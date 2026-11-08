@@ -145,7 +145,8 @@ a{color:var(--accent)}
 .rangee-defil .segments span{min-height:40px;padding:0 12px;font-size:13px;white-space:nowrap}
 .rangee-defil .segments span:has(.pastille):not(:has(:not(.pastille))){padding:0 10px}
 .rangee-defil .pastille{width:20px;height:20px}
-.rangee-defil .btn.puce{flex:none;min-height:40px;padding:0 12px;font-size:13px;border-radius:20px}
+.btn.puce{flex:none;min-height:40px;padding:0 12px;font-size:13px;border-radius:20px}
+.rapides{display:flex;flex-wrap:wrap;gap:6px}
 .champ.mini{min-height:40px;padding:6px 10px;width:auto;flex:none}
 #fil-texte{width:150px}
 #num-debut{width:64px}
@@ -154,6 +155,14 @@ a{color:var(--accent)}
 .barre-plus{display:flex;gap:2px}
 .barre-plus .outil{flex:1 1 0;min-width:46px;padding:4px 1px;font-size:11px}
 .panneau:has(.barre-plus){padding-top:8px;padding-bottom:calc(8px + var(--bas-sur))}
+/* Ordinateur (écran large) : le panneau flotte à droite du PDF, la barre d'outils reste visible et centrée */
+@media (min-width:900px){
+  #panneau{position:absolute;right:20px;bottom:92px;width:400px;max-height:60vh;border:1px solid var(--ligne);border-radius:16px;box-shadow:0 12px 32px rgba(20,24,35,.18)}
+  #ecran-doc.avec-panneau.onglet-document:not(.avec-selection) #barre-editer{display:flex!important}
+  .barre-bas{justify-content:center}
+  .outils-edition .outil,.barre-contexte .outil{flex:0 1 96px;font-size:12px}
+  .barre-plus .outil{flex:1 1 0}
+}
 #ecran-doc:not(.onglet-document) #panneau,#ecran-doc.mode-lire #panneau{display:none!important}
 #ecran-doc.avec-panneau #barre-editer,#ecran-doc.avec-panneau #barre-contexte{display:none!important}
 /* Numéros de page et filigrane affichés en direct sur les pages */
@@ -216,6 +225,20 @@ a{color:var(--accent)}
 .item-texte .contenu{display:block;white-space:pre;line-height:1.15;font-family:Helvetica,Arial,sans-serif;min-width:1ch;min-height:1.15em;outline:none}
 .item-texte .contenu:empty::before{content:"Écrivez ici";color:rgba(0,0,0,.35)}
 .item-image img{width:100%;height:100%;display:block;pointer-events:none;-webkit-user-drag:none}
+/* Traits (stylo, surligneur) */
+.item-trait svg,.trait-encours{width:100%;height:100%;display:block;overflow:visible;pointer-events:none}
+.trait-encours{position:absolute;inset:0}
+.item-trait.surligneur,.trait-encours.surligneur{mix-blend-mode:multiply;opacity:.55}
+#pages.dessin .calque-items{pointer-events:auto;cursor:crosshair;touch-action:none}
+#pages.dessin .item{pointer-events:none}
+/* Commentaires : une pastille jaune, la bulle s'ouvre quand on la touche */
+.item-note{background:#ffd43b;border-radius:7px 7px 7px 2px;display:grid;place-items:center;color:#5c4400;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer}
+.item-note>.ico{width:68%;height:68%;pointer-events:none}
+.item-note .contenu{display:none;position:absolute;left:calc(100% + 8px);top:0;min-width:150px;max-width:240px;padding:8px 10px;background:#fff8c5;border:1px solid #e9d27a;border-radius:10px;box-shadow:0 4px 14px rgba(20,24,35,.18);font:14px/1.35 system-ui,sans-serif;color:#1b2130;white-space:pre-wrap;outline:none}
+.item-note .contenu:empty::before{content:"Votre commentaire";color:rgba(0,0,0,.4)}
+.mode-editer .item-note.sel .contenu,.mode-editer .item-note.edition .contenu{display:block}
+.item-note .poignee,.item-note .poignee-rot,.item-note .poignee-deplacer{display:none!important}
+.item-note.edition{background:#ffd43b}
 .mode-editer .item{outline:1px dashed rgba(13,107,79,.35);outline-offset:1px}
 .item.sel{outline:2px dashed var(--accent)!important;outline-offset:2px}
 .item.edition{outline:2px solid var(--edition)!important;background:rgba(255,255,255,.6);cursor:text;touch-action:auto}
@@ -372,6 +395,8 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   <symbol id="i-deplacer" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18"/><path d="M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></symbol>
   <symbol id="i-pipette" viewBox="0 0 24 24"><path d="M14.5 4.5l5 5"/><path d="M17 2.5a2.1 2.1 0 0 1 3 3L17.5 8 16 6.5"/><path d="M16 9.5L7 18.5 4 20l1.5-3 9-9"/></symbol>
   <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.9-.6-1.3-.6-2.2 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></symbol>
+  <symbol id="i-stylo" viewBox="0 0 24 24"><path d="M3 21c2-1 3.5-1 5 0s3 1 5-.5"/><path d="M14.5 4.5l5 5L10 19H5v-5z"/></symbol>
+  <symbol id="i-note" viewBox="0 0 24 24"><path d="M4 4h16v12H10l-5 4v-4H4z"/><path d="M8 9h8M8 12h5"/></symbol>
   <symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></symbol>
 </svg>
 
@@ -423,9 +448,9 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
     <button class="btn-icone" id="doc-retour" aria-label="Fermer le document" title="Fermer"><svg class="ico"><use href="#i-fermer"/></svg></button>
     <h1><span id="doc-titre">Document</span><small id="doc-sous-titre"></small></h1>
     <button class="btn-icone" id="doc-apercu" aria-label="Aperçu du résultat final" aria-pressed="false" title="Aperçu"><svg class="ico"><use href="#i-oeil"/></svg></button>
-    <button class="btn-icone" id="doc-annuler" aria-label="Annuler la dernière action" title="Annuler"><svg class="ico"><use href="#i-annuler"/></svg></button>
+    <button class="btn-icone" id="doc-annuler" aria-label="Annuler la dernière action" title="Annuler (Ctrl+Z)"><svg class="ico"><use href="#i-annuler"/></svg></button>
     <button class="btn-icone" id="doc-partager" aria-label="Partager le PDF" title="Partager"><svg class="ico"><use href="#i-partager"/></svg></button>
-    <button class="btn-icone plein" id="doc-enregistrer" aria-label="Enregistrer le PDF" title="Enregistrer"><svg class="ico"><use href="#i-enregistrer"/></svg></button>
+    <button class="btn-icone plein" id="doc-enregistrer" aria-label="Enregistrer le PDF" title="Enregistrer (Ctrl+S)"><svg class="ico"><use href="#i-enregistrer"/></svg></button>
   </header>
   <nav class="onglets" role="tablist" aria-label="Affichage">
     <button role="tab" id="onglet-document" aria-selected="true" aria-controls="defil"><svg class="ico"><use href="#i-livre"/></svg>Document</button>
@@ -459,6 +484,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
     <button class="outil" data-action="texte"><svg class="ico"><use href="#i-texte"/></svg>Texte</button>
     <button class="outil" data-action="signature"><svg class="ico"><use href="#i-signature"/></svg>Signature</button>
     <button class="outil" data-action="tampon"><svg class="ico"><use href="#i-tampon"/></svg>Tampon</button>
+    <button class="outil" data-action="dessin" title="Stylo et surligneur"><svg class="ico"><use href="#i-stylo"/></svg>Dessiner</button>
     <button class="outil" data-action="masque"><svg class="ico"><use href="#i-masque"/></svg>Cacher</button>
     <button class="outil" data-action="corriger"><svg class="ico"><use href="#i-corriger"/></svg>Corriger</button>
     <button class="outil" data-action="plus" aria-label="Plus d'outils : numéroter, filigrane, rechercher"><svg class="ico"><use href="#i-menu"/></svg>Plus</button>
@@ -486,7 +512,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 const VERSION_APPLI = '1.1.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
-const { PDFDocument, StandardFonts, rgb, degrees } = window.PDFLib;
+const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;
 const MODE_FORMS = pdfjsLib.AnnotationMode.ENABLE_FORMS;
 const MODE_STOCK = pdfjsLib.AnnotationMode.ENABLE_STORAGE;
 const CLE_TAMPONS = 'atelierpdf.stamps.v1';
@@ -650,7 +676,35 @@ addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (D && D.edition) { terminerEdition(true); e.preventDefault(); return; }
   if (feuillesOuvertes > 0) { fermerCouche(); e.preventDefault(); return; }
-  if (D && D.attente) annulerPlacement();
+  if (D && D.attente) { annulerPlacement(); return; }
+  if (D && D.panneau) { fermerPanneau(); return; }
+  if (D && D.selection) selectionner(null);
+});
+/* Raccourcis clavier (ordinateur) */
+let dernierMemoFleche = 0;
+addEventListener('keydown', e => {
+  if (!D || !ecranDoc.classList.contains('actif') || feuillesOuvertes > 0) return;
+  const mod = e.ctrlKey || e.metaKey, k = e.key.toLowerCase();
+  if (mod && k === 's') { e.preventDefault(); exporter('enregistrer'); return; }
+  if (mod && k === 'p' && e.shiftKey) { e.preventDefault(); exporter('partager'); return; }
+  if (mod && k === 'f') { e.preventDefault(); ouvrirRecherche(); return; }
+  const enSaisie = e.target.closest?.('input, textarea, select, [contenteditable="true"], [contenteditable="plaintext-only"]');
+  if (enSaisie) return;
+  if (mod && k === 'z') { e.preventDefault(); annulerAction(); return; }
+  const it = D.items.find(t => t.id === D.selection); if (!it || D.mode !== 'editer') return;
+  if (k === 'delete' || k === 'backspace') { e.preventDefault(); supprimerItem(it.id); }
+  else if (mod && k === 'd') {
+    e.preventDefault(); memoriser();
+    const copie = { ...it, id: idUnique(), x: it.x + 12, y: it.y + 12 };
+    D.items.push(copie); D.modifie = true; rendreItems(it.page); selectionner(copie.id);
+  } else if (k.startsWith('arrow')) {
+    e.preventDefault();
+    if (Date.now() - dernierMemoFleche > 800) memoriser();
+    dernierMemoFleche = Date.now();
+    const pas = e.shiftKey ? 10 : 1;
+    if (k === 'arrowleft') it.x -= pas; else if (k === 'arrowright') it.x += pas; else if (k === 'arrowup') it.y -= pas; else it.y += pas;
+    rafraichirItem(it);
+  }
 });
 
 /** Ouvre le sélecteur de fichiers du téléphone. */
@@ -1199,12 +1253,23 @@ function majStyleItem(e, it) {
   if (it.type === 'texte') {
     e.style.fontSize = it.taille * s + 'px'; e.style.color = it.couleur;
     if (D.edition !== it.id) e.querySelector('.contenu').textContent = it.texte;
+  } else if (it.type === 'note') {
+    const t = Math.max(26, 18 * s) + 'px'; e.style.width = t; e.style.height = t;
+    if (D.edition !== it.id) e.querySelector('.contenu').textContent = it.texte;
+    e.title = it.texte;
   } else { e.style.width = it.w * s + 'px'; e.style.height = it.h * s + 'px'; if (it.type === 'masque') e.style.background = it.couleur; }
 }
 function elementItem(it) {
-  const e = el('div', { class: 'item item-' + it.type + (D.selection === it.id ? ' sel' : ''), dataset: { id: it.id } });
-  if (it.type === 'texte') {
-    const z = el('span', { class: 'contenu', role: 'textbox', 'aria-multiline': 'true', 'aria-label': 'Texte ajouté' });
+  const e = el('div', { class: 'item item-' + it.type + (it.surligneur ? ' surligneur' : '') + (D.selection === it.id ? ' sel' : ''), dataset: { id: it.id } });
+  if (it.type === 'note') e.append(icone('note'));
+  if (it.type === 'trait') {
+    const svg = document.createElementNS(NS, 'svg'), p = document.createElementNS(NS, 'path');
+    svg.setAttribute('viewBox', `0 0 ${it.vb[0]} ${it.vb[1]}`); svg.setAttribute('preserveAspectRatio', 'none');
+    for (const [k, v] of Object.entries({ d: cheminTrait(it.pts), fill: 'none', stroke: it.couleur, 'stroke-width': it.ep, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })) p.setAttribute(k, v);
+    svg.append(p); e.append(svg);
+  }
+  if (it.type === 'texte' || it.type === 'note') {
+    const z = el('span', { class: 'contenu', role: 'textbox', 'aria-multiline': 'true', 'aria-label': it.type === 'note' ? 'Commentaire' : 'Texte ajouté' });
     z.addEventListener('input', () => { it.texte = z.innerText.replace(/\n$/, ''); D.modifie = true; });
     z.addEventListener('blur', () => { if (D && D.edition === it.id) setTimeout(() => { if (D && D.edition === it.id && document.activeElement !== z) terminerEdition(); }, 0); });
     e.append(z);
@@ -1254,7 +1319,7 @@ pagesEl.addEventListener('focusin', e => {
 /* Écrire directement sur la page */
 function commencerEdition(it, avant) {
   let e = elItem(it.id); if (!e) return;
-  zoomerPourEcrire(e, it.taille * D.s);
+  if (it.type === 'texte') zoomerPourEcrire(e, it.taille * D.s);
   e = elItem(it.id); if (!e) return;
   const z = e.querySelector('.contenu');
   D.edition = it.id; D.avantEdition = avant || instantane(); D.texteAvant = it.texte;
@@ -1313,7 +1378,7 @@ function attacherGestes(e, it) {
       } else if (redim) {
         // déplacement du doigt exprimé dans le repère (éventuellement tourné) de l'élément
         const lx = dx * cs + dy * sn, ly = -dx * sn + dy * cs;
-        if (it.type === 'image') { it.w = clamp(orig.w + lx, 10, pg.w * 1.5); it.h = it.w * orig.h / orig.w; }
+        if (it.type === 'image' || it.type === 'trait') { it.w = clamp(orig.w + lx, 6, pg.w * 1.5); it.h = it.w * orig.h / orig.w; }
         else if (it.type === 'masque') { it.w = Math.max(4, orig.w + lx); it.h = Math.max(4, orig.h + ly); }
         else it.taille = clamp(orig.taille * (largeur0 + lx) / largeur0, 4, 120);
       } else {
@@ -1325,7 +1390,7 @@ function attacherGestes(e, it) {
     const fin = () => {
       e.removeEventListener('pointermove', mv); e.removeEventListener('pointerup', fin); e.removeEventListener('pointercancel', fin);
       if (bouge) D.modifie = true;
-      else if (!redim && !tourne && it.type === 'texte' && D.edition !== it.id) commencerEdition(it); // un simple toucher = écrire
+      else if (!redim && !tourne && (it.type === 'texte' || it.type === 'note') && D.edition !== it.id) commencerEdition(it); // un simple toucher = écrire
     };
     e.addEventListener('pointermove', mv); e.addEventListener('pointerup', fin); e.addEventListener('pointercancel', fin);
   });
@@ -1361,6 +1426,8 @@ function majBarreContexte() {
       outil('Agrandir', 'texte-plus', () => modifierItem(it, () => { it.taille = Math.min(72, Math.round(it.taille + 1)); })),
       bCouleur, pivoter,
       outil('Supprimer', 'poubelle', () => supprimerItem(it.id), 'outil danger'), fini);
+  } else if (it.type === 'note') {
+    barreContexte.append(outil('Supprimer', 'poubelle', () => supprimerItem(it.id), 'outil danger'), fini);
   } else if (it.type === 'masque') {
     barreContexte.append(boutonCouleur(it), pivoter, outil('Supprimer', 'poubelle', () => supprimerItem(it.id), 'outil danger'), fini);
   } else {
@@ -1370,10 +1437,26 @@ function majBarreContexte() {
         const copie = { ...it, id: idUnique(), x: it.x + 12, y: it.y + 12 };
         D.items.push(copie); D.modifie = true; rendreItems(it.page); selectionner(copie.id);
       }),
+      it.type === 'image' && D.pages.length > 1 ? outil('Toutes pages', 'pages', () => copierSurToutesPages(it)) : '', // '' et pas null (append écrirait « null »)
       pivoter,
       outil('Supprimer', 'poubelle', () => supprimerItem(it.id), 'outil danger'), fini);
   }
   if (paletteOuverte && it.type !== 'image') barreContexte.append(palette(it));
+}
+
+/** Paraphe : la signature (ou le tampon) est recopiée au même endroit sur toutes les autres pages. */
+function copierSurToutesPages(it) {
+  memoriser();
+  let n = 0;
+  for (const pg of D.pages) {
+    if (pg.id === it.page) continue;
+    D.items.push({ ...it, id: idUnique(), page: pg.id, x: clamp(it.x, 0, Math.max(0, pg.w - it.w)), y: clamp(it.y, 0, Math.max(0, pg.h - it.h)) });
+    n++;
+  }
+  D.modifie = true;
+  D.pages.forEach(pg => rendreItems(pg.id));
+  selectionner(it.id);
+  toast(`Copié sur ${n} autre${n > 1 ? 's' : ''} page${n > 1 ? 's' : ''}`, { action: 'Annuler', onAction: annulerAction });
 }
 
 /* Couleurs : 3 couleurs de base, couleurs perso mémorisées, sélecteur libre et pipette */
@@ -1439,6 +1522,18 @@ function couleurSous(id, x, y) {
   return '#' + h(R) + h(G) + h(B);
 }
 
+/** Coche ✓ ou croix ✗ dessinée au trait (image PNG transparente, nette à toute taille). */
+function imageMarque(marque, couleur) {
+  const id = `marque-${marque}-${couleur.replace('#', '')}`;
+  const c = el('canvas'); c.width = c.height = 200;
+  const x = c.getContext('2d'); x.strokeStyle = couleur; x.lineWidth = 26; x.lineCap = x.lineJoin = 'round';
+  x.beginPath();
+  if (marque === 'coche') { x.moveTo(30, 108); x.lineTo(80, 158); x.lineTo(172, 44); }
+  else { x.moveTo(40, 40); x.lineTo(160, 160); x.moveTo(160, 40); x.lineTo(40, 160); }
+  x.stroke();
+  return { id, marque, png: c.toDataURL('image/png'), l: 200, h: 200 };
+}
+
 /* Placement : on choisit l'outil, puis on touche la page */
 function demanderPlacement(attente, message) {
   D.attente = attente;
@@ -1474,6 +1569,18 @@ pagesEl.addEventListener('click', async e => {
   if (a.outil === 'texte') {
     it = { id: idUnique(), type: 'texte', page: id, x, y: y - prefs.tailleTexte * 0.6, texte: '', taille: prefs.tailleTexte, couleur: prefs.couleurTexte };
     D.items.push(it); rendreItems(id); commencerEdition(it, avant);
+    return;
+  }
+  if (a.outil === 'note') {
+    const pgN = D.parId.get(id);
+    it = { id: idUnique(), type: 'note', page: id, x: clamp(x - 9, 0, pgN.w - 18), y: clamp(y - 9, 0, pgN.h - 18), texte: '' };
+    D.items.push(it); rendreItems(id); commencerEdition(it, avant);
+    return;
+  }
+  if (a.outil === 'texte-rapide') {
+    memoriser(avant);
+    it = { id: idUnique(), type: 'texte', page: id, x, y: y - prefs.tailleTexte * 0.6, texte: a.texte, taille: prefs.tailleTexte, couleur: prefs.couleurTexte };
+    D.items.push(it); D.modifie = true; rendreItems(id); selectionner(it.id);
     return;
   }
   memoriser(avant);
@@ -1524,9 +1631,16 @@ $('#barre-editer').addEventListener('click', async e => {
   if (a === 'texte') demanderPlacement({ outil: 'texte' }, 'Touchez la page à l\'endroit où écrire.');
   else if (a === 'masque') demanderPlacement({ outil: 'masque' }, 'Touchez la zone à cacher.');
   else if (a === 'corriger') demanderPlacement({ outil: 'corriger' }, 'Touchez le mot à corriger, puis tapez le nouveau texte.');
+  else if (a === 'dessin') ouvrirPanneau('dessin');
   else if (a === 'signature' || a === 'tampon') {
-    const t = await choisirTampon(a);
+    let t = await choisirTampon(a);
     if (!t || !D) return;
+    if (t.rapide === 'texte') { demanderPlacement({ outil: 'texte-rapide', texte: t.texte }, `Touchez l'endroit où placer « ${t.texte} ».`); return; }
+    if (t.rapide === 'marque') {
+      t = imageMarque(t.marque, prefs.couleurTexte);
+      demanderPlacement({ outil: 'tampon', tampon: t, largeur: 16 }, t.marque === 'coche' ? 'Touchez la case à cocher.' : 'Touchez l\'endroit où placer la croix.');
+      return;
+    }
     demanderPlacement({ outil: a, tampon: t, largeur: a === 'signature' ? prefs.largeurSignature : prefs.largeurTampon },
       a === 'signature' ? 'Touchez l\'endroit où placer la signature.' : 'Touchez l\'endroit où placer le tampon.');
   }
@@ -1776,6 +1890,10 @@ async function dessinerItems(out, np, items, versPdf, R, ressources) {
       }
       const [x, y] = point(it.x, it.y + it.h);
       np.drawImage(img, { x, y, width: it.w, height: it.h, rotate: rot });
+    } else if (it.type === 'trait') {
+      const [x, y] = point(it.x, it.y); // le tracé SVG part du coin haut gauche
+      np.drawSvgPath(cheminTrait(it.pts), { x, y, scale: it.w / it.vb[0], rotate: rot, borderColor: hexVersRgb(it.couleur), borderWidth: it.ep,
+        borderLineCap: LineCapStyle.Round, borderOpacity: it.surligneur ? 0.55 : 1, blendMode: it.surligneur ? BlendMode.Multiply : BlendMode.Normal });
     } else if (it.type === 'texte') {
       lignes.forEach((ligne, k) => {
         if (!ligne) return;
@@ -1786,6 +1904,19 @@ async function dessinerItems(out, np, items, versPdf, R, ressources) {
   }
 }
 
+/** Commentaires : de vraies notes PDF (bulles jaunes que tous les lecteurs PDF savent ouvrir). */
+function ajouterNotes(out, np, notes, versPdf) {
+  for (const it of notes) {
+    if (!it.texte.trim()) continue;
+    const [x1, y1] = versPdf(it.x, it.y + 18), [x2, y2] = versPdf(it.x + 18, it.y);
+    const annot = out.context.obj({
+      Type: 'Annot', Subtype: 'Text', Name: 'Comment', F: 4, Open: false, C: [1, 0.83, 0.23],
+      Rect: [Math.min(x1, x2), Math.min(y1, y2), Math.max(x1, x2), Math.max(y1, y2)],
+      Contents: PDFHexString.fromText(it.texte), T: PDFHexString.fromText('Atelier PDF')
+    });
+    np.node.addAnnot(out.context.register(annot));
+  }
+}
 /** Prépare chaque fichier source : champs remplis, flatten, puis écriture et relecture (flush). */
 async function preparerSources() {
   const docs = [];
@@ -1826,6 +1957,7 @@ async function construirePdf() {
     const versPdf = (x, y) => versUtilisateur(cb, R, x, y);
     await dessinerDeco(out, np, pg, D.pages.indexOf(pg), pg.w, pg.h, versPdf, R, ressources);
     await dessinerItems(out, np, D.items.filter(t => t.page === pg.id), versPdf, R, ressources);
+    ajouterNotes(out, np, D.items.filter(t => t.page === pg.id && t.type === 'note'), versPdf);
   }
   return out.save();
 }
@@ -1856,6 +1988,7 @@ async function construirePdfImage(dpi = 150) {
     np.drawImage(jpg, { x: 0, y: 0, width: img.w, height: img.h });
     await dessinerDeco(out, np, pg, i, img.w, img.h, (x, y) => [x, img.h - y], 0, ressources);
     await dessinerItems(out, np, D.items.filter(t => t.page === pg.id), (x, y) => [x, img.h - y], 0, ressources);
+    ajouterNotes(out, np, D.items.filter(t => t.page === pg.id && t.type === 'note'), (x, y) => [x, img.h - y]);
   }
   return out.save();
 }
@@ -1996,8 +2129,46 @@ function fermerPanneau() {
   if (avantPanneau && instantane() !== avantPanneau) { memoriser(avantPanneau); D.modifie = true; }
   avantPanneau = null; D.panneau = null;
   panneau.hidden = true; panneau.replaceChildren();
+  pagesEl.classList.remove('dessin'); annulerTrait();
   majClassesDoc();
 }
+
+/* Dessin à main levée : stylo et surligneur. Chaque trait devient un élément (déplaçable, redimensionnable, supprimable). */
+const REGLAGE_DESSIN = { stylo: { ep: 2, couleur: '#1d3fb3' }, surligneur: { ep: 12, couleur: '#ffd43b' } };
+const arrondi = v => Math.round(v * 10) / 10;
+function cheminTrait(pts) { return pts.map(([x, y], k) => `${k ? 'L' : 'M'}${arrondi(x)} ${arrondi(y)}`).join(' '); }
+let traitEnCours = null;
+function annulerTrait() { if (traitEnCours) { traitEnCours.svg.remove(); traitEnCours = null; } }
+pagesEl.addEventListener('pointerdown', e => {
+  if (!D || D.panneau !== 'dessin') return;
+  const pageEl = e.target.closest('.page'); if (!pageEl) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  if (traitEnCours) { annulerTrait(); return; } // un deuxième doigt : on laisse le zoom
+  const r = pageEl.getBoundingClientRect(), d = D.dessin;
+  const svg = document.createElementNS(NS, 'svg'), path = document.createElementNS(NS, 'path');
+  svg.setAttribute('class', 'trait-encours' + (d.mode === 'surligneur' ? ' surligneur' : ''));
+  for (const [k, v] of Object.entries({ fill: 'none', stroke: d.couleur, 'stroke-width': d.ep * D.s, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' })) path.setAttribute(k, v);
+  svg.append(path); pageEl.querySelector('.calque-items').append(svg);
+  traitEnCours = { id: e.pointerId, pageEl, r, svg, path, pts: [[(e.clientX - r.left) / D.s, (e.clientY - r.top) / D.s]] };
+  try { pagesEl.setPointerCapture(e.pointerId); } catch {}
+}, true);
+pagesEl.addEventListener('pointermove', e => {
+  const t = traitEnCours; if (!t || e.pointerId !== t.id) return;
+  for (const m of (e.getCoalescedEvents ? e.getCoalescedEvents() : [e])) t.pts.push([(m.clientX - t.r.left) / D.s, (m.clientY - t.r.top) / D.s]);
+  t.path.setAttribute('d', cheminTrait(t.pts.map(([x, y]) => [x * D.s, y * D.s])));
+});
+pagesEl.addEventListener('pointerup', e => {
+  const t = traitEnCours; if (!t || e.pointerId !== t.id) return;
+  traitEnCours = null; t.svg.remove();
+  const d = D.dessin, ep = d.ep, pts = t.pts.length > 1 ? t.pts : [t.pts[0], [t.pts[0][0] + 0.2, t.pts[0][1]]];
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const x = Math.min(...xs) - ep / 2, y = Math.min(...ys) - ep / 2, w = Math.max(...xs) + ep / 2 - x, h = Math.max(...ys) + ep / 2 - y;
+  memoriser();
+  D.items.push({ id: idUnique(), type: 'trait', page: t.pageEl.dataset.id, x, y, w, h, vb: [w, h], pts: pts.map(([px, py]) => [arrondi(px - x), arrondi(py - y)]), couleur: d.couleur, ep, surligneur: d.mode === 'surligneur' });
+  D.modifie = true;
+  rendreItems(t.pageEl.dataset.id);
+});
+pagesEl.addEventListener('pointercancel', e => { if (traitEnCours && e.pointerId === traitEnCours.id) annulerTrait(); });
 /** En-tête compact : titre, puis « Retirer » (facultatif) et « Terminer » sur la même ligne. */
 function enteteP(titre, retirer) {
   return el('div', { class: 'panneau-tete' }, el('strong', { text: titre }),
@@ -2021,6 +2192,7 @@ function ouvrirPanneau(type) {
       o('gauche', 'Retour', fermerPanneau),
       o('numero', 'Numéroter', () => ouvrirPanneau('numeros')),
       o('filigrane', 'Filigrane', () => ouvrirPanneau('filigrane')),
+      o('note', 'Commentaire', () => { fermerPanneau(); demanderPlacement({ outil: 'note' }, 'Touchez l\'endroit où ajouter le commentaire.'); }),
       o('recherche', 'Rechercher', () => { fermerPanneau(); ouvrirRecherche(); }),
       o('info', 'Infos', () => { fermerPanneau(); afficherInfos(); })));
   } else {
@@ -2047,8 +2219,20 @@ function ouvrirPanneau(type) {
           segments('fil-couleur', [['#9ca3af', '', '#9ca3af'], ['#b91c1c', '', '#b91c1c'], ['#1d3fb3', '', '#1d3fb3']].map(([v, , c]) => [v, '', c]), f.couleur, v => { f.couleur = v; maj(); }),
           segments('fil-op', [['0.15', 'Discret'], ['0.25', 'Moyen'], ['0.4', 'Marqué']], String(f.opacite), v => { f.opacite = +v; maj(); })));
       panneau.querySelectorAll('input[name="fil-couleur"]').forEach((r, k) => r.setAttribute('aria-label', ['Gris', 'Rouge', 'Bleu'][k]));
+    } else if (type === 'dessin') {
+      const d = D.dessin ||= { mode: 'stylo', couleur: '#1d3fb3', ep: 2 };
+      const teintes = d.mode === 'stylo' ? ['#111111', '#1d3fb3', '#b91c1c', '#15803d', ...(prefs.couleursPerso || [])] : ['#ffd43b', '#69db7c', '#74c0fc', '#f783ac'];
+      panneau.append(enteteP(d.mode === 'stylo' ? 'Stylo' : 'Surligneur'),
+        rangee(
+          segments('d-mode', [['stylo', 'Stylo'], ['surligneur', 'Surligneur']], d.mode, v => { d.mode = v; Object.assign(d, REGLAGE_DESSIN[v]); ouvrirPanneau('dessin'); }),
+          segments('d-ep', (d.mode === 'stylo' ? [[1, 'Fin'], [2, 'Moyen'], [4, 'Épais']] : [[8, 'Fin'], [12, 'Moyen'], [18, 'Épais']]).map(([v, t]) => [String(v), t]), String(d.ep), v => { d.ep = +v; })),
+        rangee(segments('d-couleur', teintes.map(c => [c, '', c]), d.couleur, v => { d.couleur = v; })));
+      panneau.querySelectorAll('input[name="d-couleur"]').forEach(r => r.setAttribute('aria-label', 'Couleur ' + r.value));
+      pagesEl.classList.add('dessin');
+      if (!D.conseilDessin) { D.conseilDessin = true; toast('Dessinez avec un doigt (ou la souris). Deux doigts pour zoomer.', 5000); }
     }
-    D.modifie = true;
+    if (type === 'dessin') avantPanneau = null; // chaque trait est mémorisé à part (Annuler trait par trait)
+    else D.modifie = true;
     rendreDecoToutes();
   }
   panneau.hidden = false;
@@ -2145,6 +2329,19 @@ function choisirTampon(type) {
   return new Promise(res => {
     let choix = null;
     const fe = feuille({ titre: type === 'signature' ? 'Choisir une signature' : 'Choisir un tampon', pied: false, surFermeture: () => res(choix) });
+    if (type === 'tampon') {
+      // Tampons rapides : les mentions et marques les plus courantes, d'un toucher
+      const date = new Date().toLocaleDateString('fr-FR');
+      const rapide = (texte, r) => bouton(texte, { cls: 'btn puce', onclick: () => { choix = r; fe.fermer(); } });
+      fe.corps.append(el('h3', { class: 'titre-section', style: { marginTop: 0 }, text: 'Rapides' }),
+        el('div', { class: 'rapides' },
+          rapide(`Date du jour (${date})`, { rapide: 'texte', texte: date }),
+          rapide('Lu et approuvé', { rapide: 'texte', texte: 'Lu et approuvé' }),
+          rapide('Bon pour accord', { rapide: 'texte', texte: 'Bon pour accord' }),
+          rapide('✓ Coche', { rapide: 'marque', marque: 'coche' }),
+          rapide('✗ Croix', { rapide: 'marque', marque: 'croix' })),
+        el('h3', { class: 'titre-section', text: 'Mes tampons' }));
+    }
     const liste = lireTampons().filter(t => t.type === type);
     if (liste.length) {
       fe.corps.append(el('div', { class: 'grille-tampons' }, liste.map(t =>
