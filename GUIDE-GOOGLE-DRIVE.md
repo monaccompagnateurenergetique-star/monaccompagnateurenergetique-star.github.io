@@ -30,7 +30,10 @@ Tu le crées une seule fois depuis ton compte Google, puis tu me l'envoies. Je l
 3. **Origines JavaScript autorisées** → **Ajouter un URI** :
    - `https://monaccompagnateurenergetique-star.github.io`
    - `http://localhost:8080` (pour mes tests sur ton PC)
-4. Laisse « URI de redirection autorisés » vide → **Créer**.
+4. **URI de redirection autorisés** → **Ajouter un URI** (attention : ici, avec `/app/` et le `/` final) :
+   - `https://monaccompagnateurenergetique-star.github.io/app/`
+   - `http://localhost:8080/app/`
+   → **Créer** (ou **Enregistrer** si le client existe déjà).
 5. Copie l'**ID client** (il ressemble à `123456789-abc...xyz.apps.googleusercontent.com`) et **envoie-le-moi**.
 
 ## 5. Plus tard : ouvrir à tout le monde
