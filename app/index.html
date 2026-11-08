@@ -890,7 +890,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.15.1';
+const VERSION_APPLI = '1.15.2';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -5109,43 +5109,91 @@ function aideInstallation() {
   const etape = (n, html) => el('li', { class: 'etape-install' }, el('b', { class: 'num', text: String(n) }), el('span', {}, ...html));
   const k = t => el('strong', { text: t });
   const lien = location.origin + location.pathname;
+  const fin = ['L\'icône ', k('Atelier PDF'), ' apparaît sur votre écran d\'accueil : touchez-la pour ouvrir l\'appli'];
+  // Étapes exactes, appareil par appareil puis navigateur par navigateur (les menus ne sont pas les mêmes)
   const GUIDES = {
-    iphone: ['iPhone', 'iPhone et iPad, avec Safari (l\'installation ne marche qu\'avec Safari) :', [
-      ['Ouvrez ', k('Safari'), ' et allez sur l\'adresse de l\'appli'],
-      ['Touchez le bouton ', k('Partager'), ' (le carré avec une flèche vers le haut ⬆️), en bas de l\'écran'],
-      ['Faites défiler et choisissez ', k('Sur l\'écran d\'accueil')],
-      ['Touchez ', k('Ajouter'), ' en haut à droite : l\'icône apparaît sur votre écran d\'accueil']]],
-    android: ['Android', 'Avec Chrome :', [
-      ['Ouvrez ', k('Chrome'), ' et allez sur l\'adresse de l\'appli'],
-      ['Touchez le menu ', k('⋮'), ' en haut à droite'],
-      ['Choisissez ', k('Installer l\'application'), ' (ou ', k('Ajouter à l\'écran d\'accueil'), ')'],
-      ['Confirmez avec ', k('Installer'), '. Astuce : l\'appli apparaît aussi dans le menu « Partager » d\'Android']]],
-    samsung: ['Samsung', 'Avec Samsung Internet :', [
-      ['Touchez le menu ', k('≡'), ' en bas à droite'],
-      ['Choisissez ', k('Ajouter la page à'), ' puis ', k('Écran d\'accueil')],
-      ['Confirmez avec ', k('Ajouter')]]],
-    pc: ['PC', 'Sur ordinateur, avec Chrome ou Edge :', [
-      ['Cliquez sur l\'icône d\'installation ', k('⊕'), ' à droite de la barre d\'adresse'],
-      ['Ou menu ', k('⋮'), ' → ', k('Installer Atelier PDF'), ' (Edge : ', k('Applications'), ' → ', k('Installer ce site en tant qu\'application'), ')'],
-      ['Atelier PDF s\'ouvre alors dans sa propre fenêtre, avec une icône sur le bureau']]]
+    iphone: ['iPhone / iPad', {
+      safari: ['Safari', [
+        ['En bas de l\'écran, touchez le bouton ', k('Partager'), ' (le carré avec une flèche vers le haut ⬆️)'],
+        ['Faites glisser la liste vers le haut et touchez ', k('Sur l\'écran d\'accueil')],
+        ['Touchez ', k('Ajouter'), ' en haut à droite'], fin]],
+      chrome: ['Chrome', [
+        ['En haut à droite, à côté de l\'adresse, touchez le bouton ', k('Partager'), ' ⬆️'],
+        ['Faites glisser la liste et touchez ', k('Sur l\'écran d\'accueil')],
+        ['Touchez ', k('Ajouter'), ' en haut à droite'], fin],
+        'Il faut un iPhone à jour (iOS 16.4 ou plus récent). Si « Sur l\'écran d\'accueil » n\'apparaît pas, ouvrez la page dans Safari.'],
+      autre: ['Firefox, Edge…', [
+        ['Touchez le menu (☰ ou ⋯) puis ', k('Partager')],
+        ['Touchez ', k('Sur l\'écran d\'accueil'), ', puis ', k('Ajouter')], fin],
+        'Si l\'option n\'apparaît pas, le plus simple : ouvrez la page dans Safari.']
+    }],
+    android: ['Android', {
+      chrome: ['Chrome', [
+        ['En haut à droite, touchez le menu ', k('⋮'), ' (trois points)'],
+        ['Touchez ', k('Installer l\'application'), ' (sur certains téléphones : ', k('Ajouter à l\'écran d\'accueil'), ')'],
+        ['Touchez ', k('Installer')], fin],
+        'Astuce : une fois installée, l\'appli apparaît aussi dans le menu « Partager » d\'Android, pour y envoyer un PDF.'],
+      samsung: ['Samsung Internet', [
+        ['En bas à droite, touchez le menu ', k('≡'), ' (trois traits)'],
+        ['Touchez ', k('Ajouter la page à'), ', puis ', k('Écran d\'accueil')],
+        ['Touchez ', k('Ajouter')], fin]],
+      firefox: ['Firefox', [
+        ['Touchez le menu ', k('⋮'), ' (en haut ou en bas à droite selon votre réglage)'],
+        ['Touchez ', k('Installer'), ' (ou ', k('Ajouter à l\'écran d\'accueil'), ')'],
+        ['Touchez ', k('Ajouter')], fin]],
+      edge: ['Edge', [
+        ['En bas, touchez le menu ', k('⋯')],
+        ['Touchez ', k('Ajouter au téléphone'), ' (ou ', k('Ajouter à l\'écran d\'accueil'), ')'],
+        ['Touchez ', k('Installer')], fin]]
+    }],
+    pc: ['Ordinateur', {
+      chrome: ['Chrome', [
+        ['À droite de la barre d\'adresse, cliquez sur l\'icône ', k('Installer'), ' (un petit écran avec une flèche)'],
+        ['Si vous ne la voyez pas : menu ', k('⋮'), ' → ', k('Caster, enregistrer et partager'), ' → ', k('Installer la page en tant qu\'application')],
+        ['Cliquez sur ', k('Installer'), ' : Atelier PDF s\'ouvre dans sa propre fenêtre, avec une icône sur le bureau']]],
+      edge: ['Edge', [
+        ['Dans la barre d\'adresse, cliquez sur l\'icône ', k('Application disponible')],
+        ['Si vous ne la voyez pas : menu ', k('⋯'), ' → ', k('Applications'), ' → ', k('Installer ce site en tant qu\'application')],
+        ['Cliquez sur ', k('Installer'), ' : une icône est ajoutée au menu Démarrer et au bureau']]],
+      safari: ['Safari (Mac)', [
+        ['Dans la barre de menus, cliquez sur ', k('Fichier')],
+        ['Choisissez ', k('Ajouter au Dock')],
+        ['Cliquez sur ', k('Ajouter'), ' : l\'icône apparaît dans le Dock']],
+        'Il faut macOS Sonoma (2023) ou plus récent.'],
+      firefox: ['Firefox', [
+        ['Firefox ne sait pas installer d\'applications web sur ordinateur'],
+        ['Ouvrez l\'adresse de l\'appli dans ', k('Chrome'), ' ou ', k('Edge'), ' et suivez leurs étapes'],
+        ['Ou ajoutez simplement la page à vos favoris']]]
+    }]
   };
-  const zone = el('div');
-  const montrer = v => {
-    const [, titre, etapes] = GUIDES[v];
+  // Appareil et navigateur de la personne, pour ouvrir directement les bonnes étapes
+  const appareilActuel = estIOS ? 'iphone' : (estAndroid || estMobile) ? 'android' : 'pc';
+  const navActuel = /EdgiOS|EdgA|Edg\//.test(UA) ? 'edge' : /FxiOS|Firefox/.test(UA) ? 'firefox' : estSamsung ? 'samsung' : /CriOS|Chrome/.test(UA) ? 'chrome' : /Safari/.test(UA) ? 'safari' : 'chrome';
+  const zoneNav = el('div'), zone = el('div');
+  const montrerEtapes = (app, nav) => {
+    const [nomNav, etapes, note] = GUIDES[app][1][nav];
     zone.replaceChildren(el('div', { class: 'bloc-blanc' },
-      el('p', { class: 'note', style: { marginTop: '10px' }, text: titre }), el('ol', { class: 'etapes-install' }, etapes.map((e, i) => etape(i + 1, e)))));
+      el('p', { class: 'note', style: { marginTop: '10px' }, text: `${GUIDES[app][0]}, avec ${nomNav} :` }),
+      el('ol', { class: 'etapes-install' }, etapes.map((e, i) => etape(i + 1, e))),
+      note ? el('p', { class: 'note', text: note }) : ''));
   };
-  const actuel = estIOS ? 'iphone' : estSamsung ? 'samsung' : estAndroid ? 'android' : estMobile ? 'android' : 'pc';
-  const onglets = segments('guide-install', Object.entries(GUIDES).map(([v, [nom]]) => [v, nom]), actuel, montrer);
+  const montrerAppareil = app => {
+    const navs = GUIDES[app][1];
+    let nav = app === appareilActuel && navs[navActuel] ? navActuel : app === appareilActuel && app === 'iphone' ? 'autre' : Object.keys(navs)[0];
+    const choix = segments('guide-nav', Object.entries(navs).map(([v, [nom]]) => [v, app === appareilActuel && v === nav ? `${nom} (le vôtre)` : nom]), nav, v => montrerEtapes(app, v));
+    zoneNav.replaceChildren(el('div', { class: 'etiquette', text: 'Votre navigateur' }), choix);
+    montrerEtapes(app, nav);
+  };
+  const onglets = segments('guide-install', Object.entries(GUIDES).map(([v, [nom]]) => [v, nom]), appareilActuel, montrerAppareil);
   onglets.classList.add('onglets');
   if (estDansUneAppli) fe.corps.append(el('div', { class: 'bloc-blanc' }, el('p', { class: 'note', style: { marginTop: '10px' }, text: 'Vous êtes dans une appli (WhatsApp, Facebook…) : ouvrez d\'abord la page dans votre navigateur avec les ⋮ ou « ⋯ » en haut à droite → « Ouvrir dans le navigateur ».' })));
-  fe.corps.append(onglets, zone,
+  fe.corps.append(el('div', { class: 'etiquette', text: 'Votre appareil' }), onglets, zoneNav, zone,
     el('div', { class: 'bloc-blanc' },
       el('p', { class: 'note', style: { marginTop: '10px' }, text: 'Ensuite, Atelier PDF s\'ouvre depuis son icône, en plein écran, et fonctionne même sans connexion. Bientôt aussi sur Google Play et l\'App Store.' }),
       el('div', { class: 'rangee-btn' }, bouton('Copier l\'adresse de l\'appli', { ico: 'copier', onclick: async () => {
         try { await navigator.clipboard.writeText(lien); toast('Adresse copiée : envoyez-la sur votre téléphone ou à un collègue'); } catch { toast('Adresse : ' + lien, 8000); }
       } }), navigator.share ? bouton('Envoyer le lien', { ico: 'partager', onclick: () => navigator.share({ title: 'Atelier PDF', text: 'Atelier PDF : modifier, signer et tamponner ses PDF, gratuit', url: lien }).catch(() => {}) }) : '')));
-  montrer(actuel);
+  montrerAppareil(appareilActuel);
   fe.pied.append(bouton('J\'ai compris', { cls: 'btn principal', onclick: () => fe.fermer() }));
 }
 $('#lien-installer').addEventListener('click', e => { e.preventDefault(); aideInstallation(); });
