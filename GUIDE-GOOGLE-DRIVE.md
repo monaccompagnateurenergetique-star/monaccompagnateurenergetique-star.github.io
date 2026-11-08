@@ -15,6 +15,11 @@ Tu le crées une seule fois depuis ton compte Google, puis tu me l'envoies. Je l
 1. Menu ☰ → **API et services** → **Bibliothèque**.
 2. Cherche `Google Drive API` → clique dessus → **Activer**.
 
+## 2 bis. Activer le sélecteur de fichiers de Google
+1. Dans la barre de recherche en haut, tape `Google Picker API`.
+2. Clique sur le résultat **Google Picker API** → **Activer**.
+   (C'est ce qui permet de choisir un PDF ou un dossier dans tout ton Drive depuis l'appli.)
+
 ## 3. Écran de consentement (ce que verront les utilisateurs)
 1. Menu ☰ → **Google Auth Platform** (ou « API et services → Écran de consentement OAuth ») → **Commencer**.
 2. Nom de l'application : `Atelier PDF` ; adresse e-mail d'assistance : ton adresse.
