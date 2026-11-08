@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#0d6b4f">
-<meta name="description" content="Lire, remplir, signer et transformer vos PDF, directement sur votre téléphone. Rien n'est envoyé sur internet.">
+<meta name="description" content="Modifier, fusionner et convertir vos PDF (JPG → PDF, PDF → JPG) directement sur votre téléphone. En plus : remplir et signer. Rien n'est envoyé sur internet.">
 <title>Atelier PDF</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
@@ -317,21 +317,26 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
       <button class="btn-icone" id="btn-masquer-install" aria-label="Masquer cette proposition" title="Masquer"><svg class="ico"><use href="#i-fermer"/></svg></button>
     </div>
     <button class="carte-ouvrir" id="btn-ouvrir">
-      <svg class="ico"><use href="#i-doc"/></svg>
-      <div><strong>Ouvrir un PDF</strong><span>Lire, remplir, signer, tamponner</span></div>
+      <svg class="ico"><use href="#i-crayon"/></svg>
+      <div><strong>Modifier un PDF</strong><span>Ouvrir, ajouter du texte, corriger, réorganiser</span></div>
     </button>
     <div class="duo">
-      <button class="carte-mini" id="btn-scanner"><svg class="ico"><use href="#i-scanner"/></svg><strong>Scanner</strong><span>Un document papier en PDF</span></button>
-      <button class="carte-mini" id="btn-photos"><svg class="ico"><use href="#i-image"/></svg><strong>Photos → PDF</strong><span>Depuis votre galerie</span></button>
+      <button class="carte-mini" data-outil="fusion"><svg class="ico"><use href="#i-fusion"/></svg><strong>Fusionner</strong><span>Plusieurs PDF et photos en un seul</span></button>
+      <button class="carte-mini" id="btn-photos"><svg class="ico"><use href="#i-image"/></svg><strong>JPG → PDF</strong><span>Convertir vos photos et images</span></button>
     </div>
-    <h2 class="titre-section">Outils</h2>
+    <h2 class="titre-section">Tous les outils</h2>
     <div class="grille-outils">
-      <button class="tuile" data-outil="fusion"><svg class="ico"><use href="#i-fusion"/></svg><strong>Fusionner</strong><span>Plusieurs PDF en un seul</span></button>
-      <button class="tuile" data-outil="organiser"><svg class="ico"><use href="#i-pages"/></svg><strong>Organiser</strong><span>Pivoter, trier, supprimer des pages</span></button>
+      <button class="tuile" data-outil="images"><svg class="ico"><use href="#i-images"/></svg><strong>PDF → JPG</strong><span>Chaque page en image</span></button>
+      <button class="tuile" data-outil="organiser"><svg class="ico"><use href="#i-pages"/></svg><strong>Organiser</strong><span>Trier, pivoter, supprimer des pages</span></button>
       <button class="tuile" data-outil="compresser"><svg class="ico"><use href="#i-compresser"/></svg><strong>Compresser</strong><span>Alléger un PDF trop lourd</span></button>
+      <button class="tuile" id="btn-scanner"><svg class="ico"><use href="#i-scanner"/></svg><strong>Scanner</strong><span>Une feuille papier en PDF</span></button>
       <button class="tuile" data-outil="numeros"><svg class="ico"><use href="#i-numero"/></svg><strong>Numéroter</strong><span>Ajouter les numéros de page</span></button>
       <button class="tuile" data-outil="filigrane"><svg class="ico"><use href="#i-filigrane"/></svg><strong>Filigrane</strong><span>« COPIE », « CONFIDENTIEL »…</span></button>
-      <button class="tuile" data-outil="images"><svg class="ico"><use href="#i-images"/></svg><strong>PDF → images</strong><span>Chaque page en JPG</span></button>
+    </div>
+    <h2 class="titre-section">En plus</h2>
+    <div class="grille-outils">
+      <button class="tuile" id="btn-remplir"><svg class="ico"><use href="#i-texte"/></svg><strong>Remplir un formulaire</strong><span>Cerfa, mandat, contrat…</span></button>
+      <button class="tuile" id="btn-signer"><svg class="ico"><use href="#i-signature"/></svg><strong>Signer un PDF</strong><span>Signature et tampon</span></button>
     </div>
     <p class="confiance"><svg class="ico"><use href="#i-cadenas"/></svg><span>Vos documents restent sur cet appareil : rien n'est envoyé sur internet. <a href="../confidentialite.html">Politique de confidentialité</a></span></p>
   </main>
@@ -2024,6 +2029,21 @@ function ouvrirParametres() {
    12. OUTILS : compression, numéros, filigrane, images (fusion et organisation passent par l'onglet Pages)
    ========================================================= */
 async function lancerOutil(outil, fichiers) {
+  if (outil === 'fusion' && !fichiers) {
+    // Fusionner accepte PDF et photos, réunis dans l'onglet Pages
+    const choisis = await choisirFichiers({ accept: 'application/pdf,.pdf,image/*', multiple: true });
+    if (!choisis.length) return;
+    const pdfs = choisis.filter(estPdf), imgs = choisis.filter(f => !estPdf(f) && estImage(f));
+    const lots = await Promise.all(pdfs.map(lireFichier));
+    if (imgs.length) {
+      occupe('Conversion des photos…');
+      try { const canvas = []; for (const f of imgs) { try { canvas.push(await chargerImage(f)); } catch {} } if (canvas.length) lots.push({ nom: pdfs.length ? 'Photos.pdf' : 'Fusion.pdf', octets: await imagesVersPdf(canvas) }); }
+      finally { libre(); }
+    }
+    if (!lots.length) { toast('Choisissez des PDF ou des photos.'); return; }
+    if (lots.length + imgs.length < 2) toast('Ajoutez d\'autres fichiers avec la tuile « Ajouter des fichiers ».', 5000);
+    return ouvrirDocuments(lots, { onglet: 'pages' });
+  }
   if (!fichiers) {
     const choisis = await choisirFichiers({ multiple: outil === 'fusion' });
     if (!choisis.length) return;
@@ -2329,7 +2349,7 @@ async function imagesVersPdf(canvasListe) {
 /** Photos → PDF (et Scanner : même écran, en partant de l'appareil photo). */
 async function outilPhotos({ camera = false, fichiers = [] } = {}) {
   const lot = [];
-  const fe = feuille({ titre: camera ? 'Scanner un document' : 'Photos → PDF', plein: true });
+  const fe = feuille({ titre: camera ? 'Scanner un document' : 'JPG → PDF', plein: true });
   const grille = el('div', { class: 'vignettes' });
   const majGrille = () => {
     grille.replaceChildren(...lot.map((p, i) => el('div', { class: 'vignette' },
@@ -2438,6 +2458,12 @@ $('#btn-ouvrir').addEventListener('click', async () => { const [f] = await chois
 $('#btn-scanner').addEventListener('click', () => outilPhotos({ camera: true }));
 $('#btn-photos').addEventListener('click', async () => { const fs = await choisirFichiers({ accept: 'image/*', multiple: true }); if (fs.length) outilPhotos({ fichiers: fs }); });
 $('#btn-param').addEventListener('click', ouvrirParametres);
+$('#btn-remplir').addEventListener('click', async () => { const [f] = await choisirFichiers(); if (f) ouvrirFichier(f); });
+$('#btn-signer').addEventListener('click', async () => {
+  const [f] = await choisirFichiers(); if (!f) return;
+  await ouvrirFichier(f);
+  if (D) $('#barre-editer [data-action="signature"]').click(); // on enchaîne directement sur le choix de la signature
+});
 $$('[data-outil]').forEach(b => b.addEventListener('click', () => lancerOutil(b.dataset.outil)));
 $('#doc-retour').addEventListener('click', () => { terminerEdition(); fermerCouche(); });
 $('#doc-annuler').addEventListener('click', () => { if (D) annulerAction(); });

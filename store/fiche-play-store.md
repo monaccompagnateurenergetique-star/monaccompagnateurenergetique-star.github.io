@@ -5,45 +5,47 @@ Les limites de longueur de Google sont indiquées entre parenthèses.
 
 ## Nom de l'application (30 caractères max)
 
-Atelier PDF – Remplir & signer
+Atelier PDF – Éditeur & outils
 
 ## Description courte (80 caractères max)
 
-Lisez, remplissez et signez vos PDF. Tout reste sur votre téléphone.
+Modifier, fusionner, convertir JPG ↔ PDF. Et en plus : remplir et signer.
 
 ## Description complète (4 000 caractères max)
 
-Atelier PDF réunit dans une seule appli tout ce qu'il faut pour vos documents PDF : les lire, remplir les formulaires, les signer, les tamponner, puis les envoyer. Le tout sans compte, sans publicité, et sans que vos fichiers quittent votre téléphone.
+Atelier PDF, ce sont tous vos outils PDF dans votre poche : modifier, fusionner, convertir vos photos en PDF, réorganiser les pages, compresser… Et en plus, remplir vos formulaires et les signer. Le tout gratuit, sans compte, sans publicité, et sans que vos fichiers quittent votre téléphone.
 
-📄 LIRE
-• Défilement continu, zoom avec deux doigts
-• Recherche d'un mot dans tout le document
-• Ouverture directe depuis vos e-mails grâce au menu « Partager »
+✏️ MODIFIER UN PDF
+• Ajoutez du texte n'importe où sur la page, directement au doigt
+• Corrigez un mot existant, cachez une information
+• Pivotez, supprimez, recadrez une page
 
-✍️ REMPLIR ET SIGNER
-• Remplissage des formulaires PDF (Cerfa, mandats, contrats…) directement au doigt
-• Signatures dessinées au doigt ou importées en photo, fond retiré automatiquement
-• Tampons d'entreprise : en photo ou créés à partir de votre texte (raison sociale, adresse, SIRET)
-• Plusieurs signatures et tampons enregistrés, prêts à être réutilisés
-• Ajout de texte, correction d'un mot existant, masquage d'une zone
+🔗 FUSIONNER
+• Réunissez plusieurs PDF et photos en un seul fichier
+• Changez l'ordre des pages d'un geste
 
-📷 SCANNER
-• Photographiez une feuille : elle est redressée et les ombres sont retirées
-• Rendu couleur, gris ou noir et blanc
-• Plusieurs photos réunies en un seul PDF
+🔄 CONVERTIR
+• JPG → PDF : vos photos et captures deviennent un PDF (A4 ou taille de la photo)
+• PDF → JPG : chaque page en image, à partager ou enregistrer
+• Scanner : photographiez une feuille, elle est redressée et les ombres disparaissent
 
-🧰 OUTILS
-• Fusionner plusieurs PDF
-• Organiser les pages : pivoter, réordonner, supprimer, extraire
+🧰 ET AUSSI
+• Organiser les pages : trier, pivoter, supprimer
 • Compresser un PDF trop lourd pour un e-mail
 • Numéroter les pages
 • Ajouter un filigrane (« COPIE », « CONFIDENTIEL »…)
-• Convertir les pages en images JPG
+• Rechercher un mot dans le document
+• Ouverture directe depuis vos e-mails grâce au menu « Partager »
+
+⭐ EN PLUS : REMPLIR ET SIGNER
+• Remplissage des formulaires PDF (Cerfa, mandats, contrats) en touchant les cases ; l'appli zoome toute seule pour écrire confortablement
+• Signatures dessinées au doigt ou importées en photo, fond retiré automatiquement
+• Tampons d'entreprise créés à partir de votre texte (raison sociale, adresse, SIRET), avec votre signature posée dessus
 
 🔒 CONFIDENTIALITÉ
 Atelier PDF traite vos documents uniquement sur votre appareil. Aucun fichier n'est envoyé sur internet, ni à nous ni à personne. Pas de compte, pas de publicité, pas de suivi. Une fois installée, l'appli fonctionne même sans connexion.
 
-Idéal pour les professionnels de la rénovation énergétique, les artisans, les indépendants et les particuliers qui remplissent et signent des documents administratifs, par exemple le mandat MaPrimeRénov' (Cerfa 16089).
+Pour tous ceux qui manipulent des PDF au quotidien : artisans, indépendants, professionnels de la rénovation énergétique, et particuliers.
 
 ## Informations générales
 
