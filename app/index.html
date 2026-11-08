@@ -398,7 +398,11 @@ a{color:var(--accent)}
 /* « + » entre deux cartes : posé dans l'espace, à gauche de la carte suivante */
 .carte-page .btn-inserer{position:absolute;left:-19px;top:78px;z-index:2}
 .carte-page.debut-rangee .btn-inserer{left:calc(50% - 12px);top:-19px}
-.carte-page .miniature canvas{max-width:100%;max-height:160px;box-shadow:0 1px 3px rgba(0,0,0,.2);background:#fff}
+.carte-page .miniature canvas{display:block;max-width:100%;max-height:160px;box-shadow:0 1px 3px rgba(0,0,0,.2);background:#fff}
+.mini-page{position:relative;display:inline-block;line-height:0;max-width:100%;overflow:hidden}
+.mini-page img{position:absolute;object-fit:fill;pointer-events:none}
+.badge-photo{display:inline-flex;align-items:center;gap:3px;background:#fbe4ef!important;color:#be185d!important}
+.badge-photo .ico{width:13px;height:13px}
 .pied-carte{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:8px 10px 0;min-height:34px}
 .pied-carte strong{font-size:15px}
 .badge{font-size:12px;font-weight:700;color:var(--accent-fort);background:var(--accent-pale);padding:2px 10px;border-radius:12px}
@@ -817,6 +821,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
     <button class="btn-icone" id="bp-suiv" aria-label="Page suivante" title="Page suivante"><svg class="ico"><use href="#i-droite"/></svg></button>
     <span class="espace"></span>
     <button class="btn-icone" id="bp-pivoter" aria-label="Pivoter cette page" title="Pivoter"><svg class="ico"><use href="#i-pivoter"/></svg></button>
+    <button class="btn-icone" id="bp-photo" aria-label="Ajouter une photo sur cette page" title="Ajouter une photo"><svg class="ico"><use href="#i-image"/></svg></button>
     <button class="btn-icone" id="bp-recadrer" aria-label="Recadrer et nettoyer cette page" title="Recadrer"><svg class="ico"><use href="#i-scanner"/></svg></button>
     <button class="btn-icone" id="bp-supprimer" aria-label="Supprimer cette page" title="Supprimer"><svg class="ico"><use href="#i-poubelle"/></svg></button>
     <button class="btn tout-voir" id="bp-tout">Tout voir</button>
@@ -864,7 +869,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.12.0';
+const VERSION_APPLI = '1.12.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -1315,6 +1320,7 @@ $('#bp-tout').addEventListener('click', voirTout);
 $('#bp-pivoter').addEventListener('click', () => pivoterPage(D.parId.get(D.focus)));
 $('#bp-supprimer').addEventListener('click', () => supprimerPage(indexFocus()));
 $('#bp-recadrer').addEventListener('click', () => recadrerPage(D.parId.get(D.focus)));
+$('#bp-photo').addEventListener('click', () => ajouterPhotoSurPage(D.parId.get(D.focus)));
 
 /* =========================================================
    5. ONGLET DOCUMENT : affichage des pages, zoom, page courante
@@ -1882,13 +1888,14 @@ function majBarreContexte() {
   } else if (it.type === 'masque') {
     barreContexte.append(boutonCouleur(it), pivoter, outil('Supprimer', 'poubelle', () => supprimerItem(it.id), 'outil danger'), fini);
   } else {
+    if (it.photo) barreContexte.append(outil('Recadrer', 'scanner', () => recadrerPhoto(it)));
     barreContexte.append(
       outil('Dupliquer', 'copier', () => {
         memoriser();
         const copie = { ...it, id: idUnique(), x: it.x + 12, y: it.y + 12 };
         D.items.push(copie); D.modifie = true; rendreItems(it.page); selectionner(copie.id);
       }),
-      it.type === 'image' && D.pages.length > 1 ? outil('Toutes pages', 'pages', () => copierSurToutesPages(it)) : '', // '' et pas null (append écrirait « null »)
+      it.type === 'image' && !it.photo && D.pages.length > 1 ? outil('Toutes pages', 'pages', () => copierSurToutesPages(it)) : '', // '' et pas null (append écrirait « null »)
       pivoter,
       outil('Supprimer', 'poubelle', () => supprimerItem(it.id), 'outil danger'), fini);
   }
@@ -2251,10 +2258,16 @@ function rendreGrillePages() {
   grillePages.replaceChildren(...D.pages.map((pg, i) => {
     const cle = pg.id + '|' + pg.rot;
     const act = (ico, label, fn, visible = true) => { const b = bouton('', { ico, cls: 'btn-icone', label, onclick: fn }); if (!visible) { b.style.visibility = 'hidden'; b.tabIndex = -1; } return b; };
+    // Miniature : la page, et par-dessus les images posées (photos, signatures, tampons)
+    const images = D.items.filter(t => t.page === pg.id && t.type === 'image' && D.images[t.img]);
+    const mini = el('span', { class: 'mini-page' }, D.miniatures.get(cle) || el('canvas'),
+      ...images.map(t => el('img', { src: D.images[t.img], alt: '', style: { left: t.x / pg.w * 100 + '%', top: t.y / pg.h * 100 + '%', width: t.w / pg.w * 100 + '%', height: t.h / pg.h * 100 + '%', transform: t.rot ? `rotate(${t.rot}deg)` : '' } })));
+    const avecPhoto = images.some(t => t.photo) || D.sources[pg.src]?.photos;
     const carte = el('div', { class: 'carte-page', dataset: { id: pg.id } },
-      el('button', { type: 'button', class: 'miniature', 'aria-label': `Ouvrir la page ${i + 1} seule`, onclick: () => ouvrirPageSeule(i) },
-        D.miniatures.get(cle) || el('canvas')),
-      el('div', { class: 'pied-carte' }, el('strong', { text: `Page ${i + 1}` }), pageAnnotee(pg) ? el('span', { class: 'badge', text: 'annotée' }) : null),
+      el('button', { type: 'button', class: 'miniature', 'aria-label': `Ouvrir la page ${i + 1} seule`, onclick: () => ouvrirPageSeule(i) }, mini),
+      el('div', { class: 'pied-carte' }, el('strong', { text: `Page ${i + 1}` }),
+        avecPhoto ? el('span', { class: 'badge badge-photo', title: 'Page avec photo (JPG)' }, icone('image'), 'Photo') : null,
+        pageAnnotee(pg) && !(avecPhoto && D.items.filter(t => t.page === pg.id).every(t => t.photo)) ? el('span', { class: 'badge', text: 'annotée' }) : null),
       el('div', { class: 'actions-carte' },
         act('gauche', `Déplacer la page ${i + 1} avant`, () => deplacerPage(i, -1), i > 0),
         act('pivoter', `Pivoter la page ${i + 1}`, () => pivoterPage(pg)),
@@ -2283,8 +2296,8 @@ async function dessinerMiniature(id) {
   await pg.p.render({ canvasContext: c.getContext('2d'), viewport: vp, annotationMode: MODE_STOCK }).promise;
   if (!D) return;
   D.miniatures.set(cle, c);
-  const m = grillePages.querySelector(`[data-id="${id}"] .miniature`);
-  if (m && pg.rot + '' === cle.split('|')[1]) m.replaceChildren(c);
+  const m = grillePages.querySelector(`[data-id="${id}"] .mini-page canvas`);
+  if (m && pg.rot + '' === cle.split('|')[1]) m.replaceWith(c);
 }
 /** Après un changement de pages : on met à jour la grille et on reconstruira la lecture. */
 function apresStructure(sansMarquer) {
@@ -2424,9 +2437,65 @@ async function ajouterFichiers(position) {
 }
 
 /** Recadrer et nettoyer une page (photo ajoutée, scan de travers…) : même outil que le scanner. */
+/** Ajoute une ou plusieurs photos sur une page existante (page blanche comprise) : elles se déplacent et se redimensionnent. */
+async function ajouterPhotoSurPage(pg) {
+  if (!pg) return;
+  terminerEdition(); annulerPlacement();
+  const fichiers = (await choisirFichiers({ accept: 'image/*', multiple: true })).filter(estImage);
+  if (!fichiers.length || !D) return;
+  occupe('Ajout de la photo…');
+  try {
+    const avant = instantane(), photos = [];
+    for (const f of fichiers) { try { const c = await chargerImage(f, 1800); photos.push({ c, url: c.toDataURL('image/jpeg', 0.85) }); } catch { toast(`« ${f.name} » : format d'image non pris en charge.`); } }
+    if (!photos.length) return;
+    let der = null;
+    photos.forEach((p, i) => {
+      const w = Math.min(pg.w * 0.6, p.c.width), h = w * p.c.height / p.c.width, d = i * 24;
+      const idImg = 'photo-' + idUnique(); D.images[idImg] = p.url;
+      der = { id: idUnique(), type: 'image', photo: true, img: idImg, page: pg.id, w, h,
+        x: clamp((pg.w - w) / 2 + d, 0, Math.max(0, pg.w - w)), y: clamp((pg.h - h) / 2 - (photos.length - 1) * 12 + d, 0, Math.max(0, pg.h - h)) };
+      D.items.push(der);
+    });
+    // Deux photos sur une page en hauteur : rangées l'une au-dessus de l'autre (recto / verso)
+    const surPage = D.items.filter(t => t.page === pg.id && t.photo);
+    if (surPage.length === 2 && pg.h >= pg.w) {
+      const m = 40, gap = 30, bw = Math.min(pg.w - 2 * m, 400), bh = (pg.h - 2 * m - gap) / 2;
+      surPage.forEach((t, k) => {
+        const f = Math.min(bw / t.w, bh / t.h); t.w *= f; t.h *= f;
+        t.x = (pg.w - t.w) / 2; t.y = m + k * (bh + gap) + (bh - t.h) / 2;
+      });
+    }
+    memoriser(avant); D.modifie = true; journaliser(photos.length > 1 ? `${photos.length} photos ajoutées` : 'Photo ajoutée');
+    if (D.onglet !== 'document') choisirOnglet('document');
+    rendreItems(pg.id); selectionner(der.id);
+    requestAnimationFrame(() => elItem(der.id)?.scrollIntoView({ block: 'center' }));
+    toast('Photo posée : faites-la glisser, tirez le rond vert pour la redimensionner, « Recadrer » pour la rogner.', 6000);
+  } finally { libre(); }
+}
+/** Rogner une photo posée sur la page (même éditeur que le scanner) : elle garde sa place et sa largeur. */
+async function recadrerPhoto(it) {
+  if (!it || !D.images[it.img]) return;
+  terminerEdition();
+  const img = new Image(); img.src = D.images[it.img];
+  try { await img.decode(); } catch { toast('Cette photo n\'a pas pu être ouverte.'); return; }
+  const c = el('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d').drawImage(img, 0, 0);
+  const r = await editeurScanner(c, 'original');
+  if (!r || !D) return;
+  memoriser();
+  const idImg = 'photo-' + idUnique(); D.images[idImg] = r.toDataURL('image/jpeg', 0.88);
+  const cy = it.y + it.h / 2;
+  it.img = idImg; it.h = it.w * r.height / r.width; it.y = cy - it.h / 2;
+  D.modifie = true; journaliser('Photo recadrée');
+  rendreItems(it.page); selectionner(it.id);
+  toast('Photo recadrée', { action: 'Annuler', onAction: annulerAction });
+}
 async function recadrerPage(pg) {
   if (!pg) return;
   terminerEdition();
+  // Page avec des photos posées : c'est la photo qu'on recadre (la page elle-même est blanche)
+  const photos = D.items.filter(t => t.page === pg.id && t.photo);
+  if (photos.length === 1) return recadrerPhoto(photos[0]);
+  if (photos.length > 1) { toast('Touchez la photo à recadrer, puis « Recadrer » en bas.', 5000); return; }
   occupe('Préparation de la page…');
   let c;
   try {
@@ -2967,6 +3036,7 @@ function ouvrirPanneau(type) {
       o('gauche', 'Retour', fermerPanneau),
       o('numero', 'Numéroter', () => ouvrirPanneau('numeros')),
       o('filigrane', 'Filigrane', () => ouvrirPanneau('filigrane')),
+      o('image', 'Photo', () => { fermerPanneau(); ajouterPhotoSurPage(D.focus ? D.parId.get(D.focus) : D.pages[pageCourante()]); }),
       o('note', 'Commentaire', () => { fermerPanneau(); demanderPlacement({ outil: 'note' }, 'Touchez l\'endroit où ajouter le commentaire.'); }),
       o('recherche', 'Rechercher', () => { fermerPanneau(); ouvrirRecherche(); }),
       o('texte', 'Lire (OCR)', () => { fermerPanneau(); lancerOcr(); }),
