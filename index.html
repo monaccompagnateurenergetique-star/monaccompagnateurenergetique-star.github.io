@@ -60,9 +60,10 @@ a{color:var(--accent)}
 .fct.g1,.fct.d1{top:9%}.fct.g2,.fct.d2{top:31%}.fct.g3,.fct.d3{top:53%}.fct.g4,.fct.d4{top:75%}
 .fct.g2,.fct.g3{margin-right:16px}.fct.d2,.fct.d3{margin-left:16px}
 .fct.actif{transform:scale(1.1);border-color:var(--pc);box-shadow:0 0 0 3px var(--pf),0 14px 30px rgba(20,24,35,.16)}/* Bandeau des formats */
-.formats{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:8px 0 40px}
-.formats span{padding:8px 16px;border-radius:22px;background:var(--carte);border:1px solid var(--ligne);font-weight:700;font-size:15px}
-.formats span b{color:var(--accent)}
+/* Bandeau anthracite pleine largeur, pour trancher avec le fond clair */
+.formats{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:22px 16px;margin:8px calc(50% - 50vw) 48px;background:#1b2130;color:#fff}
+.formats span{padding:8px 16px;border-radius:22px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);font-weight:700;font-size:15px}
+.formats span b{color:#5fd3a3}
 
 h2{font-size:clamp(28px,4.4vw,40px);letter-spacing:-.02em;margin:0 0 10px;line-height:1.12}
 .sous{color:var(--doux);margin:0 0 30px;max-width:42em;font-size:18px}
@@ -150,21 +151,60 @@ section{padding:40px 0 56px}
 .etape h3{margin:0 0 6px;font-size:18px}
 .etape p{margin:0;color:var(--doux);font-size:15px}
 
-/* Démo plein écran */
-.demo{position:relative;display:grid;gap:24px;align-items:center;background:var(--sombre);color:#fff;border-radius:28px;padding:32px 24px;overflow:hidden}
-.demo h2{color:#fff}
-.demo p{color:#b8c0cc;margin:0 0 22px}
-.demo .bouton{background:#fff;color:var(--accent-fort)}
-.demo .lecteur{position:relative;justify-self:center;width:250px;height:542px;border-radius:30px;overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.4)}
-.demo .lecteur iframe{width:100%;height:100%;border:0}
-.lien-clair{display:inline-flex;align-items:center;min-height:48px;color:#8fe3c0;font-weight:700;text-decoration:none}
-.lien-clair:hover{text-decoration:underline}
-/* Fenêtre d'ordinateur pour la démo PC */
-.ecran-pc{display:none;width:100%;border-radius:16px;overflow:hidden;background:#e9e7e1;box-shadow:0 30px 70px rgba(0,0,0,.45)}
-.ecran-pc .barre-fen{display:flex;gap:7px;padding:10px 14px;background:#2a3140}
-.ecran-pc .barre-fen i{width:11px;height:11px;border-radius:50%;background:#f26b5e}
-.ecran-pc .barre-fen i:nth-child(2){background:#f4bd4f}.ecran-pc .barre-fen i:nth-child(3){background:#5ec46a}
-.ecran-pc iframe{display:block;width:100%;aspect-ratio:1280/760;border:0;background:var(--fond)}
+/* Téléphone du haut : un clic ouvre la démo en grand */
+.tel-plein{position:absolute;inset:10px;border-radius:34px;z-index:3;display:flex;align-items:flex-end;justify-content:center;padding-bottom:18px;text-decoration:none}
+.tel-plein span{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:20px;background:rgba(27,33,48,.88);color:#fff;font-size:13px;font-weight:700;opacity:0;transform:translateY(6px);transition:opacity .25s,transform .25s}
+.tel-plein svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.tel-plein:hover span,.tel-plein:focus-visible span{opacity:1;transform:none}
+.tel-plein:focus-visible{outline:3px solid #1fae76;outline-offset:4px}
+@media (hover:none){.tel-plein span{opacity:1;transform:none}}
+
+/* Animation « tampon d'entreprise + signature du client » (boucle) */
+.anim-sig{position:relative;overflow:hidden;min-height:380px;padding-bottom:58px;align-content:start}
+.as-doc{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 8px 22px rgba(20,24,35,.08);display:grid;gap:7px}
+.as-titre{font-weight:800;font-size:15px;margin-bottom:4px}
+.as-l{display:block;height:7px;border-radius:4px;background:#e7e5df;width:100%}
+.as-l.c{width:78%}.as-l.m{width:62%}
+.as-cases{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.as-case{position:relative;height:96px;border:1.5px dashed #c9c5bb;border-radius:10px;padding:7px 9px;transition:border-color .3s,background .3s}
+.as-case span{font-size:11px;font-weight:700;color:var(--doux)}
+.as-sig{position:absolute;left:8%;right:8%;bottom:10px;width:84%;height:56px;fill:none;stroke:#1b2a6b;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.as-sig path{stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.8s cubic-bezier(.45,.05,.4,1)}
+.anim-sig.s3 .as-sig path,.anim-sig.s4 .as-sig path{stroke-dashoffset:0}
+.anim-sig.s3 .as-cli{border-color:#1fae76;background:#f1faf5}
+.anim-sig.s1 .as-ent{border-color:var(--accent);background:var(--accent-pale)}
+.as-creation{position:absolute;left:20px;right:20px;top:20px;background:#fff;border-radius:14px;padding:14px;display:grid;gap:8px;box-shadow:0 18px 40px rgba(20,24,35,.18);transition:opacity .4s,transform .45s cubic-bezier(.2,.8,.2,1)}
+.anim-sig.s2 .as-creation,.anim-sig.s3 .as-creation,.anim-sig.s4 .as-creation{opacity:0;transform:translateY(-14px) scale(.97);pointer-events:none}
+.as-tete{font-weight:800;font-size:15px}
+.as-champ{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:8px;border:1px solid var(--ligne);border-radius:9px;padding:7px 10px;min-height:38px}
+.as-champ small{font-size:12px;color:var(--doux);font-weight:700}
+.as-champ b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.anim-sig .go{background:var(--accent);color:#fff;border-radius:12px;padding:12px;text-align:center;font-weight:800;transition:transform .15s,background .15s}
+.anim-sig.appui .as-go{transform:scale(.97);background:var(--accent-fort)}
+.as-tampon{position:absolute;left:0;top:0;width:176px;padding:8px 10px 4px;border:2.5px solid #1d3fb3;border-radius:8px;color:#1d3fb3;display:grid;gap:1px;text-align:center;background:rgba(255,255,255,.6);opacity:0;transform-origin:50% 50%;transition:transform .7s cubic-bezier(.3,1.3,.5,1),opacity .3s;z-index:2}
+.as-tampon b{font-size:14px;letter-spacing:.04em}
+.as-tampon span{font-size:10px;font-weight:600;line-height:1.3}
+.as-tampon svg{width:90px;height:22px;margin:0 auto;fill:none;stroke:#1d3fb3;stroke-width:2.2;stroke-linecap:round}
+.anim-sig.s1 .as-tampon,.anim-sig.s2 .as-tampon,.anim-sig.s3 .as-tampon,.anim-sig.s4 .as-tampon{opacity:1}
+.as-bulle{position:absolute;right:20px;top:20px;padding:8px 12px;border-radius:12px;background:#1b2130;color:#fff;font-size:13px;font-weight:700;opacity:0;transform:translateY(-8px);transition:opacity .3s,transform .3s}
+.anim-sig.s3 .as-bulle{opacity:1;transform:none}
+.anim-sig.s4 .as-toast{opacity:1;transform:translate(-50%,0)}
+.anim-sig.s0 .as-etapes span:nth-child(1),.anim-sig.s1 .as-etapes span:nth-child(1),.anim-sig.s2 .as-etapes span:nth-child(2),.anim-sig.s3 .as-etapes span:nth-child(3),.anim-sig.s4 .as-etapes span:nth-child(4){color:var(--accent-fort);border-color:#1fae76}
+.signer>div:last-child{order:-1}
+@media (max-width:480px){.as-tampon{width:150px}.as-tampon b{font-size:12px}.as-tampon span{font-size:9px}.as-case{height:88px}}
+@media (prefers-reduced-motion:reduce){.anim-sig *{transition:none!important}}
+
+/* Étapes numérotées : le numéro arrive avec un petit rebond */
+@media (prefers-reduced-motion:no-preference){
+  .etape.apparait::before{transform:scale(.3);transition:transform .5s cubic-bezier(.2,1.6,.4,1) .2s}
+  .etape.apparait.vu::before{transform:none}
+  .etape{transition:border-color .2s,box-shadow .2s,transform .2s}
+  .etape:hover{border-color:#b9dccd;box-shadow:0 12px 30px rgba(20,24,35,.07);transform:translateY(-2px)}
+  .confiance.apparait li{opacity:0;transform:translateX(-10px);transition:opacity .5s,transform .5s}
+  .confiance.vu li{opacity:1;transform:none}
+  .confiance.vu li:nth-child(2){transition-delay:.12s}.confiance.vu li:nth-child(3){transition-delay:.24s}.confiance.vu li:nth-child(4){transition-delay:.36s}
+  details p{animation:arrive .35s ease both}
+}
 
 .confiance{background:var(--accent-pale);border-radius:24px;padding:30px;color:#244a3c}
 .confiance h2{color:var(--accent-fort)}
@@ -203,13 +243,7 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
   .plus{grid-template-columns:1fr 1fr}
   .etapes{grid-template-columns:repeat(3,1fr)}
   .partout{grid-template-columns:1fr 1fr;padding:40px}
-  .demo{grid-template-columns:1fr;padding:48px;gap:30px}
-  .demo>div:first-child{display:grid;grid-template-columns:1fr auto;align-items:end;column-gap:40px}
-  .demo>div:first-child .etiquette-sec,.demo>div:first-child h2,.demo>div:first-child p{grid-column:1}
-  .demo>div:first-child .actions{grid-column:2;grid-row:1/4;align-self:end}
-  .demo p{margin:0}
-  .demo .ecran-pc{display:block}
-  .demo .lecteur{display:none}
+  .signer>div:last-child{order:0}
   .couronne{display:block}
   .cta-mobile{display:none}
 }
@@ -222,7 +256,7 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
   .telephone{width:238px;border-radius:36px;padding:9px}
   .telephone::before{top:15px;width:64px;height:18px}
   .telephone iframe{width:220px;height:477px;border-radius:28px}
-  .demo .lecteur{width:220px;height:477px}
+  .tel-plein{inset:9px;border-radius:28px}
 }
 @media (prefers-reduced-motion:no-preference){
   .fct{animation:flotte 6s ease-in-out infinite}
@@ -245,6 +279,7 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
   .partout.vu li{opacity:1;transform:none}
   .partout.vu li:nth-child(2){transition-delay:.15s}
   .partout.vu li:nth-child(3){transition-delay:.3s}
+  .partout.vu li:nth-child(4){transition-delay:.45s}
   /* Formats : les pastilles apparaissent en cascade */
   .formats span{opacity:0;transform:translateY(10px) scale(.95);transition:opacity .4s,transform .4s cubic-bezier(.2,1.4,.4,1)}
   .formats.vu span{opacity:1;transform:none}
@@ -271,7 +306,7 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
     <nav class="nav" aria-label="Sur cette page">
       <a href="#outils">Outils</a>
       <a href="#drive">Google Drive</a>
-      <a href="#demo">Démo</a>
+      <a href="#signer">Signature</a>
       <a href="#installer">Installer</a>
       <a href="#faq">Questions</a>
     </nav>
@@ -299,6 +334,7 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
         <div class="porte-tel">
           <div class="telephone">
             <iframe src="teaser.html?integre&amp;v=30" title="Démonstration animée d'Atelier PDF" tabindex="-1"></iframe>
+            <a class="tel-plein" id="tel-plein" href="teaser.html?v=30" aria-label="Voir la démonstration en plein écran"><span><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Voir en grand</span></a>
           </div>
           <div class="couronne" aria-hidden="true">
             <span class="fct g1" style="--pc:#0d6b4f;--pf:#e2f0ea"><i><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></i>Modifier</span>
@@ -366,32 +402,56 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
       </div>
     </section>
 
-    <section>
-      <span class="etiquette-sec">En plus</span>
-      <h2>Remplir, signer, réutiliser</h2>
-      <p class="sous">Quand un document doit être complété ou signé, plus besoin d'imprimer.</p>
-      <div class="plus">
-        <div class="carte apparait"><h3>Formulaires et Cerfa</h3><p>Les formulaires PDF (Cerfa, mandats, contrats) se remplissent en touchant les cases. L'appli zoome toute seule pour écrire confortablement.</p></div>
-        <div class="carte apparait"><h3>Signatures et tampons</h3><p>Signez au doigt ou à partir d'une photo (fond retiré automatiquement). Créez votre tampon d'entreprise, ajoutez la date du jour en un geste.</p></div>
-        <div class="carte apparait"><h3>Modèles</h3><p>Préparez une fois votre mandat avec vos coordonnées et votre tampon : à chaque nouveau client, vous repartez du modèle, date du jour incluse.</p></div>
-        <div class="carte apparait"><h3>Historique</h3><p>Chaque PDF enregistré ou partagé est noté : retrouvez-le, renvoyez-le ou repartez de lui en un instant.</p></div>
+    <section id="signer">
+      <div class="partout signer apparait">
+        <div class="maquette-enreg anim-sig" id="anim-sig" role="img" aria-label="Animation : vous créez votre tampon d'entreprise, vous le posez sur le mandat, puis votre client signe du doigt directement sur le document.">
+          <div class="as-doc">
+            <div class="as-titre">Mandat de travaux</div>
+            <i class="as-l"></i><i class="as-l c"></i><i class="as-l"></i><i class="as-l m"></i><i class="as-l c"></i>
+            <div class="as-cases">
+              <div class="as-case as-ent"><span>Cachet de l'entreprise</span></div>
+              <div class="as-case as-cli"><span>Signature du client</span>
+                <svg class="as-sig" viewBox="0 0 160 56" aria-hidden="true"><path pathLength="1" d="M8 40c10-2 14-26 22-26s-6 30 4 30 12-22 18-22-2 18 6 18 10-14 16-14 2 12 10 12 8-10 14-12c6-2 4 8 12 8s14-6 22-8M96 18c4 10 2 22-2 30"/></svg>
+              </div>
+            </div>
+          </div>
+          <div class="as-creation">
+            <div class="as-tete">Créer mon tampon</div>
+            <div class="as-champ"><small>Société</small><b id="as-societe"></b></div>
+            <div class="as-champ"><small>Adresse</small><b id="as-adresse"></b></div>
+            <div class="as-champ"><small>SIRET</small><b id="as-siret"></b></div>
+            <div class="go as-go">Enregistrer le tampon</div>
+          </div>
+          <div class="as-tampon" aria-hidden="true">
+            <b>ÉCO RÉNOV 33</b><span>12 rue des Lilas, Bordeaux</span><span>SIRET 812 345 678 00019</span>
+            <svg viewBox="0 0 120 30"><path d="M6 22c8-1 10-16 16-16s-4 18 3 18 8-12 13-12-1 10 5 10 8-8 13-8 1 6 7 6 10-4 16-6"/></svg>
+          </div>
+          <div class="as-bulle">À votre client : il signe du doigt</div>
+          <div class="ae-toast as-toast"><b>✓</b>Mandat tamponné et signé</div>
+          <div class="ae-etapes as-etapes" aria-hidden="true"><span>1. Votre tampon</span><span>2. Posé</span><span>3. Le client signe</span><span>4. Envoyé</span></div>
+        </div>
+        <div>
+          <span class="etiquette-sec">Tampon et signature</span>
+          <h2>Votre cachet d'entreprise, la signature de votre client.</h2>
+          <ul>
+            <li><i>1</i><div><b>Créez votre tampon une seule fois</b><span>Société, adresse, SIRET, et votre signature posée dessus si vous le voulez.</span></div></li>
+            <li><i>2</i><div><b>Posez-le en un geste</b><span>Sur la case « Cachet de l'entreprise », à la bonne taille.</span></div></li>
+            <li><i>3</i><div><b>Votre client signe sur place</b><span>Tendez-lui le téléphone : il signe du doigt, directement sur le document.</span></div></li>
+            <li><i>4</i><div><b>Envoyez le PDF signé</b><span>Par e-mail, WhatsApp, ou dans votre Google Drive.</span></div></li>
+          </ul>
+        </div>
       </div>
     </section>
 
-    <section id="demo">
-      <div class="demo apparait">
-        <div>
-          <span class="etiquette-sec" style="color:#8fe3c0">Démo</span>
-          <h2 id="demo-titre">L'appli en action</h2>
-          <p id="demo-texte">Fusionner, modifier, tamponner, enregistrer dans Drive : regardez l'appli sur ordinateur. Parfait pour la présenter à vos collègues ou vos clients.</p>
-          <div class="actions">
-            <a class="bouton" id="demo-plein" href="teaser-pc.html?v=30"><svg viewBox="0 0 24 24"><path d="M4 4h6M4 4v6M20 4h-6M20 4v6M4 20h6M4 20v-6M20 20h-6M20 20v-6"/></svg>Voir en plein écran</a>
-            <a class="lien-clair" id="demo-autre" href="teaser.html?v=30">Voir la version téléphone</a>
-          </div>
-        </div>
-        <!-- Sur PC : la démo PC dans une fenêtre ; sur téléphone : la démo téléphone -->
-        <div class="ecran-pc"><iframe data-src="teaser-pc.html?integre&amp;v=30" title="Démonstration animée d'Atelier PDF sur ordinateur" tabindex="-1"></iframe></div>
-        <div class="lecteur"><iframe data-src="teaser.html?integre&amp;v=30" title="Démonstration animée d'Atelier PDF sur téléphone" tabindex="-1"></iframe></div>
+    <section>
+      <span class="etiquette-sec">En plus</span>
+      <h2>Remplir, réutiliser, retrouver</h2>
+      <p class="sous">Quand un document doit être complété, plus besoin d'imprimer.</p>
+      <div class="plus">
+        <div class="carte apparait"><h3>Formulaires et Cerfa</h3><p>Les formulaires PDF (Cerfa, mandats, contrats) se remplissent en touchant les cases. L'appli zoome toute seule pour écrire confortablement.</p></div>
+        <div class="carte apparait"><h3>Photos de pièces</h3><p>Carte d'identité recto / verso sur une même page A4, justificatifs, factures : chaque photo se déplace et se redimensionne.</p></div>
+        <div class="carte apparait"><h3>Modèles</h3><p>Préparez une fois votre mandat avec vos coordonnées et votre tampon : à chaque nouveau client, vous repartez du modèle, date du jour incluse.</p></div>
+        <div class="carte apparait"><h3>Historique</h3><p>Chaque PDF enregistré ou partagé est noté : retrouvez-le, renvoyez-le ou repartez de lui en un instant.</p></div>
       </div>
     </section>
 
@@ -487,17 +547,42 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
   const fcts = [...document.querySelectorAll('.fct')]; let fi = 0;
   if (fcts.length && !reduit) setInterval(() => { fcts.forEach(x => x.classList.remove('actif')); fcts[fi++ % fcts.length].classList.add('actif'); }, 1400);
 
-  // Démo : version PC sur grand écran, version téléphone sur téléphone (seule la bonne est chargée)
-  const grand = matchMedia('(min-width:760px)').matches;
-  const cadreDemo = document.querySelector(grand ? '.ecran-pc iframe' : '.lecteur iframe');
-  if (cadreDemo) {
-    const charger = () => { if (!cadreDemo.src) cadreDemo.src = cadreDemo.dataset.src; };
-    io ? new IntersectionObserver((es, o) => { if (es.some(e => e.isIntersecting)) { charger(); o.disconnect(); } }, { rootMargin: '300px' }).observe(cadreDemo) : charger();
-  }
-  if (!grand) {
-    document.getElementById('demo-texte').textContent = "Fusionner, modifier, créer votre tampon, signer, enregistrer dans Drive : regardez l'appli en action. Parfait pour la présenter à vos collègues ou vos clients.";
-    document.getElementById('demo-plein').href = 'teaser.html?v=30';
-    const autre = document.getElementById('demo-autre'); autre.href = 'teaser-pc.html?v=30'; autre.textContent = 'Voir la version PC';
+  // Téléphone du haut : un clic ouvre la démo en grand (version PC sur grand écran)
+  if (matchMedia('(min-width:760px)').matches) document.getElementById('tel-plein').href = 'teaser-pc.html?v=30';
+
+  // Animation « tampon d'entreprise + signature du client » : se joue quand elle est visible, en boucle
+  const as = document.getElementById('anim-sig');
+  if (as) {
+    const tampon = as.querySelector('.as-tampon'), champs = ['as-societe', 'as-adresse', 'as-siret'].map(id => document.getElementById(id));
+    const textes = ['ÉCO RÉNOV 33', '12 rue des Lilas, Bordeaux', '812 345 678 00019'];
+    const etat = e => { as.className = 'maquette-enreg anim-sig ' + e; };
+    const pause = ms => new Promise(r => setTimeout(r, ms));
+    // place le tampon au centre d'un élément (avec une échelle et un angle)
+    const poser = (sel, echelle, angle) => {
+      const a = as.getBoundingClientRect(), b = as.querySelector(sel).getBoundingClientRect();
+      if (echelle == null) echelle = Math.min(1, (b.width - 18) / tampon.offsetWidth, (b.height - 24) / tampon.offsetHeight);
+      const x = b.left - a.left + b.width / 2 - tampon.offsetWidth / 2, y = b.top - a.top + b.height / 2 - tampon.offsetHeight / 2 + 7;
+      tampon.style.transform = `translate(${x}px,${y}px) rotate(${angle}deg) scale(${echelle})`;
+    };
+    let enCours = false, visible = false;
+    async function jouer() {
+      if (enCours) return; enCours = true;
+      while (visible) {
+        etat('s0'); champs.forEach(c => c.textContent = '');
+        tampon.style.transition = 'none'; poser('.as-creation', 1, 0); tampon.offsetWidth; tampon.style.transition = '';
+        await pause(400);
+        for (const [k, t] of textes.entries()) { for (const c of t) { champs[k].textContent += c; await pause(45); } await pause(200); }
+        as.classList.add('appui'); await pause(180); as.classList.remove('appui');
+        etat('s1'); await pause(900);
+        etat('s2'); poser('.as-ent', null, -5); await pause(1300);
+        etat('s3'); await pause(2600);
+        etat('s4'); await pause(2600);
+      }
+      enCours = false;
+    }
+    if (reduit) { champs.forEach((c, k) => c.textContent = textes[k]); etat('s4'); requestAnimationFrame(() => poser('.as-ent', null, -5)); }
+    else if (io) new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) jouer(); }, { threshold: .35 }).observe(as);
+    else { visible = true; jouer(); }
   }
 
   // Animation « Enregistrer dans Drive → retrouvé sur le PC » : se joue quand elle est visible, en boucle

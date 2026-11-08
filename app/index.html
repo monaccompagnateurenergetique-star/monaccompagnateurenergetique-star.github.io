@@ -864,7 +864,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.11.0';
+const VERSION_APPLI = '1.12.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -2329,13 +2329,65 @@ async function ajouterFichiers(position) {
   if (typeof position !== 'number') position = D.pages.length;
   const choisis = await choisirFichiers({ accept: 'application/pdf,.pdf,image/*', multiple: true });
   if (!choisis.length || !D) return;
+  const images = choisis.filter(f => !estPdf(f) && estImage(f));
+  // Photos : on demande comment les placer (A4 portrait, 2 par page pour un recto / verso, sur la page affichée…)
+  let mise = 'entiere';
+  if (images.length) {
+    const opts = [
+      { valeur: 'a4-2', texte: '2 photos par page A4 (recto / verso)', ico: 'pages' },
+      { valeur: 'a4-1', texte: '1 photo par page A4', ico: 'doc' }];
+    if (images.length < 2) opts.reverse();
+    if (D.onglet === 'document' && D.pages.length) opts.push({ valeur: 'page', texte: 'Sur la page affichée', ico: 'image' });
+    opts.push({ valeur: 'entiere', texte: 'Page entière à la taille de la photo (document scanné)', ico: 'scanner' });
+    mise = await demanderChoix(images.length > 1 ? `Placer ces ${images.length} photos` : 'Placer cette photo', opts);
+    if (!mise || !D) return;
+  }
   occupe('Ajout des fichiers…');
   try {
-    const avant = instantane(); let ajout = 0;
-    const images = choisis.filter(f => !estPdf(f) && estImage(f));
+    const avant = instantane(); let ajout = 0, cible = null;
     const lots = [];
     for (const f of choisis.filter(estPdf)) lots.push((await lireFichier(f)).octets);
-    if (images.length) {
+    if (images.length && mise !== 'entiere') {
+      // Photos posées comme des images qu'on peut déplacer, agrandir, réduire, faire pivoter
+      const photos = [];
+      for (const f of images) { try { const c = await chargerImage(f, 1800); photos.push({ c, url: c.toDataURL('image/jpeg', 0.85) }); } catch { toast(`« ${f.name} » : format d'image non pris en charge.`); } }
+      if (photos.length) {
+        const nouvellesPages = [];
+        if (mise !== 'page') {
+          const parPage = mise === 'a4-2' ? 2 : 1, nb = Math.ceil(photos.length / parPage);
+          const vierge = await PDFDocument.create(); vierge.setProducer('Atelier PDF');
+          // (fond blanc dessiné : une page sans contenu ne peut pas être reprise à l'export)
+          for (let i = 0; i < nb; i++) vierge.addPage(A4).drawRectangle({ x: 0, y: 0, width: A4[0], height: A4[1], color: rgb(1, 1, 1) });
+          const s = await chargerSource(await vierge.save());
+          D.sources.push(s);
+          const pgs = await pagesDe(s, D.sources.length - 1);
+          pgs.forEach(pg => D.parId.set(pg.id, pg));
+          D.pages.splice(position + ajout, 0, ...pgs); ajout += pgs.length;
+          const [W, H] = A4, m = 40, gap = 30;
+          photos.forEach((p, i) => {
+            const pg = pgs[Math.floor(i / parPage)], k = i % parPage;
+            const bw = parPage === 2 ? Math.min(W - 2 * m, 400) : W - 2 * m, bh = parPage === 2 ? (H - 2 * m - gap) / 2 : H - 2 * m;
+            const f = Math.min(bw / p.c.width, bh / p.c.height), w = p.c.width * f, h = p.c.height * f;
+            const y0 = parPage === 2 ? m + k * (bh + gap) : m;
+            p.place = { page: pg.id, x: (W - w) / 2, y: y0 + (bh - h) / 2, w, h };
+          });
+          nouvellesPages.push(...pgs);
+        } else {
+          const pg = D.pages[pageCourante()];
+          photos.forEach((p, i) => {
+            const w = Math.min(pg.w * 0.5, p.c.width), h = w * p.c.height / p.c.width, d = i * 24;
+            p.place = { page: pg.id, x: (pg.w - w) / 2 + d, y: Math.max(10, (pg.h - h) / 2 - (photos.length - 1) * 12) + d, w, h };
+          });
+          cible = pg.id;
+        }
+        for (const p of photos) {
+          const idImg = 'photo-' + idUnique(); D.images[idImg] = p.url;
+          D.items.push({ id: idUnique(), type: 'image', photo: true, img: idImg, ...p.place });
+        }
+        journaliser(photos.length > 1 ? `${photos.length} photos ajoutées` : 'Photo ajoutée');
+        D.modifie = true;
+      }
+    } else if (images.length) {
       const canvas = [];
       for (const f of images) { try { canvas.push(await chargerImage(f)); } catch { toast(`« ${f.name} » : format d'image non pris en charge.`); } }
       if (canvas.length) lots.push({ octets: await imagesVersPdf(canvas), photos: true });
@@ -2349,9 +2401,20 @@ async function ajouterFichiers(position) {
       nouvelles.forEach(pg => D.parId.set(pg.id, pg));
       D.pages.splice(position + ajout, 0, ...nouvelles); ajout += nouvelles.length;
     }
+    if (cible && !ajout) { // photos posées sur la page affichée
+      memoriser(avant); rendreItems(cible);
+      const der = D.items[D.items.length - 1]; selectionner(der.id);
+      toast('Photo posée : faites-la glisser, et tirez le rond vert pour l\'agrandir ou la réduire.', 6000);
+      return;
+    }
     if (!ajout) { toast('Aucune page n\'a pu être ajoutée.'); return; }
     memoriser(avant);
     apresStructure();
+    if (mise === 'a4-1' || mise === 'a4-2') {
+      toast('Photos placées sur une page A4. Touchez une photo pour la déplacer, l\'agrandir ou la faire pivoter.', { duree: 6000, action: 'Annuler', onAction: annulerAction });
+      if (D.onglet === 'document') requestAnimationFrame(() => allerPage(position));
+      return;
+    }
     const ou = position === 0 ? 'au début' : position + ajout >= D.pages.length ? 'à la fin' : `après la page ${position}`;
     toast(`${ajout} page${ajout > 1 ? 's' : ''} ajoutée${ajout > 1 ? 's' : ''} ${ou}.${images.length ? (D.onglet === 'pages' ? ' Touchez une photo pour la recadrer.' : ' Touchez une photo dans « Pages » pour la recadrer.') : ''}`,
       { duree: 5000, action: 'Annuler', onAction: annulerAction });
@@ -4144,7 +4207,8 @@ function ligneDoc({ apercu, ico, titre, detail, onclick, actions = [], badges = 
 function badgesDoc(doc, hist = []) {
   const e = doc.etat || {}, items = e.items || [], b = [];
   const tampons = new Map(lireTampons().map(t => [t.id, t.type]));
-  const images = items.filter(i => i.type === 'image').map(i => tampons.get(i.img));
+  const images = items.filter(i => i.type === 'image' && !i.photo).map(i => tampons.get(i.img));
+  if (items.some(i => i.photo)) b.push(['Photos', 'bleu']);
   if (images.includes('signature')) b.push(['Signé', 'vert']);
   if (images.includes('tampon') || images.some(t => t === undefined)) b.push(['Tamponné', 'bleu']);
   if ((e.champs || []).some(l => l.length)) b.push(['Rempli', 'vert']);

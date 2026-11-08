@@ -211,8 +211,8 @@ body.integre .progres{display:none}
 
 /* Plein écran : boutons pour revenir au site ou ouvrir l'appli */
 .nav-teaser{position:fixed;left:0;right:0;top:0;z-index:10;display:flex;justify-content:space-between;gap:10px;padding:14px 16px;pointer-events:none}
-.nav-teaser a{pointer-events:auto;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:12px;font-weight:700;font-size:15px;text-decoration:none;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(6px)}
-.nav-teaser a:hover{background:rgba(255,255,255,.2)}
+.nav-teaser a{pointer-events:auto;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 16px;border-radius:12px;font-weight:700;font-size:15px;text-decoration:none;color:#fff;background:#2a3140;border:1px solid rgba(255,255,255,.18);box-shadow:0 6px 16px rgba(0,0,0,.3)}
+.nav-teaser a:hover{background:#353e50}
 .nav-teaser a.appli{background:#0d6b4f;border-color:transparent}
 .nav-teaser a.appli:hover{background:#0a5540}
 .aide-teaser{position:fixed;left:0;right:0;bottom:12px;text-align:center;color:#8b93a1;font-size:13px;pointer-events:none}
@@ -386,8 +386,10 @@ body.integre .nav-teaser,body.integre .aide-teaser{display:none}
   // Le cadre (360 × 780) s'adapte à la fenêtre, sans jamais être déformé
   function ajuster() {
     const marge = integre ? 0 : 24;
-    const s = Math.min((innerWidth - marge * 2) / 360, (innerHeight - marge * 2) / 780);
-    cadre.style.transform = `translate(-50%,-50%) scale(${s})`;
+    // On garde la place des boutons du haut : la vidéo commence en dessous, sans être recouverte
+    const haut = integre ? 0 : document.querySelector('.nav-teaser').offsetHeight - 10;
+    const s = Math.min((innerWidth - marge * 2) / 360, (innerHeight - haut - marge * 2) / 780);
+    cadre.style.transform = `translate(-50%,-50%) translateY(${haut / 2}px) scale(${s})`;
   }
   addEventListener('resize', ajuster); ajuster();
 
