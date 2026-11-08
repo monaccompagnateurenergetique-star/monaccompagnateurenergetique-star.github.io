@@ -24,7 +24,7 @@
       "title": "title",
       "text": "text",
       "files": [
-        { "name": "fichiers", "accept": ["application/pdf", ".pdf", "image/*", ".jpg", ".jpeg", ".png"] }
+        { "name": "fichiers", "accept": ["application/pdf", ".pdf", "image/*", ".jpg", ".jpeg", ".png", ".xlsx", ".xls", ".ods", ".csv", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.ms-excel", "application/vnd.oasis.opendocument.spreadsheet", "text/csv"] }
       ]
     }
   },

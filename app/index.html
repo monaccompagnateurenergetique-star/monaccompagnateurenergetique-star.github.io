@@ -167,8 +167,9 @@ a{color:var(--accent)}
 #num-debut{width:64px}
 .mini-etiquette{font-size:13px;font-weight:600;color:var(--doux);margin-left:6px;flex:none}
 /* Panneau « Plus » : une rangée d'outils à la place de la barre du bas */
-.barre-plus{display:flex;gap:2px}
-.barre-plus .outil{flex:1 1 0;min-width:46px;padding:4px 1px;font-size:11px}
+.barre-plus{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.barre-plus::-webkit-scrollbar{display:none}
+.barre-plus .outil{flex:1 0 auto;min-width:56px;padding:4px 4px;font-size:11px}
 .panneau:has(.barre-plus){padding-top:8px;padding-bottom:calc(8px + var(--bas-sur))}
 /* Ordinateur (écran large) : le panneau flotte à droite du PDF, la barre d'outils reste visible et centrée */
 @media (min-width:900px){
@@ -447,6 +448,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
     </div>
     <h2 class="titre-section">Tous les outils</h2>
     <div class="grille-outils">
+      <button class="tuile" id="btn-excel"><svg class="ico"><use href="#i-pages"/></svg><strong>Excel → PDF</strong><span>Tableurs xlsx, ods, csv</span></button>
       <button class="tuile" data-outil="images"><svg class="ico"><use href="#i-images"/></svg><strong>PDF → JPG</strong><span>Chaque page en image</span></button>
       <button class="tuile" data-outil="organiser"><svg class="ico"><use href="#i-pages"/></svg><strong>Organiser</strong><span>Trier, pivoter, supprimer des pages</span></button>
       <button class="tuile" data-outil="compresser"><svg class="ico"><use href="#i-compresser"/></svg><strong>Compresser</strong><span>Alléger un PDF trop lourd</span></button>
@@ -861,7 +863,7 @@ async function ouvrirDocuments(fichiers, { onglet = 'document', restaurer = null
       mode: 'editer', onglet: 'document', focus: null, zoom: 1, s: 1,
       selection: null, edition: null, attente: null, textes: {}, resultats: [], resIndex: -1,
       vues: new Map(), miniatures: new Map(), vueObsolete: true, conseilMasque: false,
-      numeros: null, filigrane: null, panneau: null,
+      numeros: null, filigrane: null, panneau: null, ocr: null,
       docId: idUnique(), cree: Date.now(), sauvees: 0, sigSauvee: null, apercu: null
     };
     if (restaurer) appliquerSauvegarde(restaurer);
@@ -1209,6 +1211,12 @@ async function lancerRecherche(q) {
       const s = normaliser(it.str);
       let pos = s.indexOf(nq);
       while (pos >= 0) { D.resultats.push({ page: pg.id, rect: rectTexte(pg, it, pos, nq.length) }); pos = s.indexOf(nq, pos + 1); }
+    });
+    // Texte reconnu par l'OCR (pages scannées)
+    (D.ocr?.[pg.id] || []).forEach(m => {
+      const s = normaliser(m.t), L = Math.max(1, m.t.length);
+      let pos = s.indexOf(nq);
+      while (pos >= 0) { D.resultats.push({ page: pg.id, rect: { x: m.x + m.w * pos / L, y: m.y, w: m.w * nq.length / L, h: m.h } }); pos = s.indexOf(nq, pos + 1); }
     });
   }
   D.pages.forEach(pg => dessinerSurlignages(pg.id));
@@ -1998,6 +2006,7 @@ async function construirePdf() {
     np.setRotation(degrees(R));
     const versPdf = (x, y) => versUtilisateur(cb, R, x, y);
     await dessinerDeco(out, np, pg, D.pages.indexOf(pg), pg.w, pg.h, versPdf, R, ressources);
+    await dessinerOcr(out, np, pg, versPdf, R, ressources);
     await dessinerItems(out, np, D.items.filter(t => t.page === pg.id), versPdf, R, ressources);
     ajouterNotes(out, np, D.items.filter(t => t.page === pg.id && t.type === 'note'), versPdf);
   }
@@ -2029,6 +2038,7 @@ async function construirePdfImage(dpi = 150) {
     const np = out.addPage([img.w, img.h]);
     np.drawImage(jpg, { x: 0, y: 0, width: img.w, height: img.h });
     await dessinerDeco(out, np, pg, i, img.w, img.h, (x, y) => [x, img.h - y], 0, ressources);
+    await dessinerOcr(out, np, pg, (x, y) => [x, img.h - y], 0, ressources);
     await dessinerItems(out, np, D.items.filter(t => t.page === pg.id), (x, y) => [x, img.h - y], 0, ressources);
     ajouterNotes(out, np, D.items.filter(t => t.page === pg.id && t.type === 'note'), (x, y) => [x, img.h - y]);
   }
@@ -2236,6 +2246,7 @@ function ouvrirPanneau(type) {
       o('filigrane', 'Filigrane', () => ouvrirPanneau('filigrane')),
       o('note', 'Commentaire', () => { fermerPanneau(); demanderPlacement({ outil: 'note' }, 'Touchez l\'endroit où ajouter le commentaire.'); }),
       o('recherche', 'Rechercher', () => { fermerPanneau(); ouvrirRecherche(); }),
+      o('texte', 'Lire (OCR)', () => { fermerPanneau(); lancerOcr(); }),
       o('info', 'Infos', () => { fermerPanneau(); afficherInfos(); }),
       o('copier', 'Modèle', () => { fermerPanneau(); creerModele(); })));
   } else {
@@ -2960,6 +2971,7 @@ async function outilPhotos({ camera = false, fichiers = [] } = {}) {
 async function traiterFichiers(fichiers) {
   fichiers = fichiers.filter(Boolean);
   if (!fichiers.length) return;
+  if (!fichiers.some(estPdf) && fichiers.some(estTableur)) return convertirTableur(fichiers.find(estTableur));
   const pdfs = fichiers.filter(estPdf), imgs = fichiers.filter(f => !estPdf(f) && estImage(f));
   if (!pdfs.length && !imgs.length) { toast('Ces fichiers ne sont pas pris en charge (PDF ou images uniquement).'); return; }
   if (pdfs.length === 1 && !imgs.length) return ouvrirFichier(pdfs[0]);
@@ -2988,6 +3000,215 @@ async function recupererPartage() {
   } catch (e) { console.error(e); toast('Le fichier partagé n\'a pas pu être récupéré. Ouvrez-le depuis l\'accueil.'); }
 }
 
+/* =========================================================
+   14 ter. EXCEL → PDF ET OCR (bibliothèques chargées seulement à la première utilisation)
+   ========================================================= */
+const scriptsCharges = {};
+function chargerScript(src) {
+  return scriptsCharges[src] ||= new Promise((res, rej) => {
+    const s = el('script', { src }); s.onload = res; s.onerror = () => { delete scriptsCharges[src]; rej(new Error('script ' + src)); };
+    document.head.append(s);
+  });
+}
+const estTableur = f => f && /\.(xlsx|xlsm|xls|ods|csv)$/i.test(f.name || '');
+const ACCEPT_TABLEUR = '.xlsx,.xlsm,.xls,.ods,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/vnd.oasis.opendocument.spreadsheet,text/csv';
+
+/** Excel / ODS / CSV → PDF : chaque feuille devient un tableau propre, découpé en pages A4. */
+async function convertirTableur(f) {
+  occupe('Lecture du tableur…');
+  let wb;
+  try {
+    await chargerScript('lib/xlsx/xlsx.full.min.js');
+    wb = XLSX.read(new Uint8Array(await f.arrayBuffer()), { type: 'array', cellDates: true, cellNF: true }); // cellNF : garder les formats (€, %, décimales)
+  } catch (e) { console.error(e); toast('Ce fichier ne peut pas être lu. Vérifiez qu\'il s\'agit bien d\'un tableur (xlsx, xls, ods ou csv).', 6000); return; }
+  finally { libre(); }
+  const noms = wb.SheetNames.filter(n => wb.Sheets[n]?.['!ref']);
+  if (!noms.length) { toast('Ce tableur est vide.'); return; }
+  const choix = new Set(noms);
+  let orientation = 'auto', ajuster = 'oui', quadrillage = 'oui';
+  const fe = feuille({ titre: 'Excel → PDF' });
+  fe.corps.append(el('p', { style: { margin: '0 0 8px' } }, el('strong', { text: f.name })));
+  if (noms.length > 1) fe.corps.append(el('div', { class: 'etiquette', text: 'Feuilles à convertir' }),
+    ...noms.map(n => el('label', { class: 'case-option' }, el('input', { type: 'checkbox', checked: true, onchange: e => { e.target.checked ? choix.add(n) : choix.delete(n); } }), el('span', { class: 'texte' }, el('strong', { text: n })))));
+  fe.corps.append(
+    el('div', { class: 'etiquette', text: 'Orientation' }),
+    segments('xl-or', [['auto', 'Automatique'], ['portrait', 'Portrait'], ['paysage', 'Paysage']], orientation, v => { orientation = v; }),
+    el('div', { class: 'etiquette', text: 'Largeur' }),
+    segments('xl-aj', [['oui', 'Ajuster à la page'], ['non', 'Taille réelle']], ajuster, v => { ajuster = v; }),
+    el('div', { class: 'etiquette', text: 'Quadrillage' }),
+    segments('xl-q', [['oui', 'Avec'], ['non', 'Sans']], quadrillage, v => { quadrillage = v; }),
+    el('p', { class: 'note', text: 'Le contenu des cellules est repris tel qu\'affiché dans le tableur. Les graphiques, images et couleurs ne sont pas convertis.' }));
+  fe.pied.append(bouton('Créer le PDF', { ico: 'doc', cls: 'btn principal', onclick: async () => {
+    if (!choix.size) { toast('Choisissez au moins une feuille.'); return; }
+    occupe('Création du PDF…');
+    let octets;
+    try { octets = await tableurVersPdf(wb, { feuilles: noms.filter(n => choix.has(n)), orientation, ajuster: ajuster === 'oui', quadrillage: quadrillage === 'oui' }); }
+    catch (e) { console.error(e); toast('Le PDF n\'a pas pu être créé à partir de ce tableur.'); return; }
+    finally { libre(); }
+    await fe.fermer();
+    await ouvrirPdf(octets, nomSansExt(f.name) + '.pdf');
+    if (D) D.modifie = true; // gardé dans « Mes documents »
+  } }));
+}
+/** Texte d'une cellule « à la française » : 9 800,50 €, 12,5 %, 15/01/2026 (SheetJS formate à l'américaine). */
+function celluleEnFrancais(cell) {
+  if (cell.v == null) return cell.w ?? '';
+  if (cell.t === 'd' || cell.v instanceof Date) return (cell.v instanceof Date ? cell.v : new Date(cell.v)).toLocaleDateString('fr-FR');
+  if (cell.t !== 'n') return cell.w ?? String(cell.v);
+  const z = String(cell.z || 'General'), zSansTexte = z.replace(/"[^"]*"|\\./g, '');
+  if (/[ymdhs]/i.test(zSansTexte) && !/[0#]/.test(zSansTexte)) return cell.w ?? String(cell.v); // format date/heure particulier
+  const pct = zSansTexte.includes('%'), v = pct ? cell.v * 100 : cell.v;
+  const general = /general/i.test(z) || !/[0#]/.test(zSansTexte);
+  const dec = general ? null : ((zSansTexte.match(/\.(0+)/) || [, ''])[1].length);
+  let s = v.toLocaleString('fr-FR', general ? { maximumFractionDigits: 10 } : { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  if (pct) s += ' %';
+  if (/€|EUR/.test(z)) s += ' €'; else if (/\$/.test(z)) s = s + ' $'; else if (/£/.test(z)) s = s + ' £';
+  return s;
+}
+async function tableurVersPdf(wb, { feuilles, orientation, ajuster, quadrillage }) {
+  const out = await PDFDocument.create(); out.setProducer('Atelier PDF');
+  const police = await out.embedFont(StandardFonts.Helvetica), gras = await out.embedFont(StandardFonts.HelveticaBold);
+  const marge = 28, T = 9, pad = 3, gris = rgb(0.75, 0.75, 0.75), encre = rgb(0.1, 0.12, 0.16);
+  const couper = (txt, fnt, taille, max) => {
+    if (fnt.widthOfTextAtSize(txt, taille) <= max) return txt;
+    let a = 0, b = txt.length;
+    while (a < b) { const m = (a + b + 1) >> 1; if (fnt.widthOfTextAtSize(txt.slice(0, m) + '…', taille) <= max) a = m; else b = m - 1; }
+    return a ? txt.slice(0, a) + '…' : '';
+  };
+  for (const nomF of feuilles) {
+    const ws = wb.Sheets[nomF], plage = XLSX.utils.decode_range(ws['!ref']);
+    const finLigne = Math.min(plage.e.r, plage.s.r + 5000);
+    let lignes = [];
+    for (let r = plage.s.r; r <= finLigne; r++) {
+      const ligne = [];
+      for (let c = plage.s.c; c <= plage.e.c; c++) {
+        const cell = ws[XLSX.utils.encode_cell({ r, c })];
+        const brut = cell ? celluleEnFrancais(cell) : '';
+        ligne.push({ t: versWinAnsi(brut).replace(/\n/g, ' ').trim(), n: !!cell && cell.t === 'n' });
+      }
+      lignes.push(ligne);
+    }
+    while (lignes.length && lignes[lignes.length - 1].every(x => !x.t)) lignes.pop();
+    const nbCol = Math.max(0, ...lignes.map(l => { let k = l.length; while (k && !l[k - 1].t) k--; return k; }));
+    if (!lignes.length || !nbCol) continue;
+    lignes = lignes.map(l => l.slice(0, nbCol));
+    const larg = Array.from({ length: nbCol }, (_, c) => clamp(Math.max(...lignes.map(l => (c === 0 || l === lignes[0] ? gras : police).widthOfTextAtSize(l[c].t, T))) + pad * 2, 22, 230));
+    const totale = larg.reduce((a, b) => a + b, 0);
+    let [W, H] = A4;
+    if (orientation === 'paysage' || (orientation === 'auto' && totale > (A4[0] - 2 * marge) * 1.1)) [W, H] = [A4[1], A4[0]];
+    const utile = W - 2 * marge;
+    const k = ajuster && totale > utile ? Math.max(0.5, utile / totale) : 1;
+    // Tableau étroit : les colonnes s'élargissent pour occuper toute la largeur (le texte garde sa taille)
+    const etirer = ajuster && totale < utile ? utile / totale : 1;
+    const t = T * k, lh = (T + 6) * k, cols = larg.map(w => w * k * etirer);
+    // Si le tableau reste trop large, on le découpe en groupes de colonnes
+    const groupes = []; let g = [], somme = 0;
+    cols.forEach((w, c) => { if (g.length && somme + w > utile) { groupes.push(g); g = []; somme = 0; } g.push(c); somme += w; });
+    if (g.length) groupes.push(g);
+    for (const [gi, groupe] of groupes.entries()) {
+      let page = null, y = 0, num = 0;
+      const nouvellePage = () => {
+        page = out.addPage([W, H]); num++;
+        page.drawText(couper(`${versWinAnsi(nomF)}${groupes.length > 1 ? ` (colonnes ${gi + 1}/${groupes.length})` : ''}`, gras, 11, utile - 60), { x: marge, y: H - marge - 4, size: 11, font: gras, color: encre });
+        page.drawText(`${num}`, { x: W - marge - police.widthOfTextAtSize(`${num}`, 8), y: H - marge - 3, size: 8, font: police, color: rgb(0.45, 0.45, 0.45) });
+        y = H - marge - 18;
+      };
+      const dessinerLigne = (ligne, entete) => {
+        let x = marge;
+        for (const c of groupe) {
+          const w = cols[c], cell = ligne[c], fnt = entete ? gras : police;
+          if (entete) page.drawRectangle({ x, y: y - lh, width: w, height: lh, color: rgb(0.93, 0.95, 0.94) });
+          if (quadrillage) page.drawRectangle({ x, y: y - lh, width: w, height: lh, borderColor: gris, borderWidth: 0.4 });
+          const txt = couper(cell.t, fnt, t, w - pad * 2 * k);
+          if (txt) {
+            const tw = fnt.widthOfTextAtSize(txt, t);
+            page.drawText(txt, { x: cell.n && !entete ? x + w - pad * k - tw : x + pad * k, y: y - lh + (lh - t) / 2 + t * 0.2, size: t, font: fnt, color: encre });
+          }
+          x += w;
+        }
+        y -= lh;
+      };
+      nouvellePage();
+      dessinerLigne(lignes[0], true);
+      for (const ligne of lignes.slice(1)) {
+        if (y - lh < marge) { nouvellePage(); dessinerLigne(lignes[0], true); }
+        dessinerLigne(ligne, false);
+      }
+    }
+  }
+  if (!out.getPageCount()) throw new Error('aucune donnée');
+  return out.save();
+}
+
+/* OCR : reconnaître le texte des pages scannées (en français), pour chercher, copier, et rendre le PDF « cherchable » */
+let workerOcr = null, pageOcrEnCours = 0, pagesOcrTotal = 0;
+async function preparerOcr() {
+  if (workerOcr) return workerOcr;
+  await chargerScript('lib/ocr/tesseract.min.js');
+  const base = new URL('lib/ocr/', location.href).href;
+  workerOcr = await Tesseract.createWorker('fra', 1, {
+    workerPath: base + 'worker.min.js', corePath: base, langPath: base + 'lang', gzip: true,
+    logger: m => {
+      if (m.status === 'recognizing text') majOccupe(`Lecture de la page ${pageOcrEnCours} / ${pagesOcrTotal} : ${Math.round(m.progress * 100)} %`);
+      else if (/load|initializ/i.test(m.status)) majOccupe('Préparation de la reconnaissance de texte…');
+    }
+  });
+  return workerOcr;
+}
+async function lancerOcr() {
+  if (!D) return;
+  let pages = D.pages;
+  if (D.pages.length > 1) {
+    const choix = await demanderChoix('Reconnaître le texte', [
+      { texte: 'Tout le document', ico: 'pages', valeur: 'tout' },
+      { texte: `Seulement la page ${pageCourante() + 1}`, ico: 'doc', valeur: 'page' }]);
+    if (!choix) return;
+    if (choix === 'page') pages = [D.pages[pageCourante()]];
+  }
+  // Les pages qui contiennent déjà du vrai texte n'en ont pas besoin
+  const aTraiter = [];
+  for (const pg of pages) { const tc = await texteDePage(pg); if (tc.items.map(i => i.str).join('').replace(/\s/g, '').length < 30) aTraiter.push(pg); }
+  if (!aTraiter.length) { toast('Ces pages contiennent déjà du texte : la recherche et la copie fonctionnent sans OCR.', 5000); return; }
+  occupe('Préparation de la reconnaissance de texte…');
+  const textes = [];
+  try {
+    const w = await preparerOcr();
+    pagesOcrTotal = aTraiter.length;
+    D.ocr ||= {};
+    for (const [i, pg] of aTraiter.entries()) {
+      pageOcrEnCours = i + 1; majOccupe(`Lecture de la page ${i + 1} / ${aTraiter.length}…`);
+      const kz = 200 / 72, vp = pg.p.getViewport({ scale: kz, rotation: rotationTotale(pg) });
+      const c = el('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      await pg.p.render({ canvasContext: ctx, viewport: vp, annotationMode: MODE_STOCK }).promise;
+      const { data } = await w.recognize(c);
+      c.width = c.height = 0;
+      D.ocr[pg.id] = (data.words || []).filter(m => m.confidence > 35 && m.text.trim())
+        .map(m => ({ t: m.text, x: m.bbox.x0 / kz, y: m.bbox.y0 / kz, w: (m.bbox.x1 - m.bbox.x0) / kz, h: (m.bbox.y1 - m.bbox.y0) / kz }));
+      textes.push(`— Page ${D.pages.indexOf(pg) + 1} —\n${(data.text || '').trim()}`);
+    }
+  } catch (e) { console.error(e); toast('La reconnaissance de texte n\'a pas abouti. Vérifiez la connexion pour le premier usage, puis réessayez.', 6000); return; }
+  finally { libre(); }
+  D.modifie = true; D.textes = {};
+  const texte = textes.join('\n\n');
+  const fe = feuille({ titre: 'Texte reconnu', plein: true });
+  const zone = el('textarea', { class: 'champ', rows: 14, readonly: true, 'aria-label': 'Texte reconnu' }); zone.value = texte;
+  fe.corps.append(el('p', { class: 'note', text: `${aTraiter.length} page${aTraiter.length > 1 ? 's' : ''} lue${aTraiter.length > 1 ? 's' : ''}. Le PDF que vous enregistrerez sera « cherchable » : on pourra y trouver et copier ce texte. La recherche 🔍 de l'appli le trouve déjà.` }), zone);
+  fe.pied.append(
+    bouton('Copier le texte', { ico: 'copier', onclick: async () => { try { await navigator.clipboard.writeText(texte); toast('Texte copié'); } catch { zone.select(); toast('Sélectionnez puis copiez le texte.'); } } }),
+    bouton('Terminer', { ico: 'valider', cls: 'btn principal', onclick: () => fe.fermer() }));
+}
+/** À l'export : le texte reconnu est ajouté, invisible, à sa place exacte (PDF cherchable et copiable). */
+async function dessinerOcr(out, np, pg, versPdf, R, ressources) {
+  const mots = D.ocr?.[pg.id]; if (!mots?.length) return;
+  if (!ressources.police) ressources.police = await out.embedFont(StandardFonts.Helvetica);
+  for (const m of mots) {
+    const t = versWinAnsi(m.t); if (!t.trim()) continue;
+    const taille = Math.max(3, m.h * 0.92);
+    const [x, y] = versPdf(m.x, m.y + m.h * 0.82);
+    np.drawText(t, { x, y, size: taille, font: ressources.police, opacity: 0, rotate: degrees(R) });
+  }
+}
 /* =========================================================
    14 bis. MES DOCUMENTS : reprise automatique, historique, modèles
    Tout est gardé sur l'appareil, dans la base locale du navigateur (IndexedDB « atelierpdf ») :
@@ -3025,7 +3246,7 @@ function demanderPersistance() {
 /** État du travail en cours, à garder (sans les octets des PDF). */
 function etatDe(d) {
   return {
-    items: d.items, ordre: d.pages.map(p => [p.src, p.num, p.rot, p.id]), numeros: d.numeros, filigrane: d.filigrane, structure: !!d.structure,
+    items: d.items, ordre: d.pages.map(p => [p.src, p.num, p.rot, p.id]), numeros: d.numeros, filigrane: d.filigrane, structure: !!d.structure, ocr: d.ocr || null,
     champs: d.sources.map(s => { const m = s.pdf.annotationStorage.serializable?.map; return m ? [...m.entries()] : []; })
   };
 }
@@ -3103,7 +3324,7 @@ function appliquerSauvegarde({ doc, modele }) {
   if (pages.length) D.pages = pages;
   D.parId = new Map([...parSrcNum.values()].map(p => [p.id, p]));
   D.items = e.items || []; D.images = { ...(doc.images || {}) };
-  D.numeros = e.numeros || null; D.filigrane = e.filigrane || null; D.structure = !!e.structure;
+  D.numeros = e.numeros || null; D.filigrane = e.filigrane || null; D.structure = !!e.structure; D.ocr = e.ocr || null;
   (e.champs || []).forEach((liste, k) => { const st = D.sources[k]?.pdf.annotationStorage; if (st) for (const [id, v] of liste) st.setValue(id, v); });
   if (modele) {
     D.docId = idUnique(); D.cree = Date.now();
@@ -3281,6 +3502,7 @@ $('#btn-scanner').addEventListener('click', () => outilPhotos({ camera: true }))
 $('#btn-photos').addEventListener('click', async () => { const fs = await choisirFichiers({ accept: 'image/*', multiple: true }); if (fs.length) outilPhotos({ fichiers: fs }); });
 $('#btn-param').addEventListener('click', ouvrirParametres);
 $('#btn-mesdocs').addEventListener('click', () => ouvrirMesDocuments('documents'));
+$('#btn-excel').addEventListener('click', async () => { const [f] = await choisirFichiers({ accept: ACCEPT_TABLEUR }); if (f) convertirTableur(f); });
 $('#btn-modeles').addEventListener('click', () => ouvrirMesDocuments('modeles'));
 $('#reprendre-tout').addEventListener('click', () => ouvrirMesDocuments('documents'));
 majReprendre();

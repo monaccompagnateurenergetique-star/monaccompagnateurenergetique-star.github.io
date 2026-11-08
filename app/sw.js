@@ -2,8 +2,12 @@
    - garde l'appli en mémoire pour qu'elle fonctionne sans connexion ;
    - reçoit les fichiers envoyés depuis le menu « Partager » d'Android.
    À CHAQUE MODIFICATION DE app/ : augmenter VERSION (atelier-v1 → atelier-v2…). */
-const VERSION = 'atelier-v16';
+const VERSION = 'atelier-v17';
 const CACHE_PARTAGE = 'atelier-partage';
+// Bibliothèques lourdes et facultatives (Excel, OCR) : téléchargées à la première utilisation,
+// puis gardées hors ligne dans un cache à part, qui n'est PAS vidé à chaque nouvelle version de l'appli.
+const CACHE_EXTRAS = 'atelier-extras-v1';
+const EXTRAS = /\/lib\/(ocr|xlsx)\//;
 const FICHIERS = [
   './',
   'index.html',
@@ -27,7 +31,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys()
-      .then(cles => Promise.all(cles.filter(c => c !== VERSION && c !== CACHE_PARTAGE).map(c => caches.delete(c))))
+      .then(cles => Promise.all(cles.filter(c => c !== VERSION && c !== CACHE_PARTAGE && c !== CACHE_EXTRAS).map(c => caches.delete(c))))
       .then(() => self.clients.claim())
   );
 });
@@ -42,6 +46,17 @@ self.addEventListener('fetch', event => {
     return;
   }
   if (req.method !== 'GET' || url.origin !== self.location.origin) return;
+
+  if (EXTRAS.test(url.pathname)) {
+    event.respondWith(caches.open(CACHE_EXTRAS).then(async cache => {
+      const garde = await cache.match(req);
+      if (garde) return garde;
+      const rep = await fetch(req);
+      if (rep.ok) cache.put(req, rep.clone());
+      return rep;
+    }));
+    return;
+  }
 
   // Page de l'appli : version en mémoire (même avec ?partage=1)
   if (req.mode === 'navigate') {
