@@ -49,15 +49,17 @@ a{color:var(--accent)}
 .telephone{position:relative;z-index:1;width:316px;border-radius:44px;background:#1b2130;padding:10px;box-shadow:0 40px 80px rgba(20,24,35,.22),inset 0 0 0 2px #2c3443}
 .telephone::before{content:"";position:absolute;top:18px;left:50%;transform:translateX(-50%);width:84px;height:22px;border-radius:12px;background:#1b2130;z-index:2}
 .telephone iframe{display:block;width:296px;height:641px;border:0;border-radius:34px;background:var(--fond)}
-/* Bulles en orbite autour du téléphone (en 3D : elles passent derrière, puis devant) */
-.porte-tel{position:relative;z-index:1;transform-style:preserve-3d}
-.scene-tel{perspective:1400px}
-.telephone{transform:translateZ(0)}
-.orbite{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d;display:none}
-.bulle{position:absolute;left:0;top:0;transform-style:preserve-3d;transform:rotateY(var(--a)) translateZ(230px) translateY(var(--y))}
-.bulle .face{display:flex;align-items:center;gap:8px;white-space:nowrap;transform:translate(-50%,-50%) rotateY(calc(-1 * var(--a)));background:#fff;border:1px solid var(--ligne);border-radius:14px;padding:10px 14px;font-size:14px;font-weight:700;box-shadow:0 12px 30px rgba(20,24,35,.12)}
-.bulle i{font-style:normal;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--accent-pale);color:var(--accent-fort)}
-/* Bandeau des formats */
+/* Couronne de fonctionnalités autour du téléphone (couleurs de l'appli) ; l'une après l'autre s'allume */
+.porte-tel{position:relative;z-index:1}
+.couronne{position:absolute;inset:0;display:none;pointer-events:none}
+.fct{position:absolute;display:flex;align-items:center;gap:7px;white-space:nowrap;padding:6px 11px 6px 6px;border-radius:13px;background:#fff;border:1px solid var(--ligne);font-size:13px;font-weight:700;color:var(--encre);box-shadow:0 10px 26px rgba(20,24,35,.1);transition:transform .35s cubic-bezier(.2,1.4,.4,1),box-shadow .35s,border-color .35s}
+.fct i{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--pf);color:var(--pc)}
+.fct svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.fct.g1,.fct.g2,.fct.g3,.fct.g4{right:calc(100% + 6px)}
+.fct.d1,.fct.d2,.fct.d3,.fct.d4{left:calc(100% + 14px)}
+.fct.g1,.fct.d1{top:9%}.fct.g2,.fct.d2{top:31%}.fct.g3,.fct.d3{top:53%}.fct.g4,.fct.d4{top:75%}
+.fct.g2,.fct.g3{margin-right:16px}.fct.d2,.fct.d3{margin-left:16px}
+.fct.actif{transform:scale(1.1);border-color:var(--pc);box-shadow:0 0 0 3px var(--pf),0 14px 30px rgba(20,24,35,.16)}/* Bandeau des formats */
 .formats{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;padding:8px 0 40px}
 .formats span{padding:8px 16px;border-radius:22px;background:var(--carte);border:1px solid var(--ligne);font-weight:700;font-size:15px}
 .formats span b{color:var(--accent)}
@@ -162,7 +164,8 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
 
 @media (min-width:760px){
   .nav{display:flex}
-  .heros{grid-template-columns:1.1fr .9fr;padding:56px 0 64px}
+  .heros{grid-template-columns:1fr 1fr;column-gap:48px;padding:56px 0 64px}
+  .heros p.intro{max-width:27em}
   .grille{grid-template-columns:repeat(3,1fr)}
   .plus{grid-template-columns:1fr 1fr}
   .etapes{grid-template-columns:repeat(3,1fr)}
@@ -174,7 +177,7 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
   .demo p{margin:0}
   .demo .ecran-pc{display:block}
   .demo .lecteur{display:none}
-  .orbite{display:block}
+  .couronne{display:block}
   .cta-mobile{display:none}
 }
 @media (min-width:1000px){.grille{grid-template-columns:repeat(4,1fr)}}
@@ -189,10 +192,8 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
   .demo .lecteur{width:220px;height:477px}
 }
 @media (prefers-reduced-motion:no-preference){
-  .orbite{animation:orbite 24s linear infinite}
-  .bulle .face{animation:contre 24s linear infinite}
-  @keyframes orbite{from{transform:rotateX(-8deg) rotateY(0)}to{transform:rotateX(-8deg) rotateY(360deg)}}
-  @keyframes contre{from{transform:translate(-50%,-50%) rotateY(calc(-1 * var(--a)))}to{transform:translate(-50%,-50%) rotateY(calc(-1 * var(--a) - 360deg))}}
+  .fct{animation:flotte 6s ease-in-out infinite}
+  .fct.g2,.fct.d3{animation-delay:-1.5s}.fct.g3,.fct.d4{animation-delay:-3s}.fct.g4,.fct.d1{animation-delay:-4.5s}
   @keyframes flotte{50%{transform:translateY(-8px)}}
   /* Arrivée sur la page : titre, texte, bouton puis téléphone, l'un après l'autre */
   .heros>div:first-child>*{animation:arrive .7s cubic-bezier(.2,.8,.2,1) both}
@@ -225,7 +226,6 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   .apparait,.carte.apparait{opacity:1;transform:none;transition:none}
-  .bulle.b1{--a:-80deg!important}.bulle.b2{--a:80deg!important}.bulle.b3{--a:-100deg!important}
   section h2::after{transition:none}
   .carte,.bouton,.cta-mobile{transition:none}
 }
@@ -267,10 +267,15 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
           <div class="telephone">
             <iframe src="teaser.html?integre&amp;v=30" title="Démonstration animée d'Atelier PDF" tabindex="-1"></iframe>
           </div>
-          <div class="orbite" aria-hidden="true">
-            <div class="bulle b1" style="--a:0deg;--y:-170px"><span class="face"><i>✓</i>Mandat signé</span></div>
-            <div class="bulle b2" style="--a:120deg;--y:10px"><span class="face"><i>⇄</i>3 fichiers → 1 PDF</span></div>
-            <div class="bulle b3" style="--a:240deg;--y:180px"><span class="face"><i>☁</i>Enregistré dans Drive</span></div>
+          <div class="couronne" aria-hidden="true">
+            <span class="fct g1" style="--pc:#0d6b4f;--pf:#e2f0ea"><i><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg></i>Modifier</span>
+            <span class="fct g2" style="--pc:#2563eb;--pf:#e3ebfd"><i><svg viewBox="0 0 24 24"><rect x="3" y="3" width="9" height="12" rx="1.5"/><rect x="12" y="9" width="9" height="12" rx="1.5"/></svg></i>Fusionner</span>
+            <span class="fct g3" style="--pc:#db2777;--pf:#fbe4ef"><i><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M20 15l-4.5-4.5L6 20"/></svg></i>JPG → PDF</span>
+            <span class="fct g4" style="--pc:#1e7d4f;--pf:#e3f4ea"><i><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16M15 4v16"/></svg></i>Excel → PDF</span>
+            <span class="fct d1" style="--pc:#be185d;--pf:#fbe4ef"><i><svg viewBox="0 0 24 24"><path d="M3 17c3-1 4-9 6-9s-1 9 1 9 3-5 4-5 1 4 3 4 2-1 4-1"/></svg></i>Signer</span>
+            <span class="fct d2" style="--pc:#1d3fb3;--pf:#e3ebfd"><i><svg viewBox="0 0 24 24"><path d="M9.5 13V9.5a2.5 2.5 0 1 1 5 0V13"/><rect x="5" y="13" width="14" height="4" rx="1"/><path d="M6 20.5h12"/></svg></i>Tampon signé</span>
+            <span class="fct d3" style="--pc:#0369a1;--pf:#e0f0fb"><i><svg viewBox="0 0 24 24"><path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></svg></i>Google Drive</span>
+            <span class="fct d4" style="--pc:#b45309;--pf:#fbf0d9"><i><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/><path d="M8 11h6"/></svg></i>Texte reconnu</span>
           </div>
         </div>
       </div>
@@ -439,6 +444,10 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
   surDefile();
   // Les titres de section se soulignent quand ils arrivent à l'écran
   document.querySelectorAll('section>h2').forEach(h => io ? io.observe(h) : h.classList.add('vu'));
+  // Couronne : chaque fonctionnalité s'allume à tour de rôle
+  const fcts = [...document.querySelectorAll('.fct')]; let fi = 0;
+  if (fcts.length && !reduit) setInterval(() => { fcts.forEach(x => x.classList.remove('actif')); fcts[fi++ % fcts.length].classList.add('actif'); }, 1400);
+
   // Démo : version PC sur grand écran, version téléphone sur téléphone (seule la bonne est chargée)
   const grand = matchMedia('(min-width:760px)').matches;
   const cadreDemo = document.querySelector(grand ? '.ecran-pc iframe' : '.lecteur iframe');
