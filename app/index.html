@@ -884,7 +884,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.13.1';
+const VERSION_APPLI = '1.13.2';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -3290,9 +3290,10 @@ function dessinerTampon(type) {
     fe.corps.append(
       el('p', { class: 'note', text: 'Signez dans le cadre avec le doigt. Tournez le téléphone en paysage pour plus de place.' }), pad,
       el('div', { class: 'etiquette', text: 'Couleur de l\'encre' }),
-      segments('encre', [['#111111', 'Noir', '#111111'], ['#1d3fb3', 'Bleu', '#1d3fb3']], couleur, c => { couleur = c; }),
+      // La couleur et l'épaisseur s'appliquent à tout le dessin, même déjà tracé (une signature = une seule encre)
+      segments('encre', [['#111111', 'Noir', '#111111'], ['#1d3fb3', 'Bleu', '#1d3fb3']], couleur, c => { couleur = c; traits.forEach(t => { t.c = c; }); redessiner(); }),
       el('div', { class: 'etiquette', text: 'Épaisseur' }),
-      segments('epaisseur', [['2', 'Fine'], ['3', 'Moyenne'], ['5', 'Épaisse']], '3', v => { epaisseur = +v; }),
+      segments('epaisseur', [['2', 'Fine'], ['3', 'Moyenne'], ['5', 'Épaisse']], '3', v => { epaisseur = +v; traits.forEach(t => { t.e = epaisseur; }); redessiner(); }),
       el('label', { class: 'etiquette', for: 'nom-dessin', text: 'Nom' }), nom);
     let traits = [], courant = null, k = 1;
     const ctx = pad.getContext('2d');
