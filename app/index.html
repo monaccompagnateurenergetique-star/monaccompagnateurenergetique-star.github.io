@@ -38,6 +38,11 @@ a{color:var(--accent)}
 .btn.principal{background:var(--accent);border-color:transparent;color:#fff}
 .btn.principal:active{background:var(--accent-fort)}
 .btn.large{display:flex;width:100%;min-height:48px;margin:4px 0}
+.zone-nom{margin:0 0 4px}
+.champ-ext{display:flex;align-items:center;border:1px solid var(--ligne);border-radius:10px;background:#faf9f6;overflow:hidden}
+.champ-ext:focus-within{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-pale)}
+.champ-ext .champ{flex:1;min-width:0;border:0;background:none;border-radius:0;outline:none;font-size:16px}
+.champ-ext .ext{padding:0 12px 0 2px;color:var(--doux);font-size:15px;white-space:nowrap}
 .btn.danger{color:var(--danger)}
 .btn.destructif{background:var(--danger);border-color:transparent;color:#fff}
 .btn:disabled{opacity:.45;cursor:default}
@@ -562,7 +567,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.4.0';
+const VERSION_APPLI = '1.4.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;
@@ -625,6 +630,8 @@ function tailleLisible(n) {
   return (n / 1048576).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' Mo';
 }
 const nomSansExt = n => String(n || 'document').replace(/\.[a-z0-9]{1,5}$/i, '');
+// Nom de fichier saisi : sans caractères interdits (/ \ : * ? " < > |), sans « .pdf » tapé en trop, espaces nettoyés
+const nettoyerNomFichier = s => String(s || '').replace(/[\/\\:*?"<>|\u0000-\u001f]/g, ' ').replace(/\.pdf$/i, '').replace(/\s+/g, ' ').trim().replace(/^\.+|\.+$/g, '').slice(0, 120);
 // « contrat (signé).pdf » ré-enregistré reste « contrat (signé).pdf », sans empiler les suffixes
 const SUFFIXES = /(\s*\((signé|modifié|fusion|compressé|numéroté|filigrane|aplati|extrait|organisé)\))+$/i;
 const nomSortie = (nom, suffixe = 'modifié', ext = 'pdf') => `${nomSansExt(nom).replace(SUFFIXES, '')} (${suffixe}).${ext}`;
@@ -2103,6 +2110,16 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
   let format = formatInitial, aplatir = false, base = octets, resultats = { aucune: base }, generation = 0;
   const fe = feuille({ titre: partage ? 'Partager' : 'Enregistrer' });
   const tailles = {}, btnGo = bouton('', { cls: 'btn principal', onclick: () => valider() });
+  // Nom du fichier : proposé automatiquement, modifiable. S'il est modifié, il est utilisé tel quel (sans suffixe ajouté).
+  let nomTouche = false;
+  const champNom = el('input', { class: 'champ', id: 'nom-export', value: nomSansExt(nom), maxlength: 120, autocomplete: 'off', spellcheck: false, enterkeyhint: 'done',
+    oninput: () => { nomTouche = true; }, onkeydown: e => { if (e.key === 'Enter') { e.preventDefault(); champNom.blur(); } } });
+  const extNom = el('span', { class: 'ext', text: '.pdf' });
+  const zoneNom = el('div', { class: 'zone-nom' }, el('label', { class: 'etiquette', for: 'nom-export', text: 'Nom du fichier' }),
+    el('div', { class: 'champ-ext' }, champNom, extNom));
+  const nomSaisi = () => nettoyerNomFichier(champNom.value) || nomSansExt(nom);
+  // Le nom choisi devient aussi celui du document (titre en haut, Mes documents, prochains enregistrements)
+  const retenirNom = () => { if (nomTouche && D) { D.nom = nomSaisi() + '.pdf'; majTitre(); } };
   const libelleTaille = k => {
     const r = resultats[k];
     if (!r) return 'calcul…';
@@ -2114,6 +2131,7 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
     if (fe.ferme()) return;
     for (const [k] of CHOIX) tailles[k].textContent = libelleTaille(k);
     zoneTaille.hidden = format === 'jpg';
+    extNom.textContent = format === 'jpg' ? ' - page 1.jpg' : '.pdf';
     if (zoneDestination) zoneDestination.hidden = format === 'jpg';
     if (ligneDossier) ligneDossier.hidden = partage ? !versDrive : destination === 'appareil';
     const r = resultats[niveau];
@@ -2156,7 +2174,7 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
         segments('destination-export', [['appareil', 'Appareil'], ['drive', 'Google Drive'], ['deux', 'Les deux']], destination, v => { destination = v; majAffichage(); }),
         ligneDossier);
   fe.corps.append(
-    el('p', { style: { margin: '0 0 4px' } }, el('strong', { text: nom })),
+    zoneNom,
     el('div', { class: 'etiquette', text: 'Format' }),
     segments('format-export', [['pdf', 'PDF'], ['jpg', 'Images JPG (une par page)']], format, v => { format = v; majAffichage(); }),
     ...[zoneDestination, ligneAplatir, zoneTaille].filter(Boolean)); // (sans zone cachée, pas de case « effacer » : on ne passe pas de vide)
@@ -2177,12 +2195,13 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
     if (format === 'jpg') {
       occupe('Création des images…');
       let fichiers;
-      try { fichiers = await pdfVersImages(base, nomSansExt(nom).replace(SUFFIXES, '')); }
+      retenirNom();
+      try { fichiers = await pdfVersImages(base, nomTouche ? nomSaisi() : nomSansExt(nom).replace(SUFFIXES, '')); }
       catch (e) { console.error(e); toast('Les images n\'ont pas pu être créées. Réessayez.'); return; }
       finally { libre(); }
       await fe.fermer();
-      if (partage) { if (await partager(fichiers)) noterHistorique(D, 'images', base, nom); }
-      else { for (const f of fichiers) { telecharger(new Uint8Array(await f.arrayBuffer()), f.name, f.type); await attendre(400); } toast(`${fichiers.length} image${fichiers.length > 1 ? 's' : ''} enregistrée${fichiers.length > 1 ? 's' : ''}`); noterHistorique(D, 'images', base, nom); }
+      if (partage) { if (await partager(fichiers)) noterHistorique(D, 'images', base, nomTouche ? nomSaisi() + '.pdf' : nom); }
+      else { for (const f of fichiers) { telecharger(new Uint8Array(await f.arrayBuffer()), f.name, f.type); await attendre(400); } toast(`${fichiers.length} image${fichiers.length > 1 ? 's' : ''} enregistrée${fichiers.length > 1 ? 's' : ''}`); noterHistorique(D, 'images', base, nomTouche ? nomSaisi() + '.pdf' : nom); }
       return;
     }
     prefs.compressionExport = niveau; ecrirePrefs(prefs);
@@ -2195,7 +2214,8 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
     const r = resultats[niveau];
     const compresse = niveau !== 'aucune' && r.length < base.length;
     const final = compresse ? r : base;
-    const nomFinal = compresse ? nomSortie(nom, 'compressé') : aplatir ? nomSortie(nom, 'aplati') : nom;
+    retenirNom();
+    const nomFinal = nomTouche ? nomSaisi() + '.pdf' : compresse ? nomSortie(nom, 'compressé') : aplatir ? nomSortie(nom, 'aplati') : nom;
     await fe.fermer();
     if (!partage) { prefs.destinationExport = destination; ecrirePrefs(prefs); }
     const surDrive = partage ? versDrive : destination !== 'appareil';
