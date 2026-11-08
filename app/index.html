@@ -669,6 +669,9 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 .vignette{position:relative;border:2px solid transparent;border-radius:10px;padding:4px;background:#fff;box-shadow:var(--ombre);text-align:center;min-height:44px}
 .vignette .cadre{height:130px;display:grid;place-items:center;overflow:hidden}
 .vignette canvas,.vignette img{max-width:100%;max-height:126px;box-shadow:0 0 0 1px #ddd}
+.vignette .page-mini{height:126px;max-width:100%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18);display:grid;place-items:center;padding:4px}
+.vignette .page-mini.sans-marge{padding:0}
+.vignette .page-mini img{max-width:100%;max-height:100%;box-shadow:none}
 .vignette .num{font-size:12px;font-weight:600;color:var(--doux)}
 .scan-zone{position:relative;touch-action:none;margin:0 auto;user-select:none}
 .scan-zone canvas{display:block;width:100%;height:100%;border-radius:6px}
@@ -884,7 +887,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.13.2';
+const VERSION_APPLI = '1.14.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -3805,16 +3808,28 @@ function editeurScanner(source, filtreInitial = 'couleur') {
     const zone = el('div', { class: 'scan-zone' }), apercu = el('canvas');
     zone.append(apercu);
     const poignees = [0, 1, 2, 3].map(k => { const p = el('div', { class: 'coin', role: 'slider', 'aria-label': ['Coin haut gauche', 'Coin haut droit', 'Coin bas droit', 'Coin bas gauche'][k] }); zone.append(p); return p; });
-    let ech = 1;
+    let ech = 1, vue = { src: null, filtre: null, c: null };
+    // Le rendu choisi (couleur nette, gris, noir et blanc) se voit tout de suite, sur une copie réduite de la photo
+    const vueFiltree = () => {
+      if (vue.src !== src || vue.filtre !== filtre) {
+        const r = reduire(src, 1000), copie = el('canvas'); copie.width = r.width; copie.height = r.height;
+        copie.getContext('2d').drawImage(r, 0, 0);
+        vue = { src, filtre, c: filtre === 'original' ? copie : ameliorer(copie, filtre) };
+      }
+      return vue.c;
+    };
     const dessiner = () => {
       const max = Math.min(fe.corps.clientWidth - 36, 900), maxH = innerHeight * 0.55;
       ech = Math.min(max / src.width, maxH / src.height);
       const w = Math.round(src.width * ech), h = Math.round(src.height * ech);
       zone.style.width = w + 'px'; zone.style.height = h + 'px';
       apercu.width = w; apercu.height = h;
-      const ctx = apercu.getContext('2d'); ctx.drawImage(src, 0, 0, w, h);
-      ctx.fillStyle = 'rgba(13,107,79,.18)'; ctx.strokeStyle = '#0d6b4f'; ctx.lineWidth = 2;
-      ctx.beginPath(); coins.forEach(([x, y], i) => i ? ctx.lineTo(x * ech, y * ech) : ctx.moveTo(x * ech, y * ech)); ctx.closePath(); ctx.fill(); ctx.stroke();
+      const ctx = apercu.getContext('2d'); ctx.drawImage(vueFiltree(), 0, 0, w, h);
+      // ce qui sera coupé est assombri ; la feuille gardée reste claire
+      ctx.fillStyle = 'rgba(20,24,35,.5)'; ctx.strokeStyle = '#1fae76'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.rect(0, 0, w, h);
+      coins.forEach(([x, y], i) => i ? ctx.lineTo(x * ech, y * ech) : ctx.moveTo(x * ech, y * ech)); ctx.closePath(); ctx.fill('evenodd');
+      ctx.beginPath(); coins.forEach(([x, y], i) => i ? ctx.lineTo(x * ech, y * ech) : ctx.moveTo(x * ech, y * ech)); ctx.closePath(); ctx.stroke();
       poignees.forEach((p, k) => { p.style.left = coins[k][0] * ech + 'px'; p.style.top = coins[k][1] * ech + 'px'; });
     };
     poignees.forEach((p, k) => {
@@ -3839,7 +3854,7 @@ function editeurScanner(source, filtreInitial = 'couleur') {
         bouton('Tourner à droite', { ico: 'pivoter', onclick: () => tourner(1) }),
         bouton('Toute la photo', { ico: 'scanner', onclick: () => { coins = [[0, 0], [src.width, 0], [src.width, src.height], [0, src.height]]; dessiner(); } })),
       el('div', { class: 'etiquette', text: 'Rendu' }),
-      segments('filtre', [['couleur', 'Couleur nette'], ['gris', 'Gris'], ['nb', 'Noir et blanc'], ['original', 'Photo d\'origine']], filtre, v => { filtre = v; }));
+      segments('filtre', [['couleur', 'Couleur nette'], ['gris', 'Gris'], ['nb', 'Noir et blanc'], ['original', 'Photo d\'origine']], filtre, v => { filtre = v; dessiner(); }));
     fe.pied.append(
       bouton('Annuler', { onclick: () => fe.fermer() }),
       bouton('Appliquer', { ico: 'valider', cls: 'btn principal', onclick: async () => {
@@ -3856,17 +3871,26 @@ function editeurScanner(source, filtreInitial = 'couleur') {
   });
 }
 
+/** Format des pages créées à partir de photos : A4 automatique (selon la photo), A4 portrait, A4 paysage, ou taille de la photo. */
+const modePagesPhotos = () => prefs.pagePhotos || (prefs.formatPhotos === 'image' ? 'image' : 'auto');
+function dimsPagePhoto(c, mode = modePagesPhotos()) {
+  const paysage = c.width > c.height;
+  if (mode === 'portrait') return A4;
+  if (mode === 'paysage') return [A4[1], A4[0]];
+  if (mode === 'image') return paysage ? [A4[1], A4[1] * c.height / c.width] : [A4[0], A4[0] * c.height / c.width];
+  return paysage ? [A4[1], A4[0]] : A4;
+}
 /** Assemble des images (canvas) en PDF : une image par page. */
-async function imagesVersPdf(canvasListe) {
+async function imagesVersPdf(canvasListe, mode = modePagesPhotos()) {
   const out = await PDFDocument.create(); out.setProducer('Atelier PDF');
   for (const [i, c] of canvasListe.entries()) {
     majOccupe(`Page ${i + 1} / ${canvasListe.length}…`);
     const blob = await canvasVersBlob(c, 'image/jpeg', 0.85);
     const jpg = await out.embedJpg(new Uint8Array(await blob.arrayBuffer()));
-    const paysage = c.width > c.height;
-    let [W, H] = prefs.formatPhotos === 'a4' ? (paysage ? [A4[1], A4[0]] : A4) : [A4[0], A4[0] * c.height / c.width];
-    if (prefs.formatPhotos !== 'a4' && paysage) [W, H] = [A4[1], A4[1] * c.height / c.width];
-    const k = Math.min(W / c.width, H / c.height), w = c.width * k, h = c.height * k;
+    const [W, H] = dimsPagePhoto(c, mode);
+    // une petite marge blanche quand la photo est posée sur une page A4
+    const marge = mode === 'image' ? 0 : 18;
+    const k = Math.min((W - 2 * marge) / c.width, (H - 2 * marge) / c.height), w = c.width * k, h = c.height * k;
     out.addPage([W, H]).drawImage(jpg, { x: (W - w) / 2, y: (H - h) / 2, width: w, height: h });
   }
   return out.save();
@@ -3877,9 +3901,14 @@ async function outilPhotos({ camera = false, fichiers = [] } = {}) {
   const lot = [];
   const fe = feuille({ titre: camera ? 'Scanner un document' : 'JPG → PDF', plein: true });
   const grille = el('div', { class: 'vignettes' });
+  // Chaque vignette montre la vraie page du PDF (A4 portrait, paysage…) avec la photo posée dessus
+  const pageDe = (p, i) => {
+    const [W, H] = dimsPagePhoto(p.c), img = el('img', { src: p.apercu, alt: `Page ${i + 1}` });
+    return el('div', { class: 'cadre' }, el('div', { class: 'page-mini' + (modePagesPhotos() === 'image' ? ' sans-marge' : ''), style: { aspectRatio: `${W} / ${H}` } }, img));
+  };
   const majGrille = () => {
     grille.replaceChildren(...lot.map((p, i) => el('div', { class: 'vignette' },
-      el('div', { class: 'cadre' }, el('img', { src: p.apercu, alt: `Page ${i + 1}` })),
+      pageDe(p, i),
       el('span', { class: 'num', text: `Page ${i + 1}` }),
       el('div', { class: 'rangee-btn', style: { marginTop: '4px', gap: '2px' } },
         bouton('', { ico: 'scanner', cls: 'btn-icone', label: `Recadrer et nettoyer la page ${i + 1}`, onclick: async () => { const r = await editeurScanner(p.c); if (r) { p.c = r; p.apercu = apercuDe(r); majGrille(); } } }),
@@ -3888,6 +3917,9 @@ async function outilPhotos({ camera = false, fichiers = [] } = {}) {
     vide.hidden = lot.length > 0;
     btnCreer.disabled = !lot.length;
     btnCreer.lastChild.textContent = lot.length ? `Créer le PDF (${lot.length} page${lot.length > 1 ? 's' : ''})` : 'Créer le PDF';
+    // Scanner : après la 1re page, le bouton principal enchaîne sur la page suivante
+    btnPhoto.lastChild.textContent = lot.length ? (camera ? 'Scanner la page suivante' : 'Prendre une photo') : 'Prendre une photo';
+    btnPhoto.className = lot.length && camera ? 'btn principal' : 'btn';
   };
   const apercuDe = c => reduire(c, 260).toDataURL('image/jpeg', 0.7);
   const ajouter = async (fs, scanner) => {
@@ -3902,18 +3934,24 @@ async function outilPhotos({ camera = false, fichiers = [] } = {}) {
     majGrille();
   };
   const vide = el('p', { class: 'vide', text: 'Ajoutez des photos : chaque photo deviendra une page du PDF.' });
+  // Le PDF créé s'ouvre directement dans l'éditeur : on peut ajouter du texte, signer, ajouter des pages, enregistrer, partager
   const btnCreer = bouton('Créer le PDF', { ico: 'doc', cls: 'btn principal', onclick: async () => {
     occupe('Création du PDF…');
     try {
       const octets = await imagesVersPdf(lot.map(p => p.c));
       const d = new Date(), nom = `${camera ? 'Scan' : 'Photos'} ${d.toLocaleDateString('fr-FR').replace(/\//g, '-')} ${String(d.getHours()).padStart(2, '0')}h${String(d.getMinutes()).padStart(2, '0')}.pdf`;
       libre(); await fe.fermer();
-      feuilleResultat(octets, nom, `${lot.length} page${lot.length > 1 ? 's' : ''}`);
+      await ouvrirPdf(octets, nom);
+      if (D) { D.modifie = true; toast(`PDF créé (${lot.length} page${lot.length > 1 ? 's' : ''}) : modifiez-le, puis enregistrez ou partagez avec les boutons en haut.`, 6000); }
     } catch (e) { libre(); console.error(e); toast('Le PDF n\'a pas pu être créé. Réessayez.', 5000); }
   } });
+  const btnPhoto = bouton('Prendre une photo', { ico: 'camera', onclick: async () => ajouter(await choisirFichiers({ accept: 'image/*', capture: 'environment' }), true) });
+  const choixFormat = segments('page-photos', [['auto', 'A4 auto'], ['portrait', 'A4 portrait'], ['paysage', 'A4 paysage'], ['image', 'Taille photo']], modePagesPhotos(),
+    v => { prefs.pagePhotos = v; ecrirePrefs(prefs); majGrille(); });
   fe.corps.append(vide, grille, el('div', { class: 'rangee-btn' },
-    bouton('Prendre une photo', { ico: 'camera', onclick: async () => ajouter(await choisirFichiers({ accept: 'image/*', capture: 'environment' }), true) }),
-    bouton('Depuis la galerie', { ico: 'image', onclick: async () => ajouter(await choisirFichiers({ accept: 'image/*', multiple: true }), false) })));
+    btnPhoto,
+    bouton('Depuis la galerie', { ico: 'image', onclick: async () => ajouter(await choisirFichiers({ accept: 'image/*', multiple: true }), false) })),
+    el('div', { class: 'etiquette', text: 'Format des pages' }), choixFormat);
   fe.pied.append(btnCreer);
   majGrille();
   if (fichiers.length) await ajouter(fichiers, false);
