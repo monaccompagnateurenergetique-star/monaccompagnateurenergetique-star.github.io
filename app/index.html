@@ -89,10 +89,21 @@ a{color:var(--accent)}
 #defil{flex:1;overflow:auto;position:relative;touch-action:pan-x pan-y;background:#d9d7d0;-webkit-overflow-scrolling:touch}
 #pages{position:relative;padding:8px 8px 96px;transform-origin:0 0;width:max-content;min-width:100%}
 .page{position:relative;margin:0 auto 10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18)}
-.inserer{display:flex;justify-content:center;margin:-6px 0 4px;position:sticky;left:0;width:min(100%,100vw)}
-.btn-inserer{width:40px;height:40px;border-radius:50%;border:1px dashed #9aa0ab;background:rgba(255,255,255,.85);color:var(--accent);display:grid;place-items:center;padding:0}
+.inserer{display:flex;justify-content:center;margin:-8px 0 2px;height:16px;align-items:center;position:sticky;left:0;width:min(100%,100vw);z-index:3}
+/* Petit « + » discret (24 px), mais une zone de toucher de 40 px */
+.btn-inserer{position:relative;width:24px;height:24px;border-radius:50%;border:1px solid #b9b6ad;background:#fff;color:var(--accent);display:grid;place-items:center;padding:0;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.btn-inserer::before{content:"";position:absolute;inset:-8px}
 .btn-inserer:active{background:var(--accent-pale)}
-.btn-inserer .ico{width:20px;height:20px}
+.btn-inserer .ico{width:14px;height:14px;stroke-width:2.5}
+/* Choix de la taille à l'enregistrement */
+.choix-taille{display:flex;flex-direction:column;gap:8px}
+.choix-taille label{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--ligne);border-radius:12px;background:#fff;min-height:56px}
+.choix-taille label:has(input:checked){border-color:var(--accent);background:var(--accent-pale)}
+.choix-taille input{width:20px;height:20px;accent-color:var(--accent);flex:none;margin:0}
+.choix-taille .texte{flex:1;min-width:0;display:flex;flex-direction:column}
+.choix-taille strong{font-size:15px}
+.choix-taille small{font-size:13px;color:var(--doux);line-height:1.3}
+.choix-taille .poids{font-size:14px;font-weight:700;color:var(--accent-fort);white-space:nowrap;text-align:right}
 .ajout-fin{display:flex;justify-content:center;padding:8px 0 0;position:sticky;left:0;width:min(100%,100vw)}
 .page canvas.rendu{position:absolute;inset:0;width:100%;height:100%;display:block}
 .calque-recherche,.calque-items{position:absolute;inset:0;pointer-events:none}
@@ -132,8 +143,11 @@ a{color:var(--accent)}
 #vue-pages .note{margin:0 2px 12px}
 .grille-pages{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 @media (min-width:640px){.grille-pages{grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}}
-.carte-page{background:var(--carte);border:1px solid var(--ligne);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--ombre)}
-.carte-page .miniature{border:0;background:#eceae4;padding:10px;height:180px;display:grid;place-items:center;width:100%}
+.carte-page{position:relative;background:var(--carte);border:1px solid var(--ligne);border-radius:14px;display:flex;flex-direction:column;box-shadow:var(--ombre)}
+.carte-page .miniature{border:0;background:#eceae4;padding:10px;height:180px;display:grid;place-items:center;width:100%;border-radius:13px 13px 0 0;overflow:hidden}
+/* « + » entre deux cartes : posé dans l'espace, à gauche de la carte suivante */
+.carte-page .btn-inserer{position:absolute;left:-19px;top:78px;z-index:2}
+.carte-page.debut-rangee .btn-inserer{left:calc(50% - 12px);top:-19px}
 .carte-page .miniature canvas{max-width:100%;max-height:160px;box-shadow:0 1px 3px rgba(0,0,0,.2);background:#fff}
 .pied-carte{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:8px 10px 0;min-height:34px}
 .pied-carte strong{font-size:15px}
@@ -973,7 +987,7 @@ addEventListener('resize', () => {
   // On ne recalcule que si la largeur change (le clavier change seulement la hauteur).
   if (Math.abs(innerWidth - largeurPrecedente) < 2) return;
   largeurPrecedente = innerWidth;
-  clearTimeout(window.__resize); window.__resize = setTimeout(() => { if (D && D.onglet === 'document') mettreEnPage(); }, 200);
+  clearTimeout(window.__resize); window.__resize = setTimeout(() => { if (D && D.onglet === 'document') mettreEnPage(); if (D && D.onglet === 'pages') placerPlusPages(); }, 200);
 });
 
 /* =========================================================
@@ -1374,10 +1388,20 @@ function rendreGrillePages() {
         act('pivoter', `Pivoter la page ${i + 1}`, () => pivoterPage(pg)),
         act('poubelle', `Supprimer la page ${i + 1}`, () => supprimerPage(i)),
         act('droite', `Déplacer la page ${i + 1} après`, () => deplacerPage(i, 1), i < n - 1)));
+    if (i > 0) carte.append(bouton('', { ico: 'plus', cls: 'btn-inserer', label: `Insérer des fichiers entre la page ${i} et la page ${i + 1}`, onclick: () => ajouterFichiers(i) }));
     if (!D.miniatures.has(cle)) obsMini.observe(carte);
     return carte;
   }), el('button', { type: 'button', class: 'tuile-ajout', onclick: () => ajouterFichiers(D.pages.length) }, icone('plus'), el('span', { text: 'Ajouter des fichiers' }), el('small', { text: 'PDF ou photos' })));
+  placerPlusPages();
   majTitre();
+}
+/** Le « + » d'une carte en début de rangée passe au-dessus d'elle (sinon il serait collé au bord de l'écran). */
+function placerPlusPages() {
+  requestAnimationFrame(() => {
+    const cartes = [...grillePages.querySelectorAll('.carte-page')];
+    const gauche = Math.min(...cartes.map(c => c.offsetLeft));
+    cartes.forEach(c => c.classList.toggle('debut-rangee', c.offsetLeft - gauche < 4));
+  });
 }
 async function dessinerMiniature(id) {
   const pg = D?.parId.get(id); if (!pg) return;
@@ -1455,7 +1479,7 @@ async function ajouterFichiers(position) {
     memoriser(avant);
     apresStructure();
     const ou = position === 0 ? 'au début' : position + ajout >= D.pages.length ? 'à la fin' : `après la page ${position}`;
-    toast(`${ajout} page${ajout > 1 ? 's' : ''} ajoutée${ajout > 1 ? 's' : ''} ${ou}.${images.length ? ' Touchez une photo dans « Pages » pour la recadrer.' : ''}`,
+    toast(`${ajout} page${ajout > 1 ? 's' : ''} ajoutée${ajout > 1 ? 's' : ''} ${ou}.${images.length ? (D.onglet === 'pages' ? ' Touchez une photo pour la recadrer.' : ' Touchez une photo dans « Pages » pour la recadrer.') : ''}`,
       { duree: 5000, action: 'Annuler', onAction: annulerAction });
     if (D.onglet === 'document') requestAnimationFrame(() => allerPage(position));
     else requestAnimationFrame(() => vuePages.querySelectorAll('.carte-page')[position]?.scrollIntoView({ block: 'center' }));
@@ -1668,32 +1692,64 @@ async function exporter(action) {
   finally { libre(); }
   const nom = nomExport();
   const partage = action === 'partager';
-  let niveau = prefs.compressionExport in NIVEAUX_COMPRESSION || prefs.compressionExport === 'aucune' ? prefs.compressionExport : 'aucune';
+  const CHOIX = [
+    ['aucune', 'Taille d\'origine', 'Qualité parfaite, texte sélectionnable. Pour imprimer ou archiver.'],
+    ['legere', 'Légère', 'Très bonne qualité, fichier un peu plus léger.'],
+    ['moyenne', 'Moyenne', 'Bonne qualité, idéal pour l\'envoyer par e-mail.'],
+    ['forte', 'Forte', 'Le plus léger possible, image un peu moins nette.']
+  ];
+  let niveau = CHOIX.some(c => c[0] === prefs.compressionExport) ? prefs.compressionExport : 'aucune';
+  const resultats = { aucune: octets }; // tailles réellement obtenues, calculées en arrière-plan
   const fe = feuille({ titre: partage ? 'Partager le PDF' : 'Enregistrer le PDF' });
-  const note = el('p', { class: 'note' });
-  const majNote = () => { note.textContent = niveau === 'aucune' ? 'Le document reste tel quel : texte sélectionnable, qualité maximale.' : 'Les pages deviennent des images : fichier plus léger, mais le texte ne sera plus sélectionnable.'; };
+  const tailles = {}, btnGo = bouton('', { cls: 'btn principal', onclick: () => valider() });
+  const libelleTaille = k => {
+    const r = resultats[k];
+    if (!r) return 'calcul…';
+    if (k !== 'aucune' && r.length >= octets.length) return `${tailleLisible(octets.length)} · déjà léger`;
+    const gain = Math.round((1 - r.length / octets.length) * 100);
+    return tailleLisible(r.length) + (k !== 'aucune' && gain > 0 ? ` · −${gain} %` : '');
+  };
+  const majAffichage = () => {
+    for (const [k] of CHOIX) tailles[k].textContent = libelleTaille(k);
+    const r = resultats[niveau];
+    btnGo.replaceChildren(icone(partage ? 'partager' : 'enregistrer'), `${partage ? 'Partager' : 'Enregistrer'}${r ? ' · ' + tailleLisible(Math.min(r.length, octets.length)) : ''}`);
+  };
+  const liste = el('div', { class: 'choix-taille', role: 'radiogroup', 'aria-label': 'Taille du fichier' }, CHOIX.map(([k, titre, desc]) => {
+    tailles[k] = el('span', { class: 'poids' });
+    return el('label', {},
+      el('input', { type: 'radio', name: 'taille-export', value: k, checked: k === niveau, onchange: () => { niveau = k; majAffichage(); } }),
+      el('span', { class: 'texte' }, el('strong', { text: titre }), el('small', { text: desc })),
+      tailles[k]);
+  }));
   fe.corps.append(
-    el('p', { style: { margin: '0 0 12px' } }, el('strong', { text: nom }), el('br'), el('span', { class: 'note', text: `Taille actuelle : ${tailleLisible(octets.length)}` })),
-    el('div', { class: 'etiquette', text: 'Taille du fichier' }),
-    segments('taille-export', [['aucune', 'Taille d\'origine'], ['legere', 'Légère'], ['moyenne', 'Moyenne'], ['forte', 'Forte']], niveau, v => { niveau = v; majNote(); }),
-    note);
-  majNote();
-  fe.pied.append(bouton(partage ? 'Partager' : 'Enregistrer', { ico: partage ? 'partager' : 'enregistrer', cls: 'btn principal', onclick: async () => {
+    el('p', { style: { margin: '0 0 12px' } }, el('strong', { text: nom })),
+    el('div', { class: 'etiquette', text: 'Quelle taille de fichier ?' }), liste,
+    el('p', { class: 'note', text: 'Légère, Moyenne et Forte transforment les pages en images : le fichier est plus léger, mais le texte ne peut plus être sélectionné.' }));
+  fe.pied.append(btnGo);
+  majAffichage();
+  // Calcul des tailles, l'une après l'autre, tant que la fenêtre est ouverte
+  (async () => {
+    for (const k of ['moyenne', 'legere', 'forte']) {
+      if (fe.ferme()) return;
+      try { resultats[k] = await compresserOctets(octets, k); } catch (e) { console.warn(e); resultats[k] = octets; }
+      if (!fe.ferme()) majAffichage();
+    }
+  })();
+  async function valider() {
     prefs.compressionExport = niveau; ecrirePrefs(prefs);
-    let final = octets, nomFinal = nom;
-    if (niveau !== 'aucune') {
+    if (!resultats[niveau]) {
       occupe('Compression…');
-      try {
-        const c = await compresserOctets(octets, niveau);
-        if (c.length < octets.length) { final = c; nomFinal = nomSortie(nom, 'compressé'); }
-        else toast('Ce PDF est déjà léger : il est gardé tel quel.', 4500);
-      } catch (e) { console.error(e); toast('La compression n\'a pas abouti : le PDF est gardé tel quel.', 5000); }
+      try { resultats[niveau] = await compresserOctets(octets, niveau); }
+      catch (e) { console.error(e); resultats[niveau] = octets; toast('La compression n\'a pas abouti : le PDF est gardé tel quel.', 5000); }
       finally { libre(); }
     }
+    const r = resultats[niveau];
+    const compresse = niveau !== 'aucune' && r.length < octets.length;
+    const final = compresse ? r : octets, nomFinal = compresse ? nomSortie(nom, 'compressé') : nom;
     await fe.fermer();
     if (partage) await partager([fichierPdf(final, nomFinal)]);
     else if (await enregistrer(final, nomFinal)) { D.modifie = false; toast(`PDF enregistré (${tailleLisible(final.length)})`); }
-  } }));
+  }
 }
 
 /* Onglet Outils : toutes les actions du document, visibles d'un coup d'œil */

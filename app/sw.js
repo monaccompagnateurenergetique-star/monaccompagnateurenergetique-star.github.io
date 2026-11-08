@@ -2,7 +2,7 @@
    - garde l'appli en mémoire pour qu'elle fonctionne sans connexion ;
    - reçoit les fichiers envoyés depuis le menu « Partager » d'Android.
    À CHAQUE MODIFICATION DE app/ : augmenter VERSION (atelier-v1 → atelier-v2…). */
-const VERSION = 'atelier-v7';
+const VERSION = 'atelier-v8';
 const CACHE_PARTAGE = 'atelier-partage';
 const FICHIERS = [
   './',
