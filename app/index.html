@@ -537,7 +537,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.2.0';
+const VERSION_APPLI = '1.2.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;
@@ -3503,7 +3503,7 @@ async function majReprendre() {
    - autorisation « drive.file » : l'appli ne voit QUE les fichiers qu'elle a créés (dossier « Atelier PDF ») ;
    - aucun serveur à nous : le navigateur parle directement à Google, avec un jeton valable 1 heure.
    ========================================================= */
-const GOOGLE_CLIENT_ID = ''; // ← identifiant OAuth « Application Web » (…apps.googleusercontent.com), à renseigner
+const GOOGLE_CLIENT_ID = '1066116338685-76tqhpvt1sqcpofovj2ugm7sg0etd0ok.apps.googleusercontent.com'; // ← identifiant OAuth « Application Web » (…apps.googleusercontent.com), à renseigner
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const API_DRIVE = 'https://www.googleapis.com/drive/v3', API_ENVOI = 'https://www.googleapis.com/upload/drive/v3';
 const driveConfigure = () => !!GOOGLE_CLIENT_ID;
