@@ -81,7 +81,10 @@ a{color:var(--accent)}
 .haut-droite{display:flex;align-items:center;gap:4px}
 .pastille-drive{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 12px;border:1px solid var(--ligne);border-radius:20px;background:var(--carte);font-size:13px;font-weight:600;color:var(--encre)}
 .pastille-drive .point{width:9px;height:9px;border-radius:50%;background:#9aa0a6}
-.pastille-drive.active .point{background:#1e8e3e}
+.pastille-drive.active .point{background:#1fae76;box-shadow:0 0 0 0 rgba(31,174,118,.55);animation:voyant 2.4s ease-in-out infinite}
+/* Drive connecté : petit voyant vert qui « respire » discrètement */
+@keyframes voyant{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(31,174,118,.5)}50%{opacity:.45;box-shadow:0 0 0 4px rgba(31,174,118,0)}}
+@media (prefers-reduced-motion:reduce){.pastille-drive.active .point{animation:none}}
 .sommaire-param{margin:0 0 4px}
 .sommaire-param .btn{flex:none}
 .ligne-dossier{display:flex;align-items:center;gap:8px;margin:8px 0 4px;padding:8px 10px;border:1px solid var(--ligne);border-radius:12px;background:var(--carte);font-size:14px}
@@ -785,7 +788,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
       <div class="reprendre-tete"><h2 class="titre-section">Reprendre</h2><button class="btn puce" id="reprendre-tout">Tout voir</button></div>
       <div id="reprendre-liste"></div>
     </section>
-    <p class="confiance"><svg class="ico"><use href="#i-cadenas"/></svg><span>Vos documents restent sur cet appareil. Ils n'en sortent que si vous les partagez ou les envoyez vous-même dans votre Google Drive. <a href="../confidentialite.html">Confidentialité</a></span></p>
+    <p class="confiance"><svg class="ico"><use href="#i-cadenas"/></svg><span>Vos documents restent sur cet appareil. Ils n'en sortent que si vous les partagez ou les envoyez vous-même dans votre Google Drive. <a href="../confidentialite.html">Confidentialité</a> · <a href="#" id="lien-installer">Installer l'appli</a></span></p>
     </div>
     <div class="col-outils">
     <div class="duo">
@@ -887,7 +890,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.15.0';
+const VERSION_APPLI = '1.15.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -3748,6 +3751,7 @@ function ouvrirParametres() {
     carte(titre('p-apropos', 'À propos'),
     el('p', { class: 'note', text: `Atelier PDF ${VERSION_APPLI}. Tout est traité sur cet appareil. Vos documents ne quittent l'appareil que si vous les partagez, ou si vous les envoyez vous-même dans votre Google Drive.` }),
     el('p', {}, el('a', { href: '../confidentialite.html', text: 'Politique de confidentialité' })),
+    el('div', { class: 'rangee-btn' }, bouton('Installer l\'appli (téléphone, ordinateur)', { ico: 'installer', onclick: () => aideInstallation() })),
     el('div', { class: 'rangee-btn' }, bouton('Effacer toutes mes données', { ico: 'poubelle', cls: 'btn danger', onclick: async () => {
       const ok = await confirmer({ titre: 'Effacer toutes vos données ?', texte: 'Signatures, tampons, réglages, documents gardés, historique et modèles seront supprimés de cet appareil. Cette action est définitive.', action: 'Tout effacer' });
       if (!ok) return;
@@ -5098,32 +5102,53 @@ function majCarteInstall() {
   $('#btn-installer').textContent = invitationInstall ? 'Installer' : 'Comment faire ?';
   $('#install-texte').textContent = invitationInstall ? 'Elle s\'ouvre en un geste, comme une vraie appli, même sans connexion.' : 'Une icône sur votre écran d\'accueil, comme une vraie appli. 10 secondes.';
 }
-/** Étapes pour ajouter l'appli à l'écran d'accueil, selon le téléphone et le navigateur. */
+/** Guide d'installation (icône sur l'écran d'accueil) : un onglet par appareil, celui de l'utilisateur ouvert d'office. */
 function aideInstallation() {
-  const fe = feuille({ titre: 'Ajouter à l\'écran d\'accueil' });
+  const fe = feuille({ titre: 'Installer Atelier PDF', plein: true });
+  fe.feuille.classList.add('atelier');
   const etape = (n, html) => el('li', { class: 'etape-install' }, el('b', { class: 'num', text: String(n) }), el('span', {}, ...html));
   const k = t => el('strong', { text: t });
-  let titre, etapes;
-  if (estDansUneAppli) {
-    titre = 'Vous êtes dans une appli (WhatsApp, Facebook…). Ouvrez d\'abord la page dans votre navigateur :';
-    etapes = [[`Touchez les ⋮ ou « ⋯ » en haut à droite`], ['Choisissez ', k(estIOS ? 'Ouvrir dans Safari' : 'Ouvrir dans Chrome'), ' (ou « Ouvrir dans le navigateur »)'], ['Puis revenez ici : la carte vous guidera']];
-  } else if (estIOS) {
-    titre = 'Sur iPhone et iPad :';
-    etapes = [['Touchez le bouton ', k('Partager'), ' (le carré avec une flèche vers le haut ⬆️)'], ['Faites défiler et choisissez ', k('Sur l\'écran d\'accueil')], ['Touchez ', k('Ajouter'), ' en haut à droite']];
-  } else if (estSamsung) {
-    titre = 'Avec Samsung Internet :';
-    etapes = [['Touchez le menu ', k('≡'), ' en bas à droite'], ['Choisissez ', k('Ajouter la page à'), ' puis ', k('Écran d\'accueil')], ['Confirmez avec ', k('Ajouter')]];
-  } else {
-    titre = estAndroid ? 'Sur Android (Chrome) :' : 'Dans votre navigateur :';
-    etapes = [['Touchez le menu ', k('⋮'), ' en haut à droite'], ['Choisissez ', k('Installer l\'application'), ' ou ', k('Ajouter à l\'écran d\'accueil')], ['Confirmez avec ', k('Installer')]];
-  }
-  fe.corps.append(el('p', { class: 'note', text: titre }), el('ol', { class: 'etapes-install' }, etapes.map((e, i) => etape(i + 1, e))),
-    el('p', { class: 'note', text: 'Ensuite, Atelier PDF s\'ouvre depuis son icône, en plein écran, et fonctionne même sans connexion.' }));
-  if (estDansUneAppli) fe.corps.append(bouton('Copier le lien de l\'appli', { ico: 'copier', cls: 'btn', onclick: async () => {
-    try { await navigator.clipboard.writeText(location.origin + location.pathname); toast('Lien copié : collez-le dans votre navigateur'); } catch { toast('Copie impossible : notez l\'adresse ' + location.host); }
-  } }));
+  const lien = location.origin + location.pathname;
+  const GUIDES = {
+    iphone: ['iPhone', 'iPhone et iPad, avec Safari (l\'installation ne marche qu\'avec Safari) :', [
+      ['Ouvrez ', k('Safari'), ' et allez sur l\'adresse de l\'appli'],
+      ['Touchez le bouton ', k('Partager'), ' (le carré avec une flèche vers le haut ⬆️), en bas de l\'écran'],
+      ['Faites défiler et choisissez ', k('Sur l\'écran d\'accueil')],
+      ['Touchez ', k('Ajouter'), ' en haut à droite : l\'icône apparaît sur votre écran d\'accueil']]],
+    android: ['Android', 'Avec Chrome :', [
+      ['Ouvrez ', k('Chrome'), ' et allez sur l\'adresse de l\'appli'],
+      ['Touchez le menu ', k('⋮'), ' en haut à droite'],
+      ['Choisissez ', k('Installer l\'application'), ' (ou ', k('Ajouter à l\'écran d\'accueil'), ')'],
+      ['Confirmez avec ', k('Installer'), '. Astuce : l\'appli apparaît aussi dans le menu « Partager » d\'Android']]],
+    samsung: ['Samsung', 'Avec Samsung Internet :', [
+      ['Touchez le menu ', k('≡'), ' en bas à droite'],
+      ['Choisissez ', k('Ajouter la page à'), ' puis ', k('Écran d\'accueil')],
+      ['Confirmez avec ', k('Ajouter')]]],
+    pc: ['PC', 'Sur ordinateur, avec Chrome ou Edge :', [
+      ['Cliquez sur l\'icône d\'installation ', k('⊕'), ' à droite de la barre d\'adresse'],
+      ['Ou menu ', k('⋮'), ' → ', k('Installer Atelier PDF'), ' (Edge : ', k('Applications'), ' → ', k('Installer ce site en tant qu\'application'), ')'],
+      ['Atelier PDF s\'ouvre alors dans sa propre fenêtre, avec une icône sur le bureau']]]
+  };
+  const zone = el('div');
+  const montrer = v => {
+    const [, titre, etapes] = GUIDES[v];
+    zone.replaceChildren(el('div', { class: 'bloc-blanc' },
+      el('p', { class: 'note', style: { marginTop: '10px' }, text: titre }), el('ol', { class: 'etapes-install' }, etapes.map((e, i) => etape(i + 1, e)))));
+  };
+  const actuel = estIOS ? 'iphone' : estSamsung ? 'samsung' : estAndroid ? 'android' : estMobile ? 'android' : 'pc';
+  const onglets = segments('guide-install', Object.entries(GUIDES).map(([v, [nom]]) => [v, nom]), actuel, montrer);
+  onglets.classList.add('onglets');
+  if (estDansUneAppli) fe.corps.append(el('div', { class: 'bloc-blanc' }, el('p', { class: 'note', style: { marginTop: '10px' }, text: 'Vous êtes dans une appli (WhatsApp, Facebook…) : ouvrez d\'abord la page dans votre navigateur avec les ⋮ ou « ⋯ » en haut à droite → « Ouvrir dans le navigateur ».' })));
+  fe.corps.append(onglets, zone,
+    el('div', { class: 'bloc-blanc' },
+      el('p', { class: 'note', style: { marginTop: '10px' }, text: 'Ensuite, Atelier PDF s\'ouvre depuis son icône, en plein écran, et fonctionne même sans connexion. Bientôt aussi sur Google Play et l\'App Store.' }),
+      el('div', { class: 'rangee-btn' }, bouton('Copier l\'adresse de l\'appli', { ico: 'copier', onclick: async () => {
+        try { await navigator.clipboard.writeText(lien); toast('Adresse copiée : envoyez-la sur votre téléphone ou à un collègue'); } catch { toast('Adresse : ' + lien, 8000); }
+      } }), navigator.share ? bouton('Envoyer le lien', { ico: 'partager', onclick: () => navigator.share({ title: 'Atelier PDF', text: 'Atelier PDF : modifier, signer et tamponner ses PDF, gratuit', url: lien }).catch(() => {}) }) : '')));
+  montrer(actuel);
   fe.pied.append(bouton('J\'ai compris', { cls: 'btn principal', onclick: () => fe.fermer() }));
 }
+$('#lien-installer').addEventListener('click', e => { e.preventDefault(); aideInstallation(); });
 addEventListener('beforeinstallprompt', e => { e.preventDefault(); invitationInstall = e; majCarteInstall(); });
 addEventListener('appinstalled', () => { invitationInstall = null; majCarteInstall(); toast('Atelier PDF est installé sur ce téléphone'); });
 $('#btn-installer').addEventListener('click', async () => {
