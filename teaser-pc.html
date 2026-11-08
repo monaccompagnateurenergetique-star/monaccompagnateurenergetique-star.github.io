@@ -152,6 +152,37 @@ body:not(.integre) #cadre{cursor:pointer}
 .scene.active.s-modifier .clic.c1{animation:onde .5s 1s}
 .scene.active.s-modifier .clic.c2{animation:onde .5s 2.05s}
 
+/* 4 bis. Créez votre tampon (PC) : fenêtre centrée, aperçu à gauche, champs à droite */
+.creation{position:absolute;left:50%;top:40px;width:860px;margin-left:-430px;background:#fff;border-radius:22px;box-shadow:0 30px 70px rgba(0,0,0,.28);padding:24px 28px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.creation h3{grid-column:1/-1;margin:0;font-size:22px}
+.damier{display:grid;place-items:center;height:300px;border-radius:14px;background-color:#fff;background-image:linear-gradient(45deg,#eeece6 25%,transparent 25%),linear-gradient(-45deg,#eeece6 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#eeece6 75%),linear-gradient(-45deg,transparent 75%,#eeece6 75%);background-size:18px 18px;background-position:0 0,0 9px,9px -9px,-9px 0}
+.damier .tampon-ent{transform:scale(1.25)}
+.cote{display:flex;flex-direction:column;gap:10px}
+.cote .lib{font-size:12px;font-weight:800;color:var(--doux);text-transform:uppercase;letter-spacing:.05em}
+.cote .ch{border:1px solid var(--ligne);border-radius:10px;padding:10px 12px;font-size:15px;background:#faf9f6;white-space:nowrap}
+.cote .ch .tape{display:inline-block}
+.cote .boutons{display:flex;gap:10px;margin-top:auto}
+.cote .boutons span{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:12px;border:1px solid var(--ligne);font-weight:700;font-size:15px}
+.cote .boutons span.ok{background:var(--accent);border-color:transparent;color:#fff}
+.cote .boutons .ico{width:20px;height:20px}
+.s-creation .voile{background:rgba(20,24,35,.3)}
+.scene.active .creation{animation:monte .45s .1s cubic-bezier(.2,.8,.2,1)}
+.scene.active.s-creation .tl1{animation:apparait .2s .55s}
+.scene.active.s-creation .tl2{animation:apparait .2s 1.2s}
+.scene.active.s-creation .tl3{animation:apparait .2s 1.85s}
+.scene.active.s-creation .c1 .tape{animation:devoile .6s .5s steps(14)}
+.scene.active.s-creation .c2 .tape{animation:devoile .6s 1.15s steps(14)}
+.scene.active.s-creation .c3 .tape{animation:devoile .6s 1.8s steps(14)}
+.s-creation .tampon-ent path{stroke-dasharray:600;stroke-dashoffset:0}
+.scene.active.s-creation .tampon-ent path{animation:trace 1.1s 2.75s ease-in-out}
+@keyframes trace{from{stroke-dashoffset:600}}
+.scene.active.s-creation .boutons .ok{animation:appui .3s 4.05s}
+.scene.active.s-creation .toast{animation:toast .4s 4.3s cubic-bezier(.2,.8,.2,1)}
+.s-creation .curseur{animation:va-creation 3.9s .2s ease-in-out}
+@keyframes va-creation{0%{transform:translate(1100px,620px)}55%{transform:translate(743px,390px)}65%{transform:translate(743px,390px)}100%{transform:translate(943px,390px)}}
+.s-creation .clic.c1{left:748px;top:395px}.s-creation .clic.c2{left:948px;top:395px}
+.scene.active.s-creation .clic.c1{animation:onde .5s 2.45s}
+.scene.active.s-creation .clic.c2{animation:onde .5s 4.05s}
 /* 5. Tamponner */
 .champ{height:30px;border-radius:3px;background:rgba(0,84,255,.08);border:1px solid rgba(0,84,255,.25);font-size:15px;font-weight:600;line-height:28px;padding:0 8px}
 .etiq{font-size:12px;color:#666;margin-bottom:-8px}
@@ -326,6 +357,24 @@ body.integre .nav-teaser{display:none}
     <div class="legende haut"><b>Modifiez</b><span>Cliquez sur « Texte », puis sur la page : écrivez.</span></div>
   </section>
 
+  <section class="scene s-creation" data-duree="5000">
+    <div class="accueil" style="filter:blur(2px)"></div>
+    <div class="voile"></div>
+    <div class="toast"><i>✓</i>Tampon enregistré</div>
+    <div class="creation">
+      <h3>Nouveau tampon</h3>
+      <div class="damier"><div class="tampon-ent"><b class="tl1">SARL DUPONT RÉNOVATION</b><span class="tl2">12 rue des Lilas · 75011 Paris</span><span class="tl3">SIRET 123 456 789 00012</span><svg viewBox="0 0 150 62"><path d="M4 44c12-3 15-30 25-30s-5 35 7 35 12-24 20-24-2 21 8 21 13-18 21-18 5 14 13 14 12-8 20-11"/></svg></div></div>
+      <div class="cote">
+        <span class="lib">Société</span><div class="ch c1"><span class="tape">SARL DUPONT RÉNOVATION</span></div>
+        <span class="lib">Adresse</span><div class="ch c2"><span class="tape">12 rue des Lilas · 75011 Paris</span></div>
+        <span class="lib">Numéro SIRET</span><div class="ch c3"><span class="tape">SIRET 123 456 789 00012</span></div>
+        <div class="boutons"><span><svg class="ico"><use href="#i-signature"/></svg>Signer dessus</span><span class="ok"><svg class="ico"><use href="#i-valider"/></svg>Enregistrer</span></div>
+      </div>
+    </div>
+    <div class="clic c1"></div><div class="clic c2"></div>
+    <svg class="curseur" viewBox="0 0 24 24"><path d="M4 2l16 10-7 1.6L10 21z" fill="#fff" stroke="#1b2130" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    <div class="legende"><b>Créez votre tampon</b><span>Votre société, et votre signature dessus.</span></div>
+  </section>
   <section class="scene s-tampon" data-duree="3400">
     <div class="barre-doc"><span class="bi"><svg class="ico"><use href="#i-fermer"/></svg></span><span class="titre"><b>mandat.pdf</b><small>2 pages</small></span><span class="bi"><svg class="ico"><use href="#i-oeil"/></svg></span><span class="bi"><svg class="ico"><use href="#i-annuler"/></svg></span><span class="bi"><svg class="ico"><use href="#i-partager"/></svg></span><span class="plein"><svg class="ico"><use href="#i-enregistrer"/></svg></span></div>
     <div class="onglets"><span class="actif"><svg class="ico"><use href="#i-livre"/></svg>Document</span><span><svg class="ico"><use href="#i-pages"/></svg>Pages</span></div>
