@@ -254,9 +254,9 @@ a{color:var(--accent)}
   #ecran-accueil #btn-ouvrir::before{content:"Glissez votre PDF dans cette zone"}
   #ecran-accueil #btn-ouvrir::after{position:absolute;top:auto;bottom:20px;right:calc(50% + 6px);width:auto;margin:0;height:46px;pointer-events:none;padding:0 20px 0 46px;display:flex;align-items:center;border-radius:12px;font-size:15px;background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3h8l4 4v14H6z'/%3E%3Cpath d='M14 3v4h4'/%3E%3Cpath d='M12 11v6M9 14l3 3 3-3'/%3E%3C/svg%3E") no-repeat 16px center/20px}
   #ecran-accueil #btn-ouvrir:hover::after{background-color:var(--accent-fort)}
-  #ecran-accueil #btn-ouvrir-drive{justify-self:center;align-self:end;margin:0 0 20px;transform:translateX(calc(50% + 6px));animation:none;min-height:46px;padding:0 18px 0 14px;border-radius:12px;font-size:15px;font-weight:700;color:#0369a1;border:1.5px solid #b9d9ee;background:#fff;box-shadow:0 6px 16px rgba(3,105,161,.10)}
-  #ecran-accueil #btn-ouvrir-drive .ico{width:22px;height:22px;padding:3px;border-radius:6px;background:#e0f0fb;color:#0369a1}
-  #ecran-accueil #btn-ouvrir-drive:hover{border-color:#0369a1;background:#f4faff}
+  #ecran-accueil #btn-ouvrir-drive{justify-self:center;align-self:end;margin:0 0 20px;transform:translateX(calc(50% + 6px));animation:none;min-height:46px;padding:0 18px 0 14px;border-radius:12px;font-size:15px;font-weight:700;color:#1b2130;border:1.5px solid #bfe0cf;background:#fff;box-shadow:0 6px 16px rgba(13,107,79,.10)}
+  #ecran-accueil #btn-ouvrir-drive .ico{width:22px;height:22px;padding:3px;border-radius:6px;background:var(--accent-pale);color:var(--accent)}
+  #ecran-accueil #btn-ouvrir-drive:hover{border-color:var(--accent);background:#f3faf6}
 }
 @media (min-width:1000px) and (max-height:720px){
   #ecran-accueil #btn-ouvrir{padding-bottom:64px;min-height:176px}
@@ -801,7 +801,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.9.0';
+const VERSION_APPLI = '1.9.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;

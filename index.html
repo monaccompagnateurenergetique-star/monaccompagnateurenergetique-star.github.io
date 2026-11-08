@@ -106,6 +106,39 @@ section{padding:40px 0 56px}
 .maquette-enreg .go{background:var(--accent);color:#fff;border-radius:12px;padding:13px;text-align:center;font-weight:800}
 .maquette-enreg .resultat{font-size:14px;color:var(--accent-fort);font-weight:700;min-height:22px}
 
+/* Animation « enregistrer dans Drive puis retrouver sur le PC » (boucle de ~9 s) */
+.anim-enreg{position:relative;overflow:hidden;min-height:332px;align-content:start;padding-bottom:58px}
+.anim-enreg .ae-ecran{display:grid;gap:12px;transition:opacity .45s,transform .45s cubic-bezier(.2,.8,.2,1)}
+.anim-enreg .ae-pc{position:absolute;left:20px;right:20px;top:20px;gap:8px;opacity:0;transform:translateY(16px);background:#fff;border-radius:14px;padding:0 0 10px;box-shadow:0 14px 34px rgba(20,24,35,.14);overflow:hidden}
+.anim-enreg.e4 .ae-tel{opacity:0;transform:translateY(-12px)}
+.anim-enreg.e4 .ae-pc{opacity:1;transform:none}
+.ae-fen{display:flex;align-items:center;gap:6px;padding:10px 12px;background:#2a3140;color:#cfd6e0;font-size:12.5px;font-weight:700}
+.ae-fen b{width:9px;height:9px;border-radius:50%;background:#f26b5e}.ae-fen b:nth-child(2){background:#f4bd4f}.ae-fen b:nth-child(3){background:#5ec46a}
+.ae-fen span{margin-left:8px}
+.ae-fichier{display:flex;align-items:center;gap:10px;margin:0 12px;padding:9px 10px;border-radius:10px;font-size:14px;font-weight:600}
+.ae-fichier i{font-style:normal;font-size:10px;font-weight:800;color:#fff;background:#c0392b;border-radius:5px;padding:3px 5px}
+.ae-fichier small{margin-left:auto;color:var(--doux);font-weight:500}
+.ae-nouveau{background:#e3f4ea;opacity:0;transform:translateY(-8px);transition:opacity .4s .5s,transform .5s .5s cubic-bezier(.2,1.4,.4,1)}
+.ae-nouveau small{color:#0a5540;font-weight:700}
+.anim-enreg.e4 .ae-nouveau{opacity:1;transform:none}
+.anim-enreg .choix i{flex:1;font-style:normal;text-align:center;padding:11px 4px;border:1px solid var(--ligne);border-radius:22px;background:#fff;font-weight:700;font-size:14px;transition:background .2s,border-color .2s,color .2s}
+.anim-enreg.e2 .ae-drive,.anim-enreg.e3 .ae-drive,.anim-enreg.e4 .ae-drive{border-color:var(--accent);background:var(--accent-pale);color:var(--accent-fort)}
+.anim-enreg .go{transition:transform .15s,background .15s}
+.anim-enreg.appui .go{transform:scale(.97);background:var(--accent-fort)}
+.anim-enreg .champ #ae-nom{margin:0;color:var(--encre)}
+.ae-curseur{width:2px;height:20px;background:var(--accent);margin-left:1px;animation:clignote 1s steps(1) infinite}
+.anim-enreg.e2 .ae-curseur,.anim-enreg.e3 .ae-curseur,.anim-enreg.e4 .ae-curseur{display:none}
+@keyframes clignote{50%{opacity:0}}
+.ae-toast{position:absolute;left:50%;top:14px;transform:translate(-50%,-12px);opacity:0;display:flex;align-items:center;gap:8px;white-space:nowrap;padding:10px 14px;border-radius:12px;background:#1b2130;color:#fff;font-size:13.5px;font-weight:600;box-shadow:0 10px 24px rgba(0,0,0,.25);transition:opacity .3s,transform .3s cubic-bezier(.2,.8,.2,1)}
+.ae-toast b{width:20px;height:20px;border-radius:50%;background:#1e8e3e;display:grid;place-items:center;font-size:11px}
+.anim-enreg.e3 .ae-toast{opacity:1;transform:translate(-50%,0)}
+.ae-pointeur{position:absolute;left:0;top:0;width:24px;height:24px;z-index:3;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3));transition:transform .8s cubic-bezier(.4,0,.2,1),opacity .3s;opacity:0}
+.anim-enreg.e1 .ae-pointeur,.anim-enreg.e2 .ae-pointeur,.anim-enreg.e3 .ae-pointeur{opacity:1}
+.ae-etapes{position:absolute;left:20px;right:20px;bottom:14px;display:flex;gap:6px}
+.ae-etapes span{flex:1;font-size:11px;font-weight:700;color:var(--doux);text-align:center;padding-top:7px;border-top:3px solid var(--ligne);transition:color .3s,border-color .3s}
+.anim-enreg.e0 .ae-etapes span:nth-child(1),.anim-enreg.e1 .ae-etapes span:nth-child(1),.anim-enreg.e2 .ae-etapes span:nth-child(2),.anim-enreg.e3 .ae-etapes span:nth-child(3),.anim-enreg.e4 .ae-etapes span:nth-child(4){color:var(--accent-fort);border-color:#1fae76}
+@media (max-width:480px){.ae-etapes span{font-size:10.5px}.ae-toast{white-space:normal;width:88%;font-size:12.5px;line-height:1.3}.anim-enreg .choix i{font-size:13px;padding:10px 2px}.anim-enreg{min-height:300px}}
+@media (prefers-reduced-motion:reduce){.anim-enreg *{transition:none!important;animation:none!important}}
 /* En plus */
 .plus{display:grid;gap:14px}
 .plus .carte{border-color:#b9dccd;background:linear-gradient(180deg,#fff,#f6fbf8)}
@@ -312,17 +345,23 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
             <li><i>3</i><div><b>Retrouvez tout sur vos autres appareils</b><span>Connectez votre Drive (facultatif) : vos documents et modèles vous suivent du téléphone au PC.</span></div></li>
           </ul>
         </div>
-        <div class="maquette-enreg" aria-label="Exemple : enregistrer un PDF">
-          <span class="lib">Nom du fichier</span>
-          <div class="champ">Mandat Dupont<span>.pdf</span></div>
-          <span class="lib">Où l'enregistrer ?</span>
-          <div class="choix" role="group" aria-label="Destination (exemple interactif)">
-            <button type="button" data-dest="appareil">Appareil</button>
-            <button type="button" data-dest="drive" aria-pressed="true">Google Drive</button>
-            <button type="button" data-dest="deux">Les deux</button>
+        <div class="maquette-enreg anim-enreg" id="anim-enreg" role="img" aria-label="Animation : on nomme le PDF, on choisit Google Drive, on enregistre, puis on le retrouve sur son PC.">
+          <div class="ae-ecran ae-tel">
+            <span class="lib">Nom du fichier</span>
+            <div class="champ"><span id="ae-nom"></span><i class="ae-curseur"></i><span class="ae-ext">.pdf</span></div>
+            <span class="lib">Où l'enregistrer ?</span>
+            <div class="choix"><i>Appareil</i><i class="ae-drive">Google Drive</i><i>Les deux</i></div>
+            <div class="go">Enregistrer dans Drive</div>
           </div>
-          <div class="go" id="go-exemple">Enregistrer dans Drive</div>
-          <div class="resultat" id="res-exemple" aria-live="polite">✓ Va dans votre Google Drive, dossier « Clients 2026 »</div>
+          <div class="ae-ecran ae-pc">
+            <div class="ae-fen"><b></b><b></b><b></b><span>Google Drive › Clients 2026</span></div>
+            <div class="ae-fichier"><i>PDF</i>Devis Martin.pdf<small>hier</small></div>
+            <div class="ae-fichier"><i>PDF</i>Facture 0412.pdf<small>lundi</small></div>
+            <div class="ae-fichier ae-nouveau"><i>PDF</i>Mandat Dupont.pdf<small>à l'instant</small></div>
+          </div>
+          <div class="ae-toast"><b>✓</b>« Mandat Dupont.pdf » est dans Google Drive</div>
+          <svg class="ae-pointeur" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2l16 10-7 1.6L10 21z" fill="#fff" stroke="#1b2130" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <div class="ae-etapes" aria-hidden="true"><span>1. Nommez</span><span>2. Drive</span><span>3. Enregistrez</span><span>4. Sur le PC</span></div>
         </div>
       </div>
     </section>
@@ -461,19 +500,33 @@ section h2.vu::after,section .apparait.vu h2::after{width:56px}
     const autre = document.getElementById('demo-autre'); autre.href = 'teaser-pc.html?v=30'; autre.textContent = 'Voir la version PC';
   }
 
-  // Exemple interactif « Où l'enregistrer ? »
-  const textes = {
-    appareil: ['Enregistrer', '✓ Enregistré sur votre appareil (Téléchargements)'],
-    drive: ['Enregistrer dans Drive', '✓ Va dans votre Google Drive, dossier « Clients 2026 »'],
-    deux: ['Enregistrer', '✓ Sur votre appareil et dans votre Google Drive']
-  };
-  document.querySelectorAll('.choix button').forEach(b => b.addEventListener('click', () => {
-    document.querySelectorAll('.choix button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false'));
-    const [go, res] = textes[b.dataset.dest];
-    document.getElementById('go-exemple').textContent = go;
-    document.getElementById('res-exemple').textContent = res;
-  }));
-})();
+  // Animation « Enregistrer dans Drive → retrouvé sur le PC » : se joue quand elle est visible, en boucle
+  const ae = document.getElementById('anim-enreg');
+  if (ae) {
+    const nom = document.getElementById('ae-nom'), ptr = ae.querySelector('.ae-pointeur');
+    const viser = sel => { const a = ae.getBoundingClientRect(), b = ae.querySelector(sel).getBoundingClientRect(); ptr.style.transform = `translate(${b.left - a.left + b.width / 2}px,${b.top - a.top + b.height / 2}px)`; };
+    const etat = e => { ae.className = 'maquette-enreg anim-enreg ' + e; };
+    const pause = ms => new Promise(r => setTimeout(r, ms));
+    let enCours = false, visible = false;
+    async function jouer() {
+      if (enCours) return; enCours = true;
+      while (visible) {
+        etat('e0'); nom.textContent = ''; ptr.style.transform = 'translate(80%,110%)';
+        await pause(500);
+        for (const c of 'Mandat Dupont') { nom.textContent += c; await pause(reduit ? 0 : 75); }
+        await pause(500); etat('e1'); viser('.ae-drive');
+        await pause(900); etat('e2');
+        await pause(700); viser('.go'); await pause(850);
+        ae.classList.add('appui'); await pause(180); ae.classList.remove('appui');
+        etat('e3'); await pause(1700);
+        etat('e4'); await pause(3000);
+      }
+      enCours = false;
+    }
+    if (reduit) { nom.textContent = 'Mandat Dupont'; etat('e4'); }
+    else if (io) new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) jouer(); }, { threshold: .4 }).observe(ae);
+    else { visible = true; jouer(); }
+  }})();
 </script>
 </body>
 </html>
