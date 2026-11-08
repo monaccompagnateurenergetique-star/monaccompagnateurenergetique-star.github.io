@@ -89,6 +89,11 @@ a{color:var(--accent)}
 #defil{flex:1;overflow:auto;position:relative;touch-action:pan-x pan-y;background:#d9d7d0;-webkit-overflow-scrolling:touch}
 #pages{position:relative;padding:8px 8px 96px;transform-origin:0 0;width:max-content;min-width:100%}
 .page{position:relative;margin:0 auto 10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.inserer{display:flex;justify-content:center;margin:-6px 0 4px;position:sticky;left:0;width:min(100%,100vw)}
+.btn-inserer{width:40px;height:40px;border-radius:50%;border:1px dashed #9aa0ab;background:rgba(255,255,255,.85);color:var(--accent);display:grid;place-items:center;padding:0}
+.btn-inserer:active{background:var(--accent-pale)}
+.btn-inserer .ico{width:20px;height:20px}
+.ajout-fin{display:flex;justify-content:center;padding:8px 0 0;position:sticky;left:0;width:min(100%,100vw)}
 .page canvas.rendu{position:absolute;inset:0;width:100%;height:100%;display:block}
 .calque-recherche,.calque-items{position:absolute;inset:0;pointer-events:none}
 .calque-items{z-index:3}
@@ -797,6 +802,10 @@ function construireVue() {
   D.vues = new Map();
   if (D.focus && !D.parId.has(D.focus)) D.focus = null;
   for (const pg of pagesAffichees()) {
+    // Petit « + » entre deux pages : insérer des fichiers à cet endroit précis
+    const i = D.pages.indexOf(pg);
+    if (i > 0 && !D.focus) pagesEl.append(el('div', { class: 'inserer' },
+      bouton('', { ico: 'plus', cls: 'btn-inserer', label: `Insérer des fichiers entre la page ${i} et la page ${i + 1}`, onclick: () => ajouterFichiers(i) })));
     const page = el('div', { class: 'page', dataset: { id: pg.id } });
     const v = { page, canvas: el('canvas', { class: 'rendu' }), recherche: el('div', { class: 'calque-recherche' }),
       formulaire: el('div', { class: 'annotationLayer' }), items: el('div', { class: 'calque-items' }),
@@ -805,6 +814,8 @@ function construireVue() {
     pagesEl.append(page);
     D.vues.set(pg.id, v);
   }
+  if (!D.focus) pagesEl.append(el('div', { class: 'ajout-fin' },
+    bouton('Ajouter des fichiers', { ico: 'plus', cls: 'btn', onclick: () => ajouterFichiers(D.pages.length) })));
   observateur = new IntersectionObserver(entrees => {
     if (!D) return;
     for (const e of entrees) {
@@ -1365,7 +1376,7 @@ function rendreGrillePages() {
         act('droite', `Déplacer la page ${i + 1} après`, () => deplacerPage(i, 1), i < n - 1)));
     if (!D.miniatures.has(cle)) obsMini.observe(carte);
     return carte;
-  }), el('button', { type: 'button', class: 'tuile-ajout', onclick: ajouterFichiers }, icone('plus'), el('span', { text: 'Ajouter des fichiers' }), el('small', { text: 'PDF ou photos' })));
+  }), el('button', { type: 'button', class: 'tuile-ajout', onclick: () => ajouterFichiers(D.pages.length) }, icone('plus'), el('span', { text: 'Ajouter des fichiers' }), el('small', { text: 'PDF ou photos' })));
   majTitre();
 }
 async function dessinerMiniature(id) {
@@ -1415,7 +1426,9 @@ function supprimerPage(i) {
   apresStructure();
   toast(`Page ${i + 1} supprimée`, { action: 'Annuler', onAction: annulerAction });
 }
-async function ajouterFichiers() {
+/** Ajoute des PDF ou photos à la position voulue (par défaut : à la fin). */
+async function ajouterFichiers(position) {
+  if (typeof position !== 'number') position = D.pages.length;
   const choisis = await choisirFichiers({ accept: 'application/pdf,.pdf,image/*', multiple: true });
   if (!choisis.length || !D) return;
   occupe('Ajout des fichiers…');
@@ -1436,13 +1449,16 @@ async function ajouterFichiers() {
       D.sources.push(s);
       const nouvelles = await pagesDe(s, D.sources.length - 1);
       nouvelles.forEach(pg => D.parId.set(pg.id, pg));
-      D.pages.push(...nouvelles); ajout += nouvelles.length;
+      D.pages.splice(position + ajout, 0, ...nouvelles); ajout += nouvelles.length;
     }
     if (!ajout) { toast('Aucune page n\'a pu être ajoutée.'); return; }
     memoriser(avant);
     apresStructure();
-    toast(images.length ? `${ajout} page${ajout > 1 ? 's' : ''} ajoutée${ajout > 1 ? 's' : ''}. Touchez une photo pour la recadrer.` : `${ajout} page${ajout > 1 ? 's' : ''} ajoutée${ajout > 1 ? 's' : ''} à la fin`, 5000);
-    requestAnimationFrame(() => vuePages.scrollTo({ top: vuePages.scrollHeight }));
+    const ou = position === 0 ? 'au début' : position + ajout >= D.pages.length ? 'à la fin' : `après la page ${position}`;
+    toast(`${ajout} page${ajout > 1 ? 's' : ''} ajoutée${ajout > 1 ? 's' : ''} ${ou}.${images.length ? ' Touchez une photo dans « Pages » pour la recadrer.' : ''}`,
+      { duree: 5000, action: 'Annuler', onAction: annulerAction });
+    if (D.onglet === 'document') requestAnimationFrame(() => allerPage(position));
+    else requestAnimationFrame(() => vuePages.querySelectorAll('.carte-page')[position]?.scrollIntoView({ block: 'center' }));
   } finally { libre(); }
 }
 
@@ -1683,7 +1699,6 @@ async function exporter(action) {
 /* Onglet Outils : toutes les actions du document, visibles d'un coup d'œil */
 const OUTILS_DOC = [
   ['rechercher', 'recherche', 'Rechercher', 'Trouver un mot dans le document'],
-  ['ajouter', 'plus', 'Ajouter des fichiers', 'PDF ou photos, à la fin du document'],
   ['numeros', 'numero', 'Numéroter', 'Ajouter les numéros de page'],
   ['filigrane', 'filigrane', 'Filigrane', '« COPIE », « CONFIDENTIEL »…'],
   ['images', 'images', 'PDF → images', 'Chaque page en JPG'],
