@@ -147,6 +147,21 @@ a{color:var(--accent)}
 .rangee-defil .pastille{width:20px;height:20px}
 .btn.puce{flex:none;min-height:40px;padding:0 12px;font-size:13px;border-radius:20px}
 .rapides{display:flex;flex-wrap:wrap;gap:6px}
+/* Mes documents, Reprendre */
+.reprendre{margin-top:12px}
+.reprendre-tete{display:flex;align-items:center;justify-content:space-between}
+.reprendre-tete .titre-section{margin:12px 2px 8px}
+.ligne-doc{display:flex;align-items:center;gap:4px;padding:4px 4px 4px 0;border:1px solid var(--ligne);border-radius:12px;background:var(--carte);margin-bottom:8px}
+.ligne-doc-principal{flex:1;min-width:0;display:flex;align-items:center;gap:12px;border:0;background:none;text-align:left;padding:6px 8px;min-height:56px;border-radius:10px}
+.ligne-doc-principal:active{background:#f3f2ee}
+.ligne-doc-principal img{width:40px;height:52px;object-fit:cover;object-position:top;border-radius:4px;box-shadow:0 0 0 1px var(--ligne);flex:none;background:#fff}
+.ligne-doc-ico{width:40px;height:40px;border-radius:10px;background:var(--accent-pale);color:var(--accent);display:grid;place-items:center;flex:none}
+.ligne-doc .texte{flex:1;min-width:0;display:flex;flex-direction:column}
+.ligne-doc .texte strong{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ligne-doc .texte small{font-size:13px;color:var(--doux)}
+.ligne-doc .avec-nombre{width:auto;padding:0 8px;gap:4px;font-size:13px;font-weight:700;color:var(--accent-fort);display:flex}
+.liste-docs{margin-top:14px}
+.filtre-actif{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin-bottom:10px;border-radius:10px;background:var(--accent-pale);font-size:14px;font-weight:600}
 .champ.mini{min-height:40px;padding:6px 10px;width:auto;flex:none}
 #fil-texte{width:150px}
 #num-debut{width:64px}
@@ -397,6 +412,8 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.6-1.6 0-.9-.6-1.3-.6-2.2 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="14.5" cy="7" r="1"/></symbol>
   <symbol id="i-stylo" viewBox="0 0 24 24"><path d="M3 21c2-1 3.5-1 5 0s3 1 5-.5"/><path d="M14.5 4.5l5 5L10 19H5v-5z"/></symbol>
   <symbol id="i-note" viewBox="0 0 24 24"><path d="M4 4h16v12H10l-5 4v-4H4z"/><path d="M8 9h8M8 12h5"/></symbol>
+  <symbol id="i-dossier" viewBox="0 0 24 24"><path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-horloge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
   <symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></symbol>
 </svg>
 
@@ -420,6 +437,10 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
       <svg class="ico"><use href="#i-crayon"/></svg>
       <div><strong>Modifier un PDF</strong><span>Ouvrir, ajouter du texte, corriger, réorganiser</span></div>
     </button>
+    <section id="reprendre" class="reprendre" hidden aria-label="Reprendre">
+      <div class="reprendre-tete"><h2 class="titre-section">Reprendre</h2><button class="btn puce" id="reprendre-tout">Tout voir</button></div>
+      <div id="reprendre-liste"></div>
+    </section>
     <div class="duo">
       <button class="carte-mini" data-outil="fusion"><svg class="ico"><use href="#i-fusion"/></svg><strong>Fusionner</strong><span>Plusieurs PDF et photos en un seul</span></button>
       <button class="carte-mini" id="btn-photos"><svg class="ico"><use href="#i-image"/></svg><strong>JPG → PDF</strong><span>Convertir vos photos et images</span></button>
@@ -437,6 +458,8 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
     <div class="grille-outils">
       <button class="tuile" id="btn-remplir"><svg class="ico"><use href="#i-texte"/></svg><strong>Remplir un formulaire</strong><span>Cerfa, mandat, contrat…</span></button>
       <button class="tuile" id="btn-signer"><svg class="ico"><use href="#i-signature"/></svg><strong>Signer un PDF</strong><span>Signature et tampon</span></button>
+      <button class="tuile" id="btn-mesdocs"><svg class="ico"><use href="#i-dossier"/></svg><strong>Mes documents</strong><span>Reprendre, historique des envois</span></button>
+      <button class="tuile" id="btn-modeles"><svg class="ico"><use href="#i-copier"/></svg><strong>Modèles</strong><span>Un document prêt, date du jour incluse</span></button>
     </div>
     <p class="confiance"><svg class="ico"><use href="#i-cadenas"/></svg><span>Vos documents restent sur cet appareil : rien n'est envoyé sur internet. <a href="../confidentialite.html">Politique de confidentialité</a></span></p>
   </main>
@@ -603,7 +626,7 @@ function canvasVersBlob(c, type = 'image/jpeg', q = 0.85) { return new Promise(r
 /* =========================================================
    1. DONNÉES ENREGISTRÉES (localStorage uniquement)
    ========================================================= */
-const PREFS_DEFAUT = { tailleTexte: 11, couleurTexte: '#111111', largeurSignature: 140, largeurTampon: 130, formatPhotos: 'a4', compression: 'moyenne', installMasque: false };
+const PREFS_DEFAUT = { tailleTexte: 11, couleurTexte: '#111111', largeurSignature: 140, largeurTampon: 130, formatPhotos: 'a4', compression: 'moyenne', installMasque: false, garderDocuments: true };
 function lirePrefs() { try { return { ...PREFS_DEFAUT, ...JSON.parse(localStorage.getItem(CLE_PREFS) || '{}') }; } catch { return { ...PREFS_DEFAUT }; } }
 function ecrirePrefs(p) { try { localStorage.setItem(CLE_PREFS, JSON.stringify(p)); } catch { toast('Impossible d\'enregistrer les réglages.'); } }
 let prefs = lirePrefs();
@@ -747,16 +770,19 @@ async function partager(fichiers) {
   if (!navigator.canShare || !navigator.canShare({ files: fichiers })) {
     toast('Le partage n\'est pas disponible ici : le fichier est enregistré à la place.');
     for (const f of fichiers) { telecharger(new Uint8Array(await f.arrayBuffer()), f.name, f.type); await attendre(300); }
-    return;
+    return true;
   }
-  try { await navigator.share({ files: fichiers }); }
+  try { await navigator.share({ files: fichiers }); return true; }
   catch (e) {
-    if (e.name === 'AbortError') return;
+    if (e.name === 'AbortError') return false;
     if (e.name === 'NotAllowedError') {
       const fe = feuille({ titre: 'Fichier prêt' });
       fe.corps.append(el('p', { text: 'Votre fichier est prêt. Touchez « Partager » pour l\'envoyer.' }));
       fe.pied.append(bouton('Partager', { ico: 'partager', cls: 'btn principal', onclick: async () => { try { await navigator.share({ files: fichiers }); } catch {} fe.fermer(); } }));
-    } else toast('Partage impossible pour le moment. Essayez « Enregistrer ».');
+      return true;
+    }
+    toast('Partage impossible pour le moment. Essayez « Enregistrer ».');
+    return false;
   }
 }
 const fichierPdf = (octets, nom) => new File([octets], nom, { type: 'application/pdf' });
@@ -812,8 +838,12 @@ async function ouvrirFichier(f) {
 }
 const ouvrirPdf = (octets, nom, opts) => ouvrirDocuments([{ octets, nom }], opts);
 
-async function ouvrirDocuments(fichiers, { onglet = 'document' } = {}) {
-  if (D && D.modifie && !(await confirmer({ titre: `Remplacer « ${D.nom} » ?`, texte: 'Les modifications non enregistrées de ce document seront perdues.', action: 'Remplacer le document' }))) return;
+async function ouvrirDocuments(fichiers, { onglet = 'document', restaurer = null } = {}) {
+  if (D && D.modifie) {
+    // Le document en cours est gardé dans « Mes documents » (sinon, on demande avant de le perdre)
+    if (prefs.garderDocuments) sauvegarder(D);
+    else if (!(await confirmer({ titre: `Remplacer « ${D.nom} » ?`, texte: 'Les modifications non enregistrées de ce document seront perdues.', action: 'Remplacer le document' }))) return;
+  }
   occupe('Ouverture…');
   try {
     const sources = [], pages = [];
@@ -831,8 +861,11 @@ async function ouvrirDocuments(fichiers, { onglet = 'document' } = {}) {
       mode: 'editer', onglet: 'document', focus: null, zoom: 1, s: 1,
       selection: null, edition: null, attente: null, textes: {}, resultats: [], resIndex: -1,
       vues: new Map(), miniatures: new Map(), vueObsolete: true, conseilMasque: false,
-      numeros: null, filigrane: null, panneau: null
+      numeros: null, filigrane: null, panneau: null,
+      docId: idUnique(), cree: Date.now(), sauvees: 0, sigSauvee: null, apercu: null
     };
+    if (restaurer) appliquerSauvegarde(restaurer);
+    if (!D.apercu) { const d = D; apercuDe(d).then(a => { d.apercu = a; }); }
     panneau.hidden = true; panneau.replaceChildren(); avantPanneau = null;
     if (ancien) ancien.sources.forEach(s => s.pdf.destroy());
     majTitre();
@@ -850,6 +883,12 @@ function majTitre() {
 }
 
 function fermerDocument() {
+  if (D && D.modifie && prefs.garderDocuments) {
+    // Rien n'est perdu : le travail est gardé dans « Mes documents »
+    const d = D;
+    sauvegarder(d).then(id => { if (id) { toast('Gardé dans « Mes documents » pour plus tard', { action: 'Voir', onAction: () => ouvrirMesDocuments() }); majReprendre(); } });
+    d.modifie = false;
+  }
   if (D && D.modifie) {
     ouvrirCouche(fermerDocument); // on garde le document ouvert le temps de demander
     confirmer({ titre: `Fermer « ${D.nom} » sans enregistrer ?`, texte: 'Vos modifications seront perdues.', action: 'Fermer sans enregistrer' })
@@ -862,7 +901,10 @@ function fermerDocument() {
   pagesEl.replaceChildren(); grillePages.replaceChildren();
   afficherEcran('accueil');
 }
-function afficherEcran(nom) { $$('.ecran').forEach(e => e.classList.toggle('actif', e.id === 'ecran-' + nom)); }
+function afficherEcran(nom) {
+  $$('.ecran').forEach(e => e.classList.toggle('actif', e.id === 'ecran-' + nom));
+  if (nom === 'accueil') majReprendre();
+}
 function majClassesDoc() {
   if (!D) return;
   ecranDoc.classList.toggle('mode-lire', D.mode === 'lire');
@@ -1579,7 +1621,7 @@ pagesEl.addEventListener('click', async e => {
   }
   if (a.outil === 'texte-rapide') {
     memoriser(avant);
-    it = { id: idUnique(), type: 'texte', page: id, x, y: y - prefs.tailleTexte * 0.6, texte: a.texte, taille: prefs.tailleTexte, couleur: prefs.couleurTexte };
+    it = { id: idUnique(), type: 'texte', page: id, x, y: y - prefs.tailleTexte * 0.6, texte: a.texte, taille: prefs.tailleTexte, couleur: prefs.couleurTexte, date: /^\d{2}\/\d{2}\/\d{4}$/.test(a.texte) || undefined };
     D.items.push(it); D.modifie = true; rendreItems(id); selectionner(it.id);
     return;
   }
@@ -2084,8 +2126,8 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
       catch (e) { console.error(e); toast('Les images n\'ont pas pu être créées. Réessayez.'); return; }
       finally { libre(); }
       await fe.fermer();
-      if (partage) await partager(fichiers);
-      else { for (const f of fichiers) { telecharger(new Uint8Array(await f.arrayBuffer()), f.name, f.type); await attendre(400); } toast(`${fichiers.length} image${fichiers.length > 1 ? 's' : ''} enregistrée${fichiers.length > 1 ? 's' : ''}`); }
+      if (partage) { if (await partager(fichiers)) noterHistorique(D, 'images', base, nom); }
+      else { for (const f of fichiers) { telecharger(new Uint8Array(await f.arrayBuffer()), f.name, f.type); await attendre(400); } toast(`${fichiers.length} image${fichiers.length > 1 ? 's' : ''} enregistrée${fichiers.length > 1 ? 's' : ''}`); noterHistorique(D, 'images', base, nom); }
       return;
     }
     prefs.compressionExport = niveau; ecrirePrefs(prefs);
@@ -2100,8 +2142,8 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
     const final = compresse ? r : base;
     const nomFinal = compresse ? nomSortie(nom, 'compressé') : aplatir ? nomSortie(nom, 'aplati') : nom;
     await fe.fermer();
-    if (partage) await partager([fichierPdf(final, nomFinal)]);
-    else if (await enregistrer(final, nomFinal)) { D.modifie = false; toast(`PDF enregistré (${tailleLisible(final.length)})`); }
+    if (partage) { if (await partager([fichierPdf(final, nomFinal)])) noterHistorique(D, 'partagé', final, nomFinal); }
+    else if (await enregistrer(final, nomFinal)) { noterHistorique(D, 'enregistré', final, nomFinal); D.modifie = false; toast(`PDF enregistré (${tailleLisible(final.length)})`); }
   }
 }
 /** Chaque page d'un PDF en image JPG. */
@@ -2194,7 +2236,8 @@ function ouvrirPanneau(type) {
       o('filigrane', 'Filigrane', () => ouvrirPanneau('filigrane')),
       o('note', 'Commentaire', () => { fermerPanneau(); demanderPlacement({ outil: 'note' }, 'Touchez l\'endroit où ajouter le commentaire.'); }),
       o('recherche', 'Rechercher', () => { fermerPanneau(); ouvrirRecherche(); }),
-      o('info', 'Infos', () => { fermerPanneau(); afficherInfos(); })));
+      o('info', 'Infos', () => { fermerPanneau(); afficherInfos(); }),
+      o('copier', 'Modèle', () => { fermerPanneau(); creerModele(); })));
   } else {
     avantPanneau = instantane();
     if (type === 'numeros') {
@@ -2617,6 +2660,8 @@ function ouvrirParametres() {
     }
   };
   majListe();
+  const espace = el('p', { class: 'note' });
+  navigator.storage?.estimate?.().then(({ usage }) => { espace.textContent = `Espace utilisé par l'appli : ${tailleLisible(usage || 0)}.`; }).catch(() => {});
   const reglage = (cle, titre, options) => el('div', {}, el('div', { class: 'etiquette', text: titre }),
     segments('pref-' + cle, options, String(prefs[cle]), v => { prefs[cle] = isNaN(+v) ? v : +v; ecrirePrefs(prefs); }));
   fe.corps.append(
@@ -2628,13 +2673,20 @@ function ouvrirParametres() {
     reglage('largeurTampon', 'Taille des tampons posés', [['100', 'Petit'], ['130', 'Moyen'], ['170', 'Grand']]),
     reglage('formatPhotos', 'Photos → PDF : format des pages', [['a4', 'A4'], ['image', 'Taille de la photo']]),
     reglage('compression', 'Compression par défaut', [['forte', 'Forte'], ['moyenne', 'Moyenne'], ['legere', 'Légère']]),
+    el('h3', { class: 'titre-section', text: 'Mes documents' }),
+    el('div', {}, el('div', { class: 'etiquette', text: 'Garder mes documents et leur historique sur cet appareil' }),
+      segments('pref-garder', [['oui', 'Oui (conseillé)'], ['non', 'Non']], prefs.garderDocuments ? 'oui' : 'non', v => { prefs.garderDocuments = v === 'oui'; ecrirePrefs(prefs); })),
+    espace,
     el('h3', { class: 'titre-section', text: 'À propos' }),
     el('p', { class: 'note', text: `Atelier PDF ${VERSION_APPLI}. Tout est traité sur cet appareil : vos documents ne sont jamais envoyés.` }),
     el('p', {}, el('a', { href: '../confidentialite.html', text: 'Politique de confidentialité' })),
     el('div', { class: 'rangee-btn' }, bouton('Effacer toutes mes données', { ico: 'poubelle', cls: 'btn danger', onclick: async () => {
-      const ok = await confirmer({ titre: 'Effacer toutes vos données ?', texte: 'Signatures, tampons et réglages seront supprimés de ce téléphone. Cette action est définitive.', action: 'Tout effacer' });
+      const ok = await confirmer({ titre: 'Effacer toutes vos données ?', texte: 'Signatures, tampons, réglages, documents gardés, historique et modèles seront supprimés de cet appareil. Cette action est définitive.', action: 'Tout effacer' });
       if (!ok) return;
-      localStorage.removeItem(CLE_TAMPONS); localStorage.removeItem(CLE_PREFS); prefs = lirePrefs(); majListe(); toast('Données effacées');
+      localStorage.removeItem(CLE_TAMPONS); localStorage.removeItem(CLE_PREFS); prefs = lirePrefs(); majListe();
+      try { (await bd()).close(); } catch {}
+      bdPromesse = null; indexedDB.deleteDatabase('atelierpdf');
+      majReprendre(); toast('Données effacées');
     } })));
 }
 
@@ -2937,6 +2989,268 @@ async function recupererPartage() {
 }
 
 /* =========================================================
+   14 bis. MES DOCUMENTS : reprise automatique, historique, modèles
+   Tout est gardé sur l'appareil, dans la base locale du navigateur (IndexedDB « atelierpdf ») :
+   - documents  : fichiers d'origine + état du travail (champs, éléments posés, pages…) ; « modele: true » pour un modèle
+   - historique : chaque PDF enregistré ou partagé (le fichier exact est gardé : ce sont les versions)
+   - fichiers   : les octets des PDF (clés « <doc>:s<n> » pour les sources, « h<n> » pour l'historique)
+   ========================================================= */
+let bdPromesse = null;
+function bd() {
+  return bdPromesse ||= new Promise((res, rej) => {
+    const r = indexedDB.open('atelierpdf', 1);
+    r.onupgradeneeded = () => {
+      const db = r.result;
+      db.createObjectStore('documents', { keyPath: 'id' });
+      db.createObjectStore('fichiers');
+      db.createObjectStore('historique', { keyPath: 'id', autoIncrement: true }).createIndex('doc', 'docId');
+    };
+    r.onsuccess = () => res(r.result);
+    r.onerror = () => { bdPromesse = null; rej(r.error); };
+  });
+}
+const reqP = r => new Promise((res, rej) => { r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+async function bdOp(store, mode, fn) { const db = await bd(); return reqP(fn(db.transaction(store, mode).objectStore(store))); }
+const bdGet = (s, k) => bdOp(s, 'readonly', o => o.get(k));
+const bdAll = s => bdOp(s, 'readonly', o => o.getAll());
+const bdPut = (s, v, k) => bdOp(s, 'readwrite', o => k === undefined ? o.put(v) : o.put(v, k));
+const bdDel = (s, k) => bdOp(s, 'readwrite', o => o.delete(k));
+const bdParDoc = docId => bdOp('historique', 'readonly', o => o.index('doc').getAll(docId));
+
+let persistanceDemandee = false;
+function demanderPersistance() {
+  if (persistanceDemandee || !navigator.storage?.persist) return;
+  persistanceDemandee = true; navigator.storage.persist().catch(() => {});
+}
+/** État du travail en cours, à garder (sans les octets des PDF). */
+function etatDe(d) {
+  return {
+    items: d.items, ordre: d.pages.map(p => [p.src, p.num, p.rot, p.id]), numeros: d.numeros, filigrane: d.filigrane, structure: !!d.structure,
+    champs: d.sources.map(s => { const m = s.pdf.annotationStorage.serializable?.map; return m ? [...m.entries()] : []; })
+  };
+}
+/** Petite image de la première page (pour les listes). */
+async function apercuDe(d) {
+  try {
+    const pg = d.pages[0], vp = pg.p.getViewport({ scale: 120 / pg.w, rotation: rotationTotale(pg) });
+    const c = el('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    await pg.p.render({ canvasContext: c.getContext('2d'), viewport: vp, annotationMode: MODE_STOCK }).promise;
+    return c.toDataURL('image/jpeg', 0.6);
+  } catch { return null; }
+}
+/** Garde le document (ou en fait un modèle). L'état est lu tout de suite : on peut fermer le document juste après. */
+async function sauvegarder(d, { force = false, modele = false, nom } = {}) {
+  if (!d || (!prefs.garderDocuments && !modele)) return null;
+  const etat = etatDe(d), sig = JSON.stringify(etat);
+  if (!force && !modele && sig === d.sigSauvee) return d.docId;
+  const id = modele ? idUnique() : d.docId;
+  const images = {}; for (const it of etat.items) if (it.img && d.images[it.img]) images[it.img] = d.images[it.img];
+  const sources = d.sources.map(s => s.octets), deja = modele ? 0 : (d.sauvees || 0);
+  if (!modele) d.sigSauvee = sig;
+  try {
+    for (let k = deja; k < sources.length; k++) await bdPut('fichiers', sources[k], `${id}:s${k}`);
+    await bdPut('documents', { id, nom: nom || d.nom, cree: modele ? Date.now() : d.cree, maj: Date.now(), pages: d.pages.length,
+      nbSources: sources.length, apercu: d.apercu || null, etat, images, modele });
+    if (!modele) d.sauvees = sources.length;
+    demanderPersistance();
+    return id;
+  } catch (e) {
+    console.warn('Sauvegarde impossible', e); if (!modele) d.sigSauvee = null;
+    if (e.name === 'QuotaExceededError') toast('Plus de place pour garder vos documents : supprimez-en dans « Mes documents ».', 6000);
+    return null;
+  }
+}
+// Reprise automatique : on garde le travail toutes les 3 secondes s'il a changé, et quand l'appli passe en arrière-plan
+setInterval(() => { if (D && D.modifie && prefs.garderDocuments) sauvegarder(D); }, 3000);
+document.addEventListener('visibilitychange', () => { if (document.hidden && D && D.modifie) sauvegarder(D); });
+
+/** Chaque PDF enregistré ou partagé est noté, avec le fichier exact (on garde les 10 dernières versions par document). */
+async function noterHistorique(d, action, octets, nom) {
+  if (!d || !prefs.garderDocuments) return;
+  try {
+    await sauvegarder(d, { force: true });
+    const id = await bdPut('historique', { docId: d.docId, docNom: d.nom, nom, action, date: Date.now(), taille: octets.length });
+    await bdPut('fichiers', octets, 'h' + id);
+    const versions = (await bdParDoc(d.docId)).sort((a, b) => b.date - a.date);
+    for (const h of versions.slice(10)) { await bdDel('historique', h.id); await bdDel('fichiers', 'h' + h.id); }
+  } catch (e) { console.warn('Historique non noté', e); }
+}
+
+/** Rouvre un document gardé (ou crée un nouveau document à partir d'un modèle). */
+async function ouvrirSauvegarde(doc, { modele = false } = {}) {
+  occupe('Ouverture…');
+  let fichiers = [];
+  try {
+    for (let k = 0; k < doc.nbSources; k++) {
+      const o = await bdGet('fichiers', `${doc.id}:s${k}`);
+      if (!o) throw new Error('fichier manquant');
+      fichiers.push({ nom: doc.nom, octets: new Uint8Array(o) });
+    }
+  } catch (e) { console.error(e); toast('Ce document n\'a pas pu être rouvert : un de ses fichiers manque.', 5000); return; }
+  finally { libre(); }
+  await ouvrirDocuments(fichiers, { restaurer: { doc, modele } });
+}
+/** Remet en place l'état gardé, juste après le chargement des fichiers. */
+function appliquerSauvegarde({ doc, modele }) {
+  const e = doc.etat || {};
+  const parSrcNum = new Map(D.pages.map(p => [p.src + ':' + p.num, p]));
+  const pages = [];
+  for (const [src, num, rot, id] of e.ordre || []) {
+    const p = parSrcNum.get(src + ':' + num); if (!p) continue;
+    p.id = id; p.rot = rot; majDims(p); pages.push(p);
+    compteurPage = Math.max(compteurPage, parseInt(String(id).slice(1), 10) || 0);
+  }
+  if (pages.length) D.pages = pages;
+  D.parId = new Map([...parSrcNum.values()].map(p => [p.id, p]));
+  D.items = e.items || []; D.images = { ...(doc.images || {}) };
+  D.numeros = e.numeros || null; D.filigrane = e.filigrane || null; D.structure = !!e.structure;
+  (e.champs || []).forEach((liste, k) => { const st = D.sources[k]?.pdf.annotationStorage; if (st) for (const [id, v] of liste) st.setValue(id, v); });
+  if (modele) {
+    D.docId = idUnique(); D.cree = Date.now();
+    const auj = new Date().toLocaleDateString('fr-FR');
+    D.nom = `${nomSansExt(doc.nom)} - ${auj.replace(/\//g, '-')}.pdf`;
+    remplirDates();
+    D.modifie = true; D.structure = true;
+  } else {
+    D.docId = doc.id; D.cree = doc.cree; D.nom = doc.nom; D.apercu = doc.apercu;
+    D.sauvees = doc.nbSources; D.sigSauvee = JSON.stringify(etatDe(D)); D.modifie = false;
+  }
+}
+/** Modèle : les champs de date (date, jour, mois, année) et les tampons « Date du jour » prennent la date du jour. */
+function remplirDates() {
+  const d = new Date(), jj = String(d.getDate()).padStart(2, '0'), mm = String(d.getMonth() + 1).padStart(2, '0'), aaaa = String(d.getFullYear());
+  const complet = `${jj}/${mm}/${aaaa}`;
+  let n = 0;
+  for (const src of D.sources) for (const [nom, objs] of Object.entries(src.champs)) {
+    const textes = objs.filter(x => x.type === 'text'); if (!textes.length) continue;
+    const k = nom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const v = /date/.test(k) ? complet : /jour/.test(k) ? jj : /\bmois\b/.test(k) ? mm : /\bannee\b|\byear\b/.test(k) ? aaaa : null;
+    if (v) { textes.forEach(x => src.pdf.annotationStorage.setValue(x.id, { value: v })); n++; }
+  }
+  D.items.forEach(it => { if (it.date) { it.texte = complet; n++; } });
+  if (n) setTimeout(() => toast(`Date du jour mise à jour (${complet})`), 400);
+}
+/** Supprime un document gardé, ses fichiers et son historique. */
+async function supprimerSauvegarde(doc) {
+  for (let k = 0; k < (doc.nbSources || 0); k++) await bdDel('fichiers', `${doc.id}:s${k}`);
+  for (const h of await bdParDoc(doc.id)) { await bdDel('historique', h.id); await bdDel('fichiers', 'h' + h.id); }
+  await bdDel('documents', doc.id);
+}
+
+const quand = t => {
+  const d = new Date(t), maintenant = new Date(), min = Math.round((maintenant - d) / 60000);
+  if (min < 1) return 'à l\'instant';
+  if (min < 60) return `il y a ${min} min`;
+  const heure = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }).replace(':', 'h');
+  if (d.toDateString() === maintenant.toDateString()) return `aujourd'hui à ${heure}`;
+  const hier = new Date(maintenant); hier.setDate(hier.getDate() - 1);
+  if (d.toDateString() === hier.toDateString()) return `hier à ${heure}`;
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: d.getFullYear() === maintenant.getFullYear() ? undefined : 'numeric' });
+};
+const LIBELLES_ACTION = { enregistré: 'Enregistré', partagé: 'Partagé', images: 'Converti en images' };
+
+/** Ligne de liste : aperçu, nom, détail, actions. */
+function ligneDoc({ apercu, ico, titre, detail, onclick, actions = [] }) {
+  return el('div', { class: 'ligne-doc' },
+    el('button', { type: 'button', class: 'ligne-doc-principal', onclick, 'aria-label': `Ouvrir ${titre}` },
+      apercu ? el('img', { src: apercu, alt: '' }) : el('span', { class: 'ligne-doc-ico' }, icone(ico || 'doc')),
+      el('span', { class: 'texte' }, el('strong', { text: titre }), el('small', { text: detail }))),
+    ...actions);
+}
+
+/** Écran « Mes documents » : Documents, Historique, Modèles. */
+async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
+  const fe = feuille({ titre: 'Mes documents', plein: true, pied: false });
+  const zone = el('div', { class: 'liste-docs' });
+  let courant = onglet;
+  fe.corps.append(segments('mesdocs', [['documents', 'Documents'], ['historique', 'Historique'], ['modeles', 'Modèles']], courant, v => { courant = v; filtreDoc = null; afficher(); }), zone);
+  const ouvrirPuis = async fn => { await fe.fermer(); fn(); };
+  async function afficher() {
+    let docs = [], hist = [];
+    try { docs = await bdAll('documents'); hist = await bdAll('historique'); } catch (e) { console.error(e); }
+    zone.replaceChildren();
+    if (!prefs.garderDocuments && courant !== 'modeles') zone.append(el('p', { class: 'note', text: 'La sauvegarde des documents est désactivée dans les Paramètres.' }));
+    if (courant === 'documents') {
+      const liste = docs.filter(d => !d.modele).sort((a, b) => b.maj - a.maj);
+      if (!liste.length) { zone.append(el('p', { class: 'vide', text: 'Les documents que vous modifiez apparaîtront ici automatiquement, pour reprendre plus tard.' })); return; }
+      const nbVersions = id => hist.filter(h => h.docId === id).length;
+      liste.forEach(d => zone.append(ligneDoc({ apercu: d.apercu, titre: d.nom, detail: `${quand(d.maj)} · ${d.pages} page${d.pages > 1 ? 's' : ''}`,
+        onclick: () => ouvrirPuis(() => ouvrirSauvegarde(d)),
+        actions: [
+          nbVersions(d.id) ? bouton(String(nbVersions(d.id)), { ico: 'horloge', cls: 'btn-icone avec-nombre', label: `Versions envoyées de ${d.nom}`, onclick: () => { courant = 'historique'; filtreDoc = d.id; fe.corps.querySelector('input[name="mesdocs"][value="historique"]').checked = true; afficher(); } }) : '',
+          bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: `Supprimer ${d.nom}`, onclick: async () => {
+            if (await confirmer({ titre: `Supprimer « ${d.nom} » ?`, texte: 'Le document, son travail en cours et ses versions seront retirés de cet appareil.', action: 'Supprimer le document' })) { await supprimerSauvegarde(d); afficher(); majReprendre(); toast('Document supprimé'); }
+          } })] })));
+    } else if (courant === 'historique') {
+      let liste = hist.sort((a, b) => b.date - a.date);
+      if (filtreDoc) {
+        liste = liste.filter(h => h.docId === filtreDoc);
+        zone.append(el('div', { class: 'filtre-actif' }, el('span', { text: `Versions de « ${liste[0]?.docNom || 'ce document'} »` }), bouton('Tout voir', { cls: 'btn puce', onclick: () => { filtreDoc = null; afficher(); } })));
+      }
+      if (!liste.length) { zone.append(el('p', { class: 'vide', text: 'Chaque PDF que vous enregistrez ou partagez sera noté ici, pour le retrouver, le réutiliser ou le renvoyer.' })); return; }
+      liste.forEach(h => zone.append(ligneDoc({ ico: h.action === 'partagé' ? 'partager' : h.action === 'images' ? 'images' : 'enregistrer', titre: h.nom,
+        detail: `${LIBELLES_ACTION[h.action] || h.action} ${quand(h.date)} · ${tailleLisible(h.taille)}`,
+        onclick: async () => {
+          const choix = await demanderChoix(h.nom, [
+            { texte: 'Ouvrir cette version', ico: 'doc', valeur: 'ouvrir' },
+            { texte: 'Partager à nouveau', ico: 'partager', valeur: 'partager' },
+            { texte: 'Enregistrer à nouveau', ico: 'enregistrer', valeur: 'enregistrer' }]);
+          if (!choix) return;
+          const o = await bdGet('fichiers', 'h' + h.id);
+          if (!o) { toast('Ce fichier n\'est plus disponible.'); return; }
+          const octets = new Uint8Array(o);
+          if (choix === 'ouvrir') ouvrirPuis(() => ouvrirPdf(octets, h.nom));
+          else if (choix === 'partager') partager([fichierPdf(octets, h.nom)]);
+          else if (await enregistrer(octets, h.nom)) toast('Fichier enregistré');
+        } })));
+    } else {
+      const liste = docs.filter(d => d.modele).sort((a, b) => b.maj - a.maj);
+      zone.append(el('p', { class: 'note', text: 'Pour créer un modèle : ouvrez un document prêt à réutiliser (ex. votre mandat avec la partie mandataire remplie), puis Plus → Modèle.' }));
+      if (!liste.length) { zone.append(el('p', { class: 'vide', text: 'Aucun modèle pour l\'instant.' })); return; }
+      liste.forEach(d => zone.append(ligneDoc({ apercu: d.apercu, titre: nomSansExt(d.nom), detail: `Modèle · ${d.pages} page${d.pages > 1 ? 's' : ''}`,
+        onclick: () => ouvrirPuis(() => ouvrirSauvegarde(d, { modele: true })),
+        actions: [
+          bouton('Utiliser', { ico: 'plus', cls: 'btn principal mini', onclick: () => ouvrirPuis(() => ouvrirSauvegarde(d, { modele: true })) }),
+          bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: `Supprimer le modèle ${d.nom}`, onclick: async () => {
+            if (await confirmer({ titre: `Supprimer le modèle « ${nomSansExt(d.nom)} » ?`, texte: 'Les documents déjà créés à partir de ce modèle ne changent pas.', action: 'Supprimer le modèle' })) { await supprimerSauvegarde(d); afficher(); toast('Modèle supprimé'); }
+          } })] })));
+    }
+  }
+  afficher();
+}
+
+/** Enregistrer le document ouvert comme modèle. */
+function creerModele() {
+  if (!D) return;
+  terminerEdition();
+  const fe = feuille({ titre: 'Enregistrer comme modèle' });
+  const champ = el('input', { class: 'champ', id: 'nom-modele', value: nomSansExt(D.nom).replace(SUFFIXES, ''), maxlength: 60 });
+  const valider = async () => {
+    const nom = champ.value.trim(); if (!nom) { toast('Donnez un nom au modèle.'); return; }
+    if (!D.apercu) D.apercu = await apercuDe(D);
+    const id = await sauvegarder(D, { modele: true, nom: nom + '.pdf' });
+    await fe.fermer();
+    if (id) toast(`Modèle « ${nom} » enregistré`, { action: 'Voir', onAction: () => ouvrirMesDocuments('modeles') });
+    else toast('Le modèle n\'a pas pu être enregistré.');
+  };
+  champ.addEventListener('keydown', e => { if (e.key === 'Enter') valider(); });
+  fe.corps.append(el('label', { class: 'etiquette', for: 'nom-modele', text: 'Nom du modèle' }), champ,
+    el('p', { class: 'note', text: 'Le modèle garde tout ce qui est rempli et posé. À chaque utilisation, les champs de date et les tampons « Date du jour » prennent la date du jour.' }));
+  fe.pied.append(bouton('Enregistrer le modèle', { ico: 'valider', cls: 'btn principal', onclick: valider }));
+  setTimeout(() => champ.select(), 250);
+}
+
+/** Accueil : « Reprendre » liste les derniers documents en cours. */
+async function majReprendre() {
+  const zone = $('#reprendre'); if (!zone) return;
+  let docs = [];
+  try { if (prefs.garderDocuments) docs = (await bdAll('documents')).filter(d => !d.modele).sort((a, b) => b.maj - a.maj); } catch {}
+  zone.hidden = !docs.length;
+  if (!docs.length) return;
+  $('#reprendre-liste').replaceChildren(...docs.slice(0, 3).map(d => ligneDoc({ apercu: d.apercu, titre: d.nom, detail: quand(d.maj), onclick: () => ouvrirSauvegarde(d) })));
+  $('#reprendre-tout').textContent = `Tout voir (${docs.length})`;
+}
+/* =========================================================
    15. INSTALLATION SUR LE TÉLÉPHONE
    ========================================================= */
 let invitationInstall = null;
@@ -2966,6 +3280,10 @@ $('#btn-ouvrir').addEventListener('click', async () => { const [f] = await chois
 $('#btn-scanner').addEventListener('click', () => outilPhotos({ camera: true }));
 $('#btn-photos').addEventListener('click', async () => { const fs = await choisirFichiers({ accept: 'image/*', multiple: true }); if (fs.length) outilPhotos({ fichiers: fs }); });
 $('#btn-param').addEventListener('click', ouvrirParametres);
+$('#btn-mesdocs').addEventListener('click', () => ouvrirMesDocuments('documents'));
+$('#btn-modeles').addEventListener('click', () => ouvrirMesDocuments('modeles'));
+$('#reprendre-tout').addEventListener('click', () => ouvrirMesDocuments('documents'));
+majReprendre();
 $('#btn-remplir').addEventListener('click', async () => { const [f] = await choisirFichiers(); if (f) ouvrirFichier(f); });
 $('#btn-signer').addEventListener('click', async () => {
   const [f] = await choisirFichiers(); if (!f) return;
