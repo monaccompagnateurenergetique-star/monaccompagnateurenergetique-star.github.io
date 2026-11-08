@@ -537,7 +537,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.2.1';
+const VERSION_APPLI = '1.2.2';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;
@@ -3518,13 +3518,24 @@ function preparerGoogle() {
       client_id: GOOGLE_CLIENT_ID, scope: DRIVE_SCOPE,
       callback: r => {
         const a = attenteJeton; attenteJeton = null;
-        if (r.error) { a?.rej(new Error(r.error)); return; }
+        if (r.error) { a?.rej(new Error(r.error === 'access_denied' ? 'vous avez refusé l\'accès dans la fenêtre Google.' : r.error)); return; }
+        // Google laisse cocher ou décocher l'accès : sans la case « fichiers Drive », l'appli ne peut rien faire
+        if (!google.accounts.oauth2.hasGrantedAllScopes(r, DRIVE_SCOPE)) {
+          a?.rej(new Error('dans la fenêtre Google, cochez la case « Afficher, créer et supprimer uniquement les fichiers Google Drive que vous utilisez avec cette application », puis validez.'));
+          return;
+        }
         jetonDrive = r.access_token; expirationJeton = Date.now() + (r.expires_in || 3600) * 1000;
+        const premiere = !prefs.driveConnecte;
         prefs.driveConnecte = true; ecrirePrefs(prefs);
         a?.res(jetonDrive); majEtatDrive();
-        if (prefs.garderDocuments) setTimeout(() => synchroniserDrive({ discret: true }), 500);
+        // Première connexion : synchronisation visible (on voit que ça marche, ou pourquoi ça ne marche pas)
+        setTimeout(() => synchroniserDrive({ discret: !premiere }), 400);
       },
-      error_callback: e => { const a = attenteJeton; attenteJeton = null; a?.rej(new Error(e?.type || 'connexion annulée')); }
+      error_callback: e => {
+        const a = attenteJeton; attenteJeton = null;
+        const msg = { popup_failed_to_open: 'la fenêtre Google a été bloquée. Autorisez les fenêtres pop-up pour ce site, puis réessayez.', popup_closed: 'la fenêtre Google a été fermée avant la fin.' }[e?.type];
+        a?.rej(new Error(msg || 'connexion annulée.'));
+      }
     });
     return true;
   }).catch(() => false);
@@ -3546,7 +3557,8 @@ function deconnecterDrive() {
 async function driveFetch(url, opts = {}) {
   const j = await connecterDrive();
   const r = await fetch(url, { ...opts, headers: { ...(opts.headers || {}), Authorization: 'Bearer ' + j } });
-  if (r.status === 401) { jetonDrive = null; throw new Error('Session Google expirée : reconnectez-vous.'); }
+  if (r.status === 401) { jetonDrive = null; majEtatDrive(); throw new Error('Session Google expirée : reconnectez-vous.'); }
+  if (r.status === 403) { jetonDrive = null; majEtatDrive(); throw new Error('Google Drive refuse l\'accès. Reconnectez-vous et cochez bien la case d\'accès aux fichiers dans la fenêtre Google.'); }
   if (!r.ok) throw new Error(`Google Drive a répondu ${r.status}`);
   return r;
 }
@@ -3653,7 +3665,8 @@ async function synchroniserDrive({ discret = false } = {}) {
     for (const [, dist] of distants) { await enregistrerPaquet(new TextDecoder().decode(await telechargerDrive(dist.id)), { driveId: dist.id, driveMaj: dist.maj }); bilan.recus++; }
     prefs.derniereSynchro = Date.now(); ecrirePrefs(prefs);
     majReprendre(); document.dispatchEvent(new Event('drive-etat'));
-    if (!discret || bilan.recus || bilan.conflits) toast(`Synchronisé : ${bilan.envoyes} envoyé${bilan.envoyes > 1 ? 's' : ''}, ${bilan.recus} reçu${bilan.recus > 1 ? 's' : ''}${bilan.supprimes ? `, ${bilan.supprimes} supprimé${bilan.supprimes > 1 ? 's' : ''} ailleurs` : ''}${bilan.conflits ? `, ${bilan.conflits} en double (modifié sur deux appareils)` : ''}`, 5000);
+    if (!discret && !bilan.envoyes && !bilan.recus && !bilan.conflits && !bilan.supprimes) toast('Google Drive est connecté et à jour (dossier « Atelier PDF » dans votre Drive)', 5000);
+    else if (!discret || bilan.recus || bilan.conflits) toast(`Synchronisé : ${bilan.envoyes} envoyé${bilan.envoyes > 1 ? 's' : ''}, ${bilan.recus} reçu${bilan.recus > 1 ? 's' : ''}${bilan.supprimes ? `, ${bilan.supprimes} supprimé${bilan.supprimes > 1 ? 's' : ''} ailleurs` : ''}${bilan.conflits ? `, ${bilan.conflits} en double (modifié sur deux appareils)` : ''}`, 5000);
     return bilan;
   } catch (e) { console.error(e); if (!discret) toast('La synchronisation n\'a pas abouti : ' + e.message, 6000); }
   finally { synchroEnCours = false; if (!discret) libre(); }
@@ -3779,7 +3792,11 @@ if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(e => console.warn('Service worker non installé', e));
   let dejaControle = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (dejaControle) toast('Nouvelle version installée : elle sera active à la prochaine ouverture.', 5000);
+    // Nouvelle version : on recharge tout de suite si rien n'est ouvert, sinon on propose de le faire (le travail est gardé avant)
+    if (dejaControle) {
+      if (!D && !document.querySelector('.feuille')) location.reload();
+      else toast('Nouvelle version disponible.', { action: 'Mettre à jour', onAction: async () => { if (D) await sauvegarder(D, { force: true }); location.reload(); } });
+    }
     dejaControle = true;
   });
 }
