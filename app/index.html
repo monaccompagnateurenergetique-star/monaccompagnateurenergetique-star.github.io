@@ -387,6 +387,9 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 @media (prefers-reduced-motion:reduce){.roue{animation-duration:2.4s}#toast{transition:none}}
 #depot{position:fixed;inset:0;display:none;place-items:center;background:rgba(13,107,79,.12);border:4px dashed var(--accent);z-index:9998;font-size:20px;font-weight:700;color:var(--accent-fort)}
 #depot.visible{display:grid}
+/* Sélecteur de fichiers de Google : au-dessus des fenêtres de l'appli */
+.picker-dialog-bg{z-index:9990!important}
+.picker-dialog{z-index:9991!important;max-width:100vw}
 </style>
 </head>
 <body>
@@ -567,7 +570,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.4.1';
+const VERSION_APPLI = '1.4.2';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;
@@ -2163,9 +2166,14 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
   const avecDrive = driveConfigure();
   let destination = avecDrive && !partage && ['appareil', 'drive', 'deux'].includes(prefs.destinationExport) ? prefs.destinationExport : 'appareil';
   let versDrive = avecDrive && partage && !!prefs.driveAuto;
+  const nomDossierEl = el('strong', { text: nomDossierExport() });
   const ligneDossier = avecDrive ? el('div', { class: 'ligne-dossier' }, icone('dossier'),
-    el('span', { class: 'texte' }, 'Dossier Drive : ', el('strong', { text: nomDossierExport() })),
-    bouton('Changer', { cls: 'btn mini', label: 'Choisir le dossier Google Drive où enregistrer', onclick: () => { if (!partage) { prefs.destinationExport = destination; ecrirePrefs(prefs); } choisirDansDrive('dossier'); } })) : null;
+    el('span', { class: 'texte' }, 'Dossier Drive : ', nomDossierEl),
+    bouton('Changer', { cls: 'btn mini', label: 'Choisir le dossier Google Drive où enregistrer', onclick: async () => {
+      if (!partage) { prefs.destinationExport = destination; ecrirePrefs(prefs); }
+      await choisirDansDrive('dossier'); // (sélecteur dans l'appli : la fenêtre reste ouverte, on met le nom à jour)
+      nomDossierEl.textContent = nomDossierExport();
+    } })) : null;
   const zoneDestination = !avecDrive ? null : partage
     ? el('div', {}, el('label', { class: 'case-option' },
         el('input', { type: 'checkbox', checked: versDrive, onchange: e => { versDrive = e.target.checked; prefs.driveAuto = versDrive; ecrirePrefs(prefs); majAffichage(); } }),
@@ -3600,10 +3608,9 @@ const API_DRIVE = 'https://www.googleapis.com/drive/v3', API_ENVOI = 'https://ww
 const driveConfigure = () => !!GOOGLE_CLIENT_ID;
 /* Connexion par REDIRECTION (et non par fenêtre pop-up) : la page part chez Google, puis Google renvoie ici avec le jeton
    dans l'adresse (#access_token=…). Plus fiable que la pop-up, que les navigateurs coupent souvent en route.
-   Le jeton est gardé dans la session de l'onglet (sessionStorage), au plus 1 heure, puis effacé. */
-const CLE_JETON = 'atelierpdf.jeton';
+   Le jeton est gardé sur l'appareil (réglages), au plus 1 heure (durée fixée par Google), même si l'appli est fermée. */
 let jetonDrive = null, expirationJeton = 0;
-try { const j = JSON.parse(sessionStorage.getItem(CLE_JETON) || 'null'); if (j && j.exp > Date.now()) { jetonDrive = j.jeton; expirationJeton = j.exp; } } catch {}
+if (prefs.jetonDrive?.exp > Date.now()) { jetonDrive = prefs.jetonDrive.jeton; expirationJeton = prefs.jetonDrive.exp; }
 const driveConnecte = () => !!jetonDrive && Date.now() < expirationJeton - 60000;
 const preparerGoogle = () => Promise.resolve(driveConfigure()); // (plus de script Google à charger)
 const urlRetourGoogle = () => new URL('./', location.href).href; // https://…/app/ : à déclarer dans « URI de redirection autorisés »
@@ -3620,6 +3627,8 @@ async function redirigerVersGoogle({ silencieux = false, choix = null } = {}) {
     else p.set('mimetypes', 'application/pdf');
   }
   else if (silencieux) p.set('prompt', 'none'); else if (!prefs.driveConnecte) p.set('prompt', 'consent');
+  // Compte déjà connu : Google ne redemande pas de choisir le compte (et la reconnexion silencieuse est immédiate)
+  if (prefs.driveEmail) p.set('login_hint', prefs.driveEmail);
   occupe('Connexion à Google…');
   location.assign('https://accounts.google.com/o/oauth2/v2/auth?' + p);
   return new Promise(() => {}); // la page s'en va
@@ -3629,10 +3638,10 @@ function connecterDrive() {
   if (driveConnecte()) return Promise.resolve(jetonDrive);
   return redirigerVersGoogle({ silencieux: !!prefs.driveConnecte });
 }
-function oublierJeton() { jetonDrive = null; expirationJeton = 0; try { sessionStorage.removeItem(CLE_JETON); } catch {} }
+function oublierJeton() { jetonDrive = null; expirationJeton = 0; if (prefs.jetonDrive) { delete prefs.jetonDrive; ecrirePrefs(prefs); } }
 function deconnecterDrive() {
   if (jetonDrive) fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(jetonDrive), { method: 'POST' }).catch(() => {});
-  oublierJeton(); prefs.driveConnecte = false; prefs.driveAuto = false; delete prefs.driveDossiers; delete prefs.driveDossierExport; delete prefs.destinationExport; ecrirePrefs(prefs);
+  oublierJeton(); prefs.driveConnecte = false; prefs.driveAuto = false; delete prefs.driveEmail; delete prefs.driveDossiers; delete prefs.driveDossierExport; delete prefs.destinationExport; ecrirePrefs(prefs);
   majEtatDrive();
 }
 /** Au chargement : traite le retour de Google (#access_token=… ou #error=…). */
@@ -3662,13 +3671,16 @@ async function traiterRetourGoogle() {
   }
   if (r.has('access_token')) {
     jetonDrive = r.get('access_token'); expirationJeton = Date.now() + (+r.get('expires_in') || 3600) * 1000;
-    try { sessionStorage.setItem(CLE_JETON, JSON.stringify({ jeton: jetonDrive, exp: expirationJeton })); } catch {}
+    prefs.jetonDrive = { jeton: jetonDrive, exp: expirationJeton };
   }
   const premiere = !prefs.driveConnecte;
   prefs.driveConnecte = true; ecrirePrefs(prefs);
   majEtatDrive();
+  retenirCompteGoogle();
   if (choix) return retourChoixDrive(choix, (r.get('picked_file_ids') || '').split(',').filter(Boolean), rouvrir);
   await rouvrir();
+  // Le sélecteur intégré attendait la reconnexion : on l'ouvre maintenant
+  if (prefs.oauthPuisChoix) { const c = prefs.oauthPuisChoix; delete prefs.oauthPuisChoix; ecrirePrefs(prefs); return choisirDansDrive(c); }
   // Un PDF attendait la connexion (case « Aussi enregistrer dans Google Drive ») : on l'envoie maintenant
   if (await envoyerPdfEnAttente() && !premiere) return;
   if (premiere && !reouvrir) ouvrirMesDocuments('drive');
@@ -3684,9 +3696,53 @@ async function envoyerPdfEnAttente() {
   return true;
 }
 
-/** Sélecteur de Google : choisir un PDF (ouvrir, créer un modèle) ou un dossier (où enregistrer) dans tout son Drive. */
-function choisirDansDrive(choix) {
+/** Retient l'adresse du compte Google (pour que Google ne redemande plus de choisir le compte). */
+async function retenirCompteGoogle() {
+  if (prefs.driveEmail || !driveConnecte()) return;
+  try {
+    const u = (await (await driveFetch(`${API_DRIVE}/about?fields=user(emailAddress)`)).json()).user;
+    if (u?.emailAddress) { prefs.driveEmail = u.emailAddress; ecrirePrefs(prefs); majEtatDrive(); }
+  } catch (e) { console.warn('Compte Google non lu', e); }
+}
+
+/* Sélecteur de fichiers de Google DANS l'appli (fenêtre par-dessus, sans quitter l'appli ni redemander l'accord).
+   Il demande une clé API (publique, limitée à ce site et au sélecteur). Sans clé : on passe par la page de Google. */
+const GOOGLE_CLE_API = ''; // ← clé API « Google Picker API » (AIza…), à renseigner
+const GOOGLE_NUMERO_PROJET = '1066116338685'; // = début de l'identifiant client
+function chargerSelecteurGoogle() {
+  return chargerScript('https://apis.google.com/js/api.js')
+    .then(() => new Promise((res, rej) => gapi.load('picker', { callback: res, onerror: rej })));
+}
+async function selecteurDansAppli(choix) {
+  await chargerSelecteurGoogle();
+  const P = google.picker;
+  const vue = choix === 'dossier'
+    ? new P.DocsView(P.ViewId.FOLDERS).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes('application/vnd.google-apps.folder')
+    : new P.DocsView(P.ViewId.DOCS).setIncludeFolders(true).setMimeTypes('application/pdf');
+  return new Promise(res => {
+    const b = new P.PickerBuilder().addView(vue).setOAuthToken(jetonDrive).setDeveloperKey(GOOGLE_CLE_API).setAppId(GOOGLE_NUMERO_PROJET)
+      .setLocale('fr').setTitle(choix === 'dossier' ? 'Choisir le dossier où enregistrer' : 'Choisir un PDF')
+      .setSize(Math.min(1051, innerWidth - 8), Math.min(650, innerHeight - 8))
+      .setCallback(d => {
+        if (d[P.Response.ACTION] === P.Action.PICKED) res((d[P.Response.DOCUMENTS] || []).map(x => x[P.Document.ID]));
+        else if (d[P.Response.ACTION] === P.Action.CANCEL) res(null);
+      });
+    if (choix !== 'dossier') b.enableFeature(P.Feature.MULTISELECT_ENABLED);
+    b.build().setVisible(true);
+  });
+}
+/** Choisir un PDF (ouvrir, créer un modèle) ou un dossier (où enregistrer) dans tout son Drive. */
+async function choisirDansDrive(choix) {
   if (!driveConfigure()) return;
+  // Avec la clé API : le sélecteur s'ouvre dans l'appli. Session expirée : reconnexion rapide, puis il s'ouvre au retour.
+  if (GOOGLE_CLE_API && !driveConnecte()) { prefs.oauthPuisChoix = choix; ecrirePrefs(prefs); return redirigerVersGoogle({ silencieux: !!prefs.driveConnecte }); }
+  if (GOOGLE_CLE_API) {
+    let ids;
+    try { ids = await selecteurDansAppli(choix); }
+    catch (e) { console.warn('Sélecteur intégré indisponible, passage par la page de Google', e); ids = undefined; }
+    if (ids === null) return; // annulé
+    if (ids) return retourChoixDrive(choix, ids, async () => {});
+  }
   toast('Ouverture de Google Drive…');
   return redirigerVersGoogle({ choix });
 }
@@ -3695,7 +3751,7 @@ async function retourChoixDrive(choix, ids, rouvrir) {
   if (choix === 'dossier') {
     let nom = 'Dossier choisi';
     try { nom = (await (await driveFetch(`${API_DRIVE}/files/${ids[0]}?fields=name`)).json()).name || nom; } catch (e) { console.warn(e); }
-    prefs.driveDossierExport = { id: ids[0], nom }; ecrirePrefs(prefs);
+    prefs.driveDossierExport = { id: ids[0], nom }; ecrirePrefs(prefs); majEtatDrive();
     await rouvrir();
     if (await envoyerPdfEnAttente()) return;
     toast(`Les PDF iront dans « ${nom} ».${D ? ' Touchez Enregistrer pour continuer.' : ''}`, 6000);
@@ -3915,7 +3971,7 @@ function remplirBlocDrive(z) {
     return;
   }
   z.append(
-    el('p', { class: 'note' }, '✓ Connecté à Google Drive', prefs.derniereSynchro ? ` · dernière synchronisation ${quand(prefs.derniereSynchro)}` : ''),
+    el('p', { class: 'note' }, '✓ Connecté à Google Drive', prefs.driveEmail ? ` (${prefs.driveEmail})` : '', prefs.derniereSynchro ? ` · dernière synchronisation ${quand(prefs.derniereSynchro)}` : ''),
     el('div', { class: 'ligne-dossier' }, icone('dossier'),
       el('span', { class: 'texte' }, 'Vos PDF vont dans : ', el('strong', { text: nomDossierExport() })),
       bouton('Changer', { cls: 'btn mini', label: 'Choisir le dossier Google Drive où enregistrer vos PDF', onclick: () => choisirDansDrive('dossier') })),

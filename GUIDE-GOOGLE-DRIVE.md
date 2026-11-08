@@ -20,6 +20,18 @@ Tu le crées une seule fois depuis ton compte Google, puis tu me l'envoies. Je l
 2. Clique sur le résultat **Google Picker API** → **Activer**.
    (C'est ce qui permet de choisir un PDF ou un dossier dans tout ton Drive depuis l'appli.)
 
+## 2 ter. Créer la clé API (pour ouvrir le sélecteur Google directement dans l'appli)
+1. Barre de recherche en haut : tape `Identifiants` → ouvre **Identifiants** (API et services).
+2. **+ Créer des identifiants** → **Clé API**. Google affiche la clé (elle commence par `AIza`).
+3. Clique sur **Modifier la clé** (ou sur son nom) pour la protéger :
+   - **Restrictions relatives aux applications** → **Sites Web** → ajoute :
+     - `https://monaccompagnateurenergetique-star.github.io/*`
+     - `http://localhost:8080/*`
+     - `https://docs.google.com/*` (obligatoire pour le sélecteur)
+   - **Restrictions relatives aux API** → **Restreindre la clé** → coche **Google Picker API** uniquement.
+   - **Enregistrer**.
+4. Envoie-moi la clé. Comme l'identifiant client, elle n'est pas secrète : elle est visible dans l'appli et ne marche que depuis ton site.
+
 ## 3. Écran de consentement (ce que verront les utilisateurs)
 1. Menu ☰ → **Google Auth Platform** (ou « API et services → Écran de consentement OAuth ») → **Commencer**.
 2. Nom de l'application : `Atelier PDF` ; adresse e-mail d'assistance : ton adresse.
