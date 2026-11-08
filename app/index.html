@@ -134,11 +134,26 @@ a{color:var(--accent)}
 #ecran-doc:not(.onglet-document) :is(#defil,#indic-page,#aide-placement,#barre-recherche,#bandeau-page){display:none!important}
 #ecran-doc:not(.onglet-pages) #vue-pages{display:none}
 /* Panneau d'outils : sous le PDF (qui reste visible au-dessus), à la place de la barre d'outils */
-.panneau{background:#fff;border-top:1px solid var(--ligne);padding:4px 14px calc(12px + var(--bas-sur));max-height:48dvh;overflow:auto;box-shadow:0 -6px 16px rgba(20,24,35,.08);z-index:5}
-.panneau-tete{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;padding:4px 0;z-index:1}
-.panneau-tete strong{font-size:16px}
-.panneau .grille-outils .tuile{min-height:84px}
-.panneau .etiquette{margin-top:10px}
+.panneau{background:#fff;border-top:1px solid var(--ligne);padding:4px 10px calc(6px + var(--bas-sur));max-height:34dvh;overflow:auto;box-shadow:0 -4px 12px rgba(20,24,35,.08);z-index:5;display:flex;flex-direction:column;gap:4px}
+.panneau-tete{display:flex;align-items:center;gap:4px;min-height:44px}
+.panneau-tete strong{flex:1;font-size:15px}
+.btn.mini{min-height:40px;padding:0 12px;font-size:14px}
+.btn-icone.danger{color:var(--danger)}
+.rangee-defil{display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0}
+.rangee-defil::-webkit-scrollbar{display:none}
+.rangee-defil .segments{flex-wrap:nowrap;flex:none}
+.rangee-defil .segments span{min-height:40px;padding:0 12px;font-size:13px;white-space:nowrap}
+.rangee-defil .segments span:has(.pastille):not(:has(:not(.pastille))){padding:0 10px}
+.rangee-defil .pastille{width:20px;height:20px}
+.rangee-defil .btn.puce{flex:none;min-height:40px;padding:0 12px;font-size:13px;border-radius:20px}
+.champ.mini{min-height:40px;padding:6px 10px;width:auto;flex:none}
+#fil-texte{width:150px}
+#num-debut{width:64px}
+.mini-etiquette{font-size:13px;font-weight:600;color:var(--doux);margin-left:6px;flex:none}
+/* Panneau « Plus » : une rangée d'outils à la place de la barre du bas */
+.barre-plus{display:flex;gap:2px}
+.barre-plus .outil{flex:1 1 0;min-width:46px;padding:4px 1px;font-size:11px}
+.panneau:has(.barre-plus){padding-top:8px;padding-bottom:calc(8px + var(--bas-sur))}
 #ecran-doc:not(.onglet-document) #panneau,#ecran-doc.mode-lire #panneau{display:none!important}
 #ecran-doc.avec-panneau #barre-editer,#ecran-doc.avec-panneau #barre-contexte{display:none!important}
 /* Numéros de page et filigrane affichés en direct sur les pages */
@@ -1983,10 +1998,14 @@ function fermerPanneau() {
   panneau.hidden = true; panneau.replaceChildren();
   majClassesDoc();
 }
-function enteteP(titre) {
+/** En-tête compact : titre, puis « Retirer » (facultatif) et « Terminer » sur la même ligne. */
+function enteteP(titre, retirer) {
   return el('div', { class: 'panneau-tete' }, el('strong', { text: titre }),
-    bouton('', { ico: 'fermer', cls: 'btn-icone', label: 'Fermer ce panneau', onclick: fermerPanneau }));
+    retirer ? bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: retirer.label, onclick: retirer.action }) : null,
+    bouton('Terminer', { ico: 'valider', cls: 'btn principal mini', onclick: fermerPanneau }));
 }
+/** Rangée de choix qui défile horizontalement (une seule ligne, quelle que soit la largeur). */
+const rangee = (...enfants) => el('div', { class: 'rangee-defil' }, ...enfants);
 function ouvrirPanneau(type) {
   if (!D) return;
   terminerEdition(); annulerPlacement(); selectionner(null);
@@ -1996,43 +2015,38 @@ function ouvrirPanneau(type) {
   D.panneau = type;
   panneau.replaceChildren();
   if (type === 'plus') {
-    const t = (ico, titre, desc, fn) => el('button', { type: 'button', class: 'tuile', onclick: fn }, icone(ico), el('strong', { text: titre }), el('span', { text: desc }));
-    panneau.append(enteteP('Plus d\'outils'), el('div', { class: 'grille-outils' },
-      t('numero', 'Numéroter', 'Numéros de page, en direct', () => ouvrirPanneau('numeros')),
-      t('filigrane', 'Filigrane', '« COPIE », « CONFIDENTIEL »…', () => ouvrirPanneau('filigrane')),
-      t('recherche', 'Rechercher', 'Trouver un mot', () => { fermerPanneau(); ouvrirRecherche(); }),
-      t('info', 'Informations', 'Pages, taille, champs', () => { fermerPanneau(); afficherInfos(); })));
+    // Une simple rangée d'outils, de la même hauteur que la barre du bas qu'elle remplace
+    const o = (ico, titre, fn, cls = 'outil') => bouton(titre, { ico, cls, onclick: fn });
+    panneau.append(el('div', { class: 'barre-plus' },
+      o('gauche', 'Retour', fermerPanneau),
+      o('numero', 'Numéroter', () => ouvrirPanneau('numeros')),
+      o('filigrane', 'Filigrane', () => ouvrirPanneau('filigrane')),
+      o('recherche', 'Rechercher', () => { fermerPanneau(); ouvrirRecherche(); }),
+      o('info', 'Infos', () => { fermerPanneau(); afficherInfos(); })));
   } else {
     avantPanneau = instantane();
     if (type === 'numeros') {
       if (!D.numeros) D.numeros = { position: 'bas-centre', format: 'n-sur-total', debut: 1 };
       const n = D.numeros, maj = () => { D.modifie = true; rendreDecoToutes(); };
-      const debut = el('input', { class: 'champ', id: 'num-debut', type: 'number', min: '0', value: String(n.debut), inputmode: 'numeric', style: { maxWidth: '120px' } });
+      const debut = el('input', { class: 'champ mini', id: 'num-debut', type: 'number', min: '0', value: String(n.debut), inputmode: 'numeric', 'aria-label': 'Premier numéro' });
       debut.addEventListener('input', () => { n.debut = parseInt(debut.value, 10) || 1; maj(); });
-      panneau.append(enteteP('Numéroter les pages'),
-        el('div', { class: 'etiquette', text: 'Position' }),
-        segments('pos', [['bas-centre', 'En bas au centre'], ['bas-droite', 'En bas à droite'], ['haut-droite', 'En haut à droite']], n.position, v => { n.position = v; maj(); }),
-        el('div', { class: 'etiquette', text: 'Format' }),
-        segments('fmt', [['n', '1'], ['n-sur-total', '1 / 5'], ['page-n-sur', 'Page 1 sur 5']], n.format, v => { n.format = v; maj(); }),
-        el('label', { class: 'etiquette', for: 'num-debut', text: 'Premier numéro' }), debut,
-        el('div', { class: 'rangee-btn' },
-          bouton('Retirer les numéros', { ico: 'poubelle', cls: 'btn danger', onclick: () => { D.numeros = null; rendreDecoToutes(); fermerPanneau(); toast('Numéros retirés', { action: 'Annuler', onAction: annulerAction }); } }),
-          bouton('Terminer', { ico: 'valider', cls: 'btn principal', onclick: fermerPanneau })));
+      panneau.append(
+        enteteP('Numéros de page', { label: 'Retirer les numéros', action: () => { D.numeros = null; rendreDecoToutes(); fermerPanneau(); toast('Numéros retirés', { action: 'Annuler', onAction: annulerAction }); } }),
+        rangee(segments('pos', [['bas-centre', 'Bas centre'], ['bas-droite', 'Bas droite'], ['haut-droite', 'Haut droite']], n.position, v => { n.position = v; maj(); })),
+        rangee(segments('fmt', [['n', '1'], ['n-sur-total', '1 / 5'], ['page-n-sur', 'Page 1 sur 5']], n.format, v => { n.format = v; maj(); }),
+          el('label', { class: 'mini-etiquette', for: 'num-debut', text: 'Début' }), debut));
     } else if (type === 'filigrane') {
       if (!D.filigrane) D.filigrane = { texte: 'COPIE', couleur: '#9ca3af', opacite: 0.25 };
       const f = D.filigrane, maj = () => { D.modifie = true; rendreDecoToutes(); };
-      const champ = el('input', { class: 'champ', id: 'fil-texte', value: f.texte, maxlength: 40 });
+      const champ = el('input', { class: 'champ mini', id: 'fil-texte', value: f.texte, maxlength: 40, 'aria-label': 'Texte du filigrane', list: 'fil-modeles' });
       champ.addEventListener('input', () => { f.texte = champ.value; maj(); });
-      panneau.append(enteteP('Filigrane'),
-        el('label', { class: 'etiquette', for: 'fil-texte', text: 'Texte' }), champ,
-        el('div', { class: 'rangee-btn' }, ['COPIE', 'CONFIDENTIEL', 'BROUILLON', 'PAYÉ'].map(t => bouton(t, { onclick: () => { champ.value = f.texte = t; maj(); } }))),
-        el('div', { class: 'etiquette', text: 'Couleur' }),
-        segments('fil-couleur', [['#9ca3af', 'Gris', '#9ca3af'], ['#b91c1c', 'Rouge', '#b91c1c'], ['#1d3fb3', 'Bleu', '#1d3fb3']], f.couleur, v => { f.couleur = v; maj(); }),
-        el('div', { class: 'etiquette', text: 'Intensité' }),
-        segments('fil-op', [['0.15', 'Discrète'], ['0.25', 'Moyenne'], ['0.4', 'Marquée']], String(f.opacite), v => { f.opacite = +v; maj(); }),
-        el('div', { class: 'rangee-btn' },
-          bouton('Retirer le filigrane', { ico: 'poubelle', cls: 'btn danger', onclick: () => { D.filigrane = null; rendreDecoToutes(); fermerPanneau(); toast('Filigrane retiré', { action: 'Annuler', onAction: annulerAction }); } }),
-          bouton('Terminer', { ico: 'valider', cls: 'btn principal', onclick: fermerPanneau })));
+      panneau.append(
+        enteteP('Filigrane', { label: 'Retirer le filigrane', action: () => { D.filigrane = null; rendreDecoToutes(); fermerPanneau(); toast('Filigrane retiré', { action: 'Annuler', onAction: annulerAction }); } }),
+        rangee(champ, ...['COPIE', 'CONFIDENTIEL', 'BROUILLON', 'PAYÉ'].map(t => bouton(t, { cls: 'btn puce', onclick: () => { champ.value = f.texte = t; maj(); } }))),
+        rangee(
+          segments('fil-couleur', [['#9ca3af', '', '#9ca3af'], ['#b91c1c', '', '#b91c1c'], ['#1d3fb3', '', '#1d3fb3']].map(([v, , c]) => [v, '', c]), f.couleur, v => { f.couleur = v; maj(); }),
+          segments('fil-op', [['0.15', 'Discret'], ['0.25', 'Moyen'], ['0.4', 'Marqué']], String(f.opacite), v => { f.opacite = +v; maj(); })));
+      panneau.querySelectorAll('input[name="fil-couleur"]').forEach((r, k) => r.setAttribute('aria-label', ['Gris', 'Rouge', 'Bleu'][k]));
     }
     D.modifie = true;
     rendreDecoToutes();
