@@ -585,8 +585,29 @@ a{color:var(--accent)}
 .vue-cartes .ligne-doc .texte strong{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3}
 .vue-cartes .ligne-doc .texte small{font-size:12px}
 .vue-cartes .ligne-doc>.btn-icone{width:40px;height:40px}
+/* Ligne par ligne : un document par ligne, sur toute la largeur, en rangées serrées */
+.feuille.mes-docs .liste-docs.vue-lignes{display:block;background:#fff;border-radius:14px;box-shadow:0 1px 2px rgba(20,24,35,.05),0 6px 16px rgba(20,24,35,.05);overflow:hidden}
+.feuille.mes-docs .liste-docs.vue-lignes>:not(.ligne-doc){margin:10px 12px}
+.feuille.mes-docs .vue-lignes .ligne-doc{margin:0;border:0;border-radius:0;box-shadow:none;border-bottom:1px solid var(--ligne);padding:2px 4px 2px 0}
+.feuille.mes-docs .vue-lignes .ligne-doc:last-child{border-bottom:0}
+.vue-lignes .ligne-doc-principal{min-height:44px;padding:3px 10px;border-radius:8px}
+.vue-lignes .ligne-doc-principal img{width:26px;height:34px}
+.vue-lignes .ligne-doc-ico{width:30px;height:30px;border-radius:8px}
+.vue-lignes .ligne-doc .texte{flex-direction:row;align-items:baseline;gap:12px}
+.vue-lignes .ligne-doc .texte strong{flex:1;min-width:0;font-weight:600}
+.vue-lignes .ligne-doc .texte small{flex:none;font-size:12.5px;white-space:nowrap}
+.vue-lignes .ligne-doc>.btn-icone{width:40px;height:40px}
+.vue-lignes .badges-doc{margin:0;flex:none}
+@media (max-width:520px){
+  /* Téléphone : nom (+ « Non enregistré ») sur la 1re ligne, date dessous ; les autres étiquettes sont masquées pour rester compact */
+  .vue-lignes .ligne-doc .texte{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:6px;align-items:center}
+  .vue-lignes .ligne-doc .texte strong{grid-column:1;grid-row:1}
+  .vue-lignes .ligne-doc .texte small{grid-column:1/-1;grid-row:2;font-size:12px}
+  .vue-lignes .badges-doc{grid-column:2;grid-row:1}
+  .vue-lignes .badge-doc:not(.alerte){display:none}
+}
 @media (min-width:1000px){
-  .feuille.mes-docs .liste-docs{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
+  .feuille.mes-docs .liste-docs:not(.vue-lignes){display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
   .feuille.mes-docs .liste-docs>:not(.ligne-doc){grid-column:1/-1}
   .feuille.mes-docs .liste-docs .ligne-doc{margin:0}
   /* Paramètres : sommaire visible et collant sur PC aussi */
@@ -758,6 +779,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   <symbol id="i-horloge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
   <symbol id="i-rogner" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M2 6h14a2 2 0 0 1 2 2v14"/></symbol>
   <symbol id="i-vue-liste" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><rect x="3.5" y="5" width="3" height="3" rx=".8"/><rect x="3.5" y="10.5" width="3" height="3" rx=".8"/><rect x="3.5" y="16" width="3" height="3" rx=".8"/></symbol>
+  <symbol id="i-vue-lignes" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="4" rx="1"/><rect x="3.5" y="10" width="17" height="4" rx="1"/><rect x="3.5" y="15.5" width="17" height="4" rx="1"/></symbol>
   <symbol id="i-vue-cartes" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></symbol>
   <symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></symbol>
 </svg>
@@ -893,7 +915,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.15.3';
+const VERSION_APPLI = '1.16.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -965,7 +987,25 @@ const SUFFIXES = /(\s*\((signé|modifié|fusion|compressé|numéroté|filigrane|
 const nomSortie = (nom, suffixe = 'modifié', ext = 'pdf') => `${nomSansExt(nom).replace(SUFFIXES, '')} (${suffixe}).${ext}`;
 const estPdf = f => f && (f.type === 'application/pdf' || /\.pdf$/i.test(f.name || ''));
 const estImage = f => f && (/^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|bmp|heic)$/i.test(f.name || ''));
-async function lireFichier(f) { return { nom: f.name || 'document.pdf', octets: new Uint8Array(await f.arrayBuffer()) }; }
+/* GARDE-FOUS : un fichier énorme, des centaines de fichiers ou un PDF piégé de 50 000 pages peuvent épuiser la mémoire
+   du téléphone et faire fermer l'appli. On refuse proprement, avec un message, AVANT de lire le fichier. */
+const LIMITES = { pdfMo: 150, imageMo: 40, tableurMo: 25, nbFichiers: 40, pages: 1500, imagePixels: 120e6, ouvertureSec: 60 };
+function limiteMo(f) { return estPdf(f) ? LIMITES.pdfMo : estImage(f) ? LIMITES.imageMo : estTableur(f) ? LIMITES.tableurMo : LIMITES.pdfMo; }
+function filtrerFichiers(liste) {
+  const msgs = [];
+  let ok = [...(liste || [])].filter(Boolean);
+  const lourds = ok.filter(f => f.size > limiteMo(f) * 1048576);
+  if (lourds.length) {
+    msgs.push(lourds.length === 1 ? `« ${lourds[0].name} » est trop lourd (${Math.round(lourds[0].size / 1048576)} Mo, maximum ${limiteMo(lourds[0])} Mo).` : `${lourds.length} fichiers trop lourds ont été ignorés (PDF : ${LIMITES.pdfMo} Mo maximum, photo : ${LIMITES.imageMo} Mo).`);
+    ok = ok.filter(f => !lourds.includes(f));
+  }
+  if (ok.length > LIMITES.nbFichiers) { msgs.push(`${LIMITES.nbFichiers} fichiers au maximum à la fois : les ${ok.length - LIMITES.nbFichiers} derniers ont été ignorés.`); ok = ok.slice(0, LIMITES.nbFichiers); }
+  if (msgs.length) toast(msgs.join(' '), 7000);
+  return ok;
+}
+async function lireFichier(f) {
+  if (f.size > limiteMo(f) * 1048576) throw new Error('fichier trop lourd');
+  return { nom: f.name || 'document.pdf', octets: new Uint8Array(await f.arrayBuffer()) }; }
 
 /** Transforme un texte pour qu'il soit écrit avec la police standard du PDF (accents français compris). */
 const WINANSI_EXTRA = '€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ';
@@ -1104,7 +1144,7 @@ function choisirFichiers({ accept = 'application/pdf,.pdf', multiple = false, ca
     if (capture) i.setAttribute('capture', capture);
     let fini = false;
     const finir = v => { if (fini) return; fini = true; i.remove(); res(v); };
-    i.addEventListener('change', () => finir([...i.files]));
+    i.addEventListener('change', () => finir(filtrerFichiers(i.files)));
     i.addEventListener('cancel', () => finir([]));
     document.body.append(i); i.click();
   });
@@ -1174,8 +1214,13 @@ const defil = $('#defil'), pagesEl = $('#pages'), ecranDoc = $('#ecran-doc');
 const vuePages = $('#vue-pages'), grillePages = $('#grille-pages');
 
 async function chargerPdfjs(octets, { demanderMotDePasse = true } = {}) {
-  const tache = pdfjsLib.getDocument({ data: octets.slice(), isEvalSupported: false, enableXfa: false, useSystemFonts: true });
+  // maxImageSize : une image géante cachée dans un PDF (« bombe ») n'est pas décodée, au lieu de saturer la mémoire
+  const tache = pdfjsLib.getDocument({ data: octets.slice(), isEvalSupported: false, enableXfa: false, useSystemFonts: true, maxImageSize: 64e6 });
+  // Un PDF fabriqué pour ne jamais finir de s'ouvrir est abandonné au bout d'un moment (l'appli reste utilisable)
+  let minuteur = setTimeout(() => tache.destroy(), LIMITES.ouvertureSec * 1000);
+  tache.promise.then(() => clearTimeout(minuteur), () => clearTimeout(minuteur));
   if (demanderMotDePasse) tache.onPassword = (repondre, raison) => {
+    clearTimeout(minuteur); // on laisse à la personne le temps de taper le mot de passe
     const mdp = prompt(raison === pdfjsLib.PasswordResponses.INCORRECT_PASSWORD ? 'Mot de passe incorrect. Réessayez :' : 'Ce PDF est protégé. Mot de passe :');
     if (mdp === null) tache.destroy(); else repondre(mdp);
   };
@@ -1189,9 +1234,11 @@ async function chargerSource(octets) {
 let compteurPage = 0;
 const rotationTotale = e => (e.p.rotate + e.rot) % 360;
 function majDims(e) { e.vp = e.p.getViewport({ scale: 1, rotation: rotationTotale(e) }); e.w = e.vp.width; e.h = e.vp.height; }
-async function pagesDe(source, k) {
-  const res = [];
-  for (let n = 1; n <= source.pdf.numPages; n++) {
+/** Pages d'un PDF. « deja » = pages déjà présentes : au-delà de LIMITES.pages, les suivantes ne sont pas chargées. */
+async function pagesDe(source, k, deja = 0) {
+  const res = [], max = Math.max(0, LIMITES.pages - deja), nb = Math.min(source.pdf.numPages, max);
+  if (nb < source.pdf.numPages) toast(nb ? `Document très long : seules les ${nb} premières pages sont chargées (${LIMITES.pages} pages au maximum).` : `Limite de ${LIMITES.pages} pages atteinte : ces pages n'ont pas été ajoutées.`, 7000);
+  for (let n = 1; n <= nb; n++) {
     const e = { id: 'p' + (++compteurPage), src: k, num: n, p: await source.pdf.getPage(n), rot: 0 };
     majDims(e); res.push(e);
   }
@@ -1217,7 +1264,8 @@ async function ouvrirDocuments(fichiers, { onglet = 'document', restaurer = null
       let s;
       try { s = await chargerSource(f.octets); }
       catch (e) { if (e?.name !== 'PasswordException') toast(`« ${f.nom} » ne s'ouvre pas : le fichier est peut-être abîmé.`, 5000); console.error(e); continue; }
-      sources.push(s); pages.push(...await pagesDe(s, sources.length - 1));
+      if (pages.length >= LIMITES.pages) { s.pdf.destroy(); toast(`Limite de ${LIMITES.pages} pages atteinte : les fichiers suivants n'ont pas été ouverts.`, 7000); break; }
+      sources.push(s); pages.push(...await pagesDe(s, sources.length - 1, pages.length));
     }
     if (!sources.length) return;
     const ancien = D;
@@ -2519,7 +2567,7 @@ async function ajouterFichiers(position) {
       let s; try { s = await chargerSource(octets); } catch (e) { console.error(e); continue; }
       s.photos = !!lot.photos;
       D.sources.push(s);
-      const nouvelles = await pagesDe(s, D.sources.length - 1);
+      const nouvelles = await pagesDe(s, D.sources.length - 1, D.pages.length);
       nouvelles.forEach(pg => D.parId.set(pg.id, pg));
       D.pages.splice(position + ajout, 0, ...nouvelles); ajout += nouvelles.length;
     }
@@ -3450,7 +3498,8 @@ async function chargerImage(fichier, max = 2400) {
   const url = URL.createObjectURL(fichier);
   try {
     const img = new Image(); img.src = url; await img.decode();
-    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    if (img.naturalWidth * img.naturalHeight > LIMITES.imagePixels) throw new Error('image trop grande');
+    const k =Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
     const c = el('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
     const ctx = c.getContext('2d'); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(img, 0, 0, c.width, c.height);
     return c;
@@ -4071,7 +4120,7 @@ async function outilPhotos({ camera = false, fichiers = [] } = {}) {
    14. FICHIERS REÇUS (menu Partager d'Android, « Ouvrir avec », glisser-déposer)
    ========================================================= */
 async function traiterFichiers(fichiers) {
-  fichiers = fichiers.filter(Boolean);
+  fichiers = filtrerFichiers(fichiers);
   if (!fichiers.length) return;
   if (!fichiers.some(estPdf) && fichiers.some(estTableur)) return convertirTableur(fichiers.find(estTableur));
   const pdfs = fichiers.filter(estPdf), imgs = fichiers.filter(f => !estPdf(f) && estImage(f));
@@ -4566,13 +4615,14 @@ async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
   const appliquerVue = v => {
     prefs.vueDocs = v; ecrirePrefs(prefs);
     zone.classList.toggle('vue-cartes', v === 'cartes');
+    zone.classList.toggle('vue-lignes', v === 'lignes');
     choixVue.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vue === v)));
   };
-  [['liste', 'vue-liste', 'Afficher en liste'], ['cartes', 'vue-cartes', 'Afficher en cartes']].forEach(([v, ico, label]) => {
+  [['lignes', 'vue-lignes', 'Afficher ligne par ligne'], ['liste', 'vue-liste', 'Afficher en liste'], ['cartes', 'vue-cartes', 'Afficher en cartes']].forEach(([v, ico, label]) => {
     const b = bouton('', { ico, cls: 'btn-icone', label, onclick: () => appliquerVue(v) });
     b.dataset.vue = v; choixVue.append(b);
   });
-  appliquerVue(prefs.vueDocs === 'cartes' ? 'cartes' : 'liste');
+  appliquerVue(['cartes', 'lignes'].includes(prefs.vueDocs) ? prefs.vueDocs : 'liste');
   fe.corps.append(el('div', { class: 'barre-recherche-docs' },
     el('label', { for: 'recherche-docs', class: 'lib-recherche' }, icone('zoom'), 'Rechercher'), champRecherche, choixVue), barreOnglets, infoRecherche, zone);
   const ouvrirPuis = async fn => { await fe.fermer(); fn(); };
