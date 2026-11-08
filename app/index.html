@@ -106,13 +106,21 @@ a{color:var(--accent)}
 .outils-edition .outil.principal,.barre-contexte .outil.principal{flex-basis:auto;padding:4px 10px;margin-left:2px}
 .pastille-outil{width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
 
-/* Quelle barre est visible ? */
-#barre-lire,#barre-editer,#barre-contexte{display:none}
-#ecran-doc.mode-lire #barre-lire,#ecran-doc.onglet-pages #barre-lire{display:flex}
-#ecran-doc.mode-editer:not(.onglet-pages):not(.avec-selection) #barre-editer{display:flex}
-#ecran-doc.mode-editer.avec-selection:not(.onglet-pages) #barre-contexte{display:flex}
-#ecran-doc.onglet-pages #defil,#ecran-doc.onglet-pages #indic-page,#ecran-doc.onglet-pages #aide-placement,#ecran-doc.onglet-pages #barre-recherche{display:none!important}
+/* Quelle zone est visible ? (onglet Document, Pages ou Outils) */
+#barre-editer,#barre-contexte{display:none}
+#ecran-doc.onglet-document:not(.avec-selection) #barre-editer{display:flex}
+#ecran-doc.onglet-document.avec-selection #barre-contexte{display:flex}
+#ecran-doc:not(.onglet-document) :is(#defil,#indic-page,#aide-placement,#barre-recherche,#bandeau-page){display:none!important}
 #ecran-doc:not(.onglet-pages) #vue-pages{display:none}
+#ecran-doc:not(.onglet-outils) #vue-outils{display:none}
+.btn-icone.plein{background:var(--accent);color:#fff;border-radius:50%;width:40px;height:40px;margin:0 4px}
+.btn-icone.plein:active{background:var(--accent-fort)}
+.bandeau-page{display:flex;align-items:center;gap:0;padding:2px 6px;background:var(--accent-pale);border-bottom:1px solid #c9e2d6;z-index:4}
+.bandeau-page strong{font-size:14px;white-space:nowrap}
+.bandeau-page .espace{flex:1}
+.bandeau-page .tout-voir{min-height:40px;padding:0 10px;font-size:13px}
+#vue-outils{flex:1;overflow:auto;padding:12px 12px 24px}
+#vue-outils .tuile{min-height:96px}
 
 /* Onglet Pages */
 #vue-pages{flex:1;overflow:auto;padding:12px 12px 24px}
@@ -334,13 +342,25 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   <header class="barre-doc">
     <button class="btn-icone" id="doc-retour" aria-label="Fermer le document" title="Fermer"><svg class="ico"><use href="#i-fermer"/></svg></button>
     <h1><span id="doc-titre">Document</span><small id="doc-sous-titre"></small></h1>
-    <button class="btn-icone" id="doc-chercher" aria-label="Rechercher dans le document" title="Rechercher"><svg class="ico"><use href="#i-recherche"/></svg></button>
-    <button class="btn-icone" id="doc-menu" aria-label="Plus d'actions" title="Plus d'actions"><svg class="ico"><use href="#i-menu"/></svg></button>
+    <button class="btn-icone" id="doc-annuler" aria-label="Annuler la dernière action" title="Annuler"><svg class="ico"><use href="#i-annuler"/></svg></button>
+    <button class="btn-icone" id="doc-partager" aria-label="Partager le PDF" title="Partager"><svg class="ico"><use href="#i-partager"/></svg></button>
+    <button class="btn-icone plein" id="doc-enregistrer" aria-label="Enregistrer le PDF" title="Enregistrer"><svg class="ico"><use href="#i-enregistrer"/></svg></button>
   </header>
   <nav class="onglets" role="tablist" aria-label="Affichage">
     <button role="tab" id="onglet-document" aria-selected="true" aria-controls="defil"><svg class="ico"><use href="#i-livre"/></svg>Document</button>
     <button role="tab" id="onglet-pages" aria-selected="false" aria-controls="vue-pages"><svg class="ico"><use href="#i-pages"/></svg>Pages</button>
+    <button role="tab" id="onglet-outils" aria-selected="false" aria-controls="vue-outils"><svg class="ico"><use href="#i-reglages"/></svg>Outils</button>
   </nav>
+  <div id="bandeau-page" class="bandeau-page" hidden>
+    <button class="btn-icone" id="bp-prec" aria-label="Page précédente" title="Page précédente"><svg class="ico"><use href="#i-gauche"/></svg></button>
+    <strong id="bp-titre">Page 1</strong>
+    <button class="btn-icone" id="bp-suiv" aria-label="Page suivante" title="Page suivante"><svg class="ico"><use href="#i-droite"/></svg></button>
+    <span class="espace"></span>
+    <button class="btn-icone" id="bp-pivoter" aria-label="Pivoter cette page" title="Pivoter"><svg class="ico"><use href="#i-pivoter"/></svg></button>
+    <button class="btn-icone" id="bp-recadrer" aria-label="Recadrer et nettoyer cette page" title="Recadrer"><svg class="ico"><use href="#i-scanner"/></svg></button>
+    <button class="btn-icone" id="bp-supprimer" aria-label="Supprimer cette page" title="Supprimer"><svg class="ico"><use href="#i-poubelle"/></svg></button>
+    <button class="btn tout-voir" id="bp-tout">Tout voir</button>
+  </div>
   <form id="barre-recherche" hidden>
     <input id="q" type="search" placeholder="Rechercher un mot" aria-label="Texte à rechercher" enterkeyhint="search" autocomplete="off">
     <span id="q-compte" aria-live="polite"></span>
@@ -351,23 +371,19 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   <div id="aide-placement" hidden><span id="aide-texte"></span><button class="btn" id="aide-annuler">Annuler</button></div>
   <div id="defil" role="tabpanel" aria-labelledby="onglet-document"><div id="pages"></div></div>
   <div id="vue-pages" role="tabpanel" aria-labelledby="onglet-pages">
-    <p class="note">Touchez une page pour l'ouvrir. Les flèches changent l'ordre.</p>
+    <p class="note">Touchez une page pour l'ouvrir seule. Les flèches changent l'ordre.</p>
     <div class="grille-pages" id="grille-pages"></div>
   </div>
+  <div id="vue-outils" role="tabpanel" aria-labelledby="onglet-outils">
+    <div class="grille-outils" id="grille-outils-doc"></div>
+  </div>
   <button id="indic-page" class="indic-page" aria-label="Aller à une page">1 / 1</button>
-  <footer id="barre-lire" class="barre-bas">
-    <button class="btn principal" id="btn-editer"><svg class="ico"><use href="#i-crayon"/></svg>Remplir et signer</button>
-    <button class="outil" id="btn-partager"><svg class="ico"><use href="#i-partager"/></svg>Partager</button>
-    <button class="outil" id="btn-enregistrer"><svg class="ico"><use href="#i-enregistrer"/></svg>Enregistrer</button>
-  </footer>
   <footer id="barre-editer" class="barre-bas outils-edition">
     <button class="outil" data-action="texte"><svg class="ico"><use href="#i-texte"/></svg>Texte</button>
     <button class="outil" data-action="signature"><svg class="ico"><use href="#i-signature"/></svg>Signature</button>
     <button class="outil" data-action="tampon"><svg class="ico"><use href="#i-tampon"/></svg>Tampon</button>
     <button class="outil" data-action="masque"><svg class="ico"><use href="#i-masque"/></svg>Cacher</button>
     <button class="outil" data-action="corriger"><svg class="ico"><use href="#i-corriger"/></svg>Corriger</button>
-    <button class="outil" data-action="annuler"><svg class="ico"><use href="#i-annuler"/></svg>Annuler</button>
-    <button class="outil principal" data-action="apercu"><svg class="ico"><use href="#i-oeil"/></svg>Aperçu</button>
   </footer>
   <footer id="barre-contexte" class="barre-bas barre-contexte" aria-label="Élément sélectionné"></footer>
 </section>
@@ -446,7 +462,9 @@ function tailleLisible(n) {
   return (n / 1048576).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' Mo';
 }
 const nomSansExt = n => String(n || 'document').replace(/\.[a-z0-9]{1,5}$/i, '');
-const nomSortie = (nom, suffixe = 'modifié', ext = 'pdf') => `${nomSansExt(nom)} (${suffixe}).${ext}`;
+// « contrat (signé).pdf » ré-enregistré reste « contrat (signé).pdf », sans empiler les suffixes
+const SUFFIXES = /(\s*\((signé|modifié|fusion|compressé|numéroté|filigrane|aplati|extrait|organisé)\))+$/i;
+const nomSortie = (nom, suffixe = 'modifié', ext = 'pdf') => `${nomSansExt(nom).replace(SUFFIXES, '')} (${suffixe}).${ext}`;
 const estPdf = f => f && (f.type === 'application/pdf' || /\.pdf$/i.test(f.name || ''));
 const estImage = f => f && (/^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|bmp|heic)$/i.test(f.name || ''));
 async function lireFichier(f) { return { nom: f.name || 'document.pdf', octets: new Uint8Array(await f.arrayBuffer()) }; }
@@ -672,7 +690,7 @@ async function ouvrirDocuments(fichiers, { onglet = 'document' } = {}) {
     D = {
       nom: fichiers[0].nom, sources, pages, parId: new Map(pages.map(e => [e.id, e])),
       items: [], images: {}, historique: [], modifie: sources.length > 1, structure: sources.length > 1,
-      mode: sources.some(s => s.aDesChamps) ? 'editer' : 'lire', onglet: 'document', zoom: 1, s: 1,
+      mode: 'editer', onglet: 'document', focus: null, zoom: 1, s: 1,
       selection: null, edition: null, attente: null, textes: {}, resultats: [], resIndex: -1,
       vues: new Map(), miniatures: new Map(), vueObsolete: true, conseilMasque: false
     };
@@ -682,19 +700,19 @@ async function ouvrirDocuments(fichiers, { onglet = 'document' } = {}) {
     fermerRecherche(true);
     majClassesDoc();
     choisirOnglet(onglet);
-    if (D.mode === 'editer' && onglet === 'document') toast('Formulaire détecté : touchez les cases bleues pour les remplir.');
+    if (sources.some(s => s.aDesChamps) && onglet === 'document') toast('Formulaire détecté : touchez les cases bleues pour les remplir.');
   } catch (e) { console.error(e); toast('Ouverture impossible. Réessayez avec un autre fichier.'); }
   finally { libre(); }
 }
 function majTitre() {
-  $('#doc-titre').textContent = D.sources.length > 1 ? `${D.sources.length} fichiers réunis` : D.nom;
+  $('#doc-titre').textContent = D.nom;
   $('#doc-sous-titre').textContent = `${D.pages.length} page${D.pages.length > 1 ? 's' : ''}`;
 }
 
 function fermerDocument() {
   if (D && D.modifie) {
     ouvrirCouche(fermerDocument); // on garde le document ouvert le temps de demander
-    confirmer({ titre: `Fermer « ${D.sources.length > 1 ? 'les fichiers réunis' : D.nom} » sans enregistrer ?`, texte: 'Vos modifications seront perdues.', action: 'Fermer sans enregistrer' })
+    confirmer({ titre: `Fermer « ${D.nom} » sans enregistrer ?`, texte: 'Vos modifications seront perdues.', action: 'Fermer sans enregistrer' })
       .then(ok => { if (ok && D) { D.modifie = false; fermerCouche(); } });
     return;
   }
@@ -709,20 +727,51 @@ function majClassesDoc() {
   if (!D) return;
   ecranDoc.classList.toggle('mode-lire', D.mode === 'lire');
   ecranDoc.classList.toggle('mode-editer', D.mode === 'editer');
-  ecranDoc.classList.toggle('onglet-pages', D.onglet === 'pages');
+  ['document', 'pages', 'outils'].forEach(o => ecranDoc.classList.toggle('onglet-' + o, D.onglet === o));
   ecranDoc.classList.toggle('avec-selection', D.mode === 'editer' && !!D.selection);
 }
 function choisirOnglet(o) {
   if (!D) return;
   terminerEdition(); annulerPlacement();
   D.onglet = o;
-  $('#onglet-document').setAttribute('aria-selected', String(o === 'document'));
-  $('#onglet-pages').setAttribute('aria-selected', String(o === 'pages'));
-  if (o === 'pages') { selectionner(null); majClassesDoc(); rendreGrillePages(); vuePages.scrollTo(0, 0); }
-  else { majClassesDoc(); if (D.vueObsolete) { construireVue(); D.vueObsolete = false; } majIndicateur(); }
+  ['document', 'pages', 'outils'].forEach(x => $('#onglet-' + x).setAttribute('aria-selected', String(o === x)));
+  if (o !== 'document') selectionner(null);
+  majClassesDoc();
+  if (o === 'pages') { rendreGrillePages(); vuePages.scrollTo(0, 0); }
+  else if (o === 'outils') rendreOutils();
+  else { if (D.vueObsolete) { construireVue(); D.vueObsolete = false; } majIndicateur(); majBandeau(); }
 }
-$('#onglet-document').addEventListener('click', () => choisirOnglet('document'));
+$('#onglet-document').addEventListener('click', () => { if (D && D.onglet === 'document' && D.focus) voirTout(); else choisirOnglet('document'); });
 $('#onglet-pages').addEventListener('click', () => choisirOnglet('pages'));
+$('#onglet-outils').addEventListener('click', () => choisirOnglet('outils'));
+
+/* Une page seule (touchée dans l'onglet Pages) */
+function ouvrirPageSeule(i) {
+  const pg = D.pages[clamp(i, 0, D.pages.length - 1)];
+  D.focus = pg.id; D.zoom = 1; D.vueObsolete = true;
+  if (D.onglet === 'document') { construireVue(); D.vueObsolete = false; majBandeau(); defil.scrollTo(0, 0); }
+  else choisirOnglet('document');
+}
+function voirTout() {
+  const id = D.focus; D.focus = null; D.vueObsolete = true;
+  if (D.onglet === 'document') { construireVue(); D.vueObsolete = false; majBandeau(); const i = D.pages.findIndex(p => p.id === id); if (i >= 0) requestAnimationFrame(() => allerPage(i)); }
+}
+function majBandeau() {
+  const b = $('#bandeau-page');
+  if (!D || !D.focus) { b.hidden = true; return; }
+  const i = D.pages.findIndex(p => p.id === D.focus);
+  b.hidden = false;
+  $('#bp-titre').textContent = `Page ${i + 1} sur ${D.pages.length}`;
+  $('#bp-prec').style.visibility = i > 0 ? 'visible' : 'hidden';
+  $('#bp-suiv').style.visibility = i < D.pages.length - 1 ? 'visible' : 'hidden';
+}
+const indexFocus = () => D.pages.findIndex(p => p.id === D.focus);
+$('#bp-prec').addEventListener('click', () => ouvrirPageSeule(indexFocus() - 1));
+$('#bp-suiv').addEventListener('click', () => ouvrirPageSeule(indexFocus() + 1));
+$('#bp-tout').addEventListener('click', voirTout);
+$('#bp-pivoter').addEventListener('click', () => pivoterPage(D.parId.get(D.focus)));
+$('#bp-supprimer').addEventListener('click', () => supprimerPage(indexFocus()));
+$('#bp-recadrer').addEventListener('click', () => recadrerPage(D.parId.get(D.focus)));
 
 /* =========================================================
    5. ONGLET DOCUMENT : affichage des pages, zoom, page courante
@@ -741,7 +790,8 @@ function construireVue() {
   pagesEl.replaceChildren();
   observateur?.disconnect();
   D.vues = new Map();
-  for (const pg of D.pages) {
+  if (D.focus && !D.parId.has(D.focus)) D.focus = null;
+  for (const pg of pagesAffichees()) {
     const page = el('div', { class: 'page', dataset: { id: pg.id } });
     const v = { page, canvas: el('canvas', { class: 'rendu' }), recherche: el('div', { class: 'calque-recherche' }),
       formulaire: el('div', { class: 'annotationLayer' }), items: el('div', { class: 'calque-items' }),
@@ -762,9 +812,10 @@ function construireVue() {
   D.vues.forEach(v => observateur.observe(v.page));
   majIndicateur(); majTitre();
 }
+const pagesAffichees = () => D.focus ? D.pages.filter(p => p.id === D.focus) : D.pages;
 function echelleAjustee() {
-  const largeurMax = Math.max(...D.pages.map(p => p.w));
-  const dispo = Math.max(200, Math.min(defil.clientWidth - 16, 1000));
+  const largeurMax = Math.max(...pagesAffichees().map(p => p.w));
+  const dispo = Math.max(200, Math.min(defil.clientWidth - 32, 900));
   return D.zoom * dispo / largeurMax;
 }
 function mettreEnPage() {
@@ -825,21 +876,6 @@ async function rendreFormulaire(id, vp) {
   v.formCle = cle;
 }
 
-function changerMode(mode) {
-  if (!D) return;
-  if (document.activeElement && pagesEl.contains(document.activeElement)) document.activeElement.blur();
-  terminerEdition(); annulerPlacement();
-  D.mode = mode; D.selection = null;
-  if (D.onglet !== 'document') choisirOnglet('document');
-  majClassesDoc();
-  for (const pg of D.pages) {
-    const v = D.vues.get(pg.id); if (!v) continue;
-    if (mode === 'lire') { v.formulaire.replaceChildren(); v.formCle = null; }
-    rendreItems(pg.id);
-    if (v.visible) rendrePage(pg.id);
-  }
-}
-
 /* Zoom au pincement (deux doigts) et Ctrl + molette sur ordinateur */
 let pince = null;
 function appliquerZoom(z, cx, cy) {
@@ -895,7 +931,8 @@ function pageCourante() {
 }
 function majIndicateur() { if (D) $('#indic-page').textContent = `${pageCourante() + 1} / ${D.pages.length}`; }
 function allerPage(i, decalage = 0) {
-  const pg = D.pages[clamp(i, 0, D.pages.length - 1)], v = D.vues.get(pg.id); if (!v) return;
+  const pg = D.pages[clamp(i, 0, D.pages.length - 1)], v = D.vues.get(pg.id);
+  if (!v) { if (D.focus) ouvrirPageSeule(i); return; }
   const r = v.page.getBoundingClientRect(), rd = defil.getBoundingClientRect();
   defil.scrollTo({ top: defil.scrollTop + r.top - rd.top - 8 + decalage, behavior: 'auto' });
 }
@@ -973,6 +1010,7 @@ function allerResultat(k) {
   const r = D.resultats[D.resIndex];
   $('#q-compte').textContent = `${D.resIndex + 1} / ${n}`;
   D.pages.forEach(pg => dessinerSurlignages(pg.id));
+  if (!D.vues.get(r.page) && D.focus) voirTout();
   const v = D.vues.get(r.page); if (!v) return;
   const rp = v.page.getBoundingClientRect(), rd = defil.getBoundingClientRect();
   defil.scrollTo({ top: defil.scrollTop + rp.top - rd.top + r.rect.y * D.s - defil.clientHeight / 3,
@@ -989,6 +1027,7 @@ function dessinerSurlignages(id) {
 }
 function ouvrirRecherche() {
   if (D.onglet !== 'document') choisirOnglet('document');
+  if (D.focus) voirTout();
   const b = $('#barre-recherche');
   if (!b.hidden) { $('#q').focus(); return; }
   b.hidden = false; $('#q').focus();
@@ -1284,8 +1323,6 @@ $('#barre-editer').addEventListener('click', async e => {
   if (a === 'texte') demanderPlacement({ outil: 'texte' }, 'Touchez la page à l\'endroit où écrire.');
   else if (a === 'masque') demanderPlacement({ outil: 'masque' }, 'Touchez la zone à cacher.');
   else if (a === 'corriger') demanderPlacement({ outil: 'corriger' }, 'Touchez le mot à corriger, puis tapez le nouveau texte.');
-  else if (a === 'annuler') annulerAction();
-  else if (a === 'apercu') changerMode('lire');
   else if (a === 'signature' || a === 'tampon') {
     const t = await choisirTampon(a);
     if (!t || !D) return;
@@ -1313,7 +1350,7 @@ function rendreGrillePages() {
     const cle = pg.id + '|' + pg.rot;
     const act = (ico, label, fn, visible = true) => { const b = bouton('', { ico, cls: 'btn-icone', label, onclick: fn }); if (!visible) { b.style.visibility = 'hidden'; b.tabIndex = -1; } return b; };
     const carte = el('div', { class: 'carte-page', dataset: { id: pg.id } },
-      el('button', { type: 'button', class: 'miniature', 'aria-label': `Ouvrir la page ${i + 1}`, onclick: () => { choisirOnglet('document'); requestAnimationFrame(() => allerPage(i)); } },
+      el('button', { type: 'button', class: 'miniature', 'aria-label': `Ouvrir la page ${i + 1} seule`, onclick: () => ouvrirPageSeule(i) },
         D.miniatures.get(cle) || el('canvas')),
       el('div', { class: 'pied-carte' }, el('strong', { text: `Page ${i + 1}` }), pageAnnotee(pg) ? el('span', { class: 'badge', text: 'annotée' }) : null),
       el('div', { class: 'actions-carte' },
@@ -1341,8 +1378,8 @@ async function dessinerMiniature(id) {
 function apresStructure(sansMarquer) {
   if (!sansMarquer) { D.structure = true; D.modifie = true; }
   D.resultats = []; D.selection = null;
-  if (D.onglet === 'pages') { D.vueObsolete = true; rendreGrillePages(); }
-  else { construireVue(); D.vueObsolete = false; }
+  if (D.onglet === 'document') { construireVue(); D.vueObsolete = false; majBandeau(); }
+  else { D.vueObsolete = true; if (D.onglet === 'pages') rendreGrillePages(); }
   majTitre();
 }
 function deplacerPage(i, sens) {
@@ -1367,7 +1404,9 @@ function pivoterPage(pg) {
 function supprimerPage(i) {
   if (D.pages.length === 1) { toast('Un document doit garder au moins une page.'); return; }
   memoriser();
+  const etaitFocus = D.focus === D.pages[i].id;
   D.pages.splice(i, 1);
+  if (etaitFocus) D.focus = D.pages[Math.min(i, D.pages.length - 1)].id;
   apresStructure();
   toast(`Page ${i + 1} supprimée`, { action: 'Annuler', onAction: annulerAction });
 }
@@ -1383,10 +1422,12 @@ async function ajouterFichiers() {
     if (images.length) {
       const canvas = [];
       for (const f of images) { try { canvas.push(await chargerImage(f)); } catch { toast(`« ${f.name} » : format d'image non pris en charge.`); } }
-      if (canvas.length) lots.push(await imagesVersPdf(canvas));
+      if (canvas.length) lots.push({ octets: await imagesVersPdf(canvas), photos: true });
     }
-    for (const octets of lots) {
+    for (const lot of lots) {
+      const octets = lot.octets || lot;
       let s; try { s = await chargerSource(octets); } catch (e) { console.error(e); continue; }
+      s.photos = !!lot.photos;
       D.sources.push(s);
       const nouvelles = await pagesDe(s, D.sources.length - 1);
       nouvelles.forEach(pg => D.parId.set(pg.id, pg));
@@ -1395,9 +1436,46 @@ async function ajouterFichiers() {
     if (!ajout) { toast('Aucune page n\'a pu être ajoutée.'); return; }
     memoriser(avant);
     apresStructure();
-    toast(`${ajout} page${ajout > 1 ? 's' : ''} ajoutée${ajout > 1 ? 's' : ''} à la fin`);
+    toast(images.length ? `${ajout} page${ajout > 1 ? 's' : ''} ajoutée${ajout > 1 ? 's' : ''}. Touchez une photo pour la recadrer.` : `${ajout} page${ajout > 1 ? 's' : ''} ajoutée${ajout > 1 ? 's' : ''} à la fin`, 5000);
     requestAnimationFrame(() => vuePages.scrollTo({ top: vuePages.scrollHeight }));
   } finally { libre(); }
+}
+
+/** Recadrer et nettoyer une page (photo ajoutée, scan de travers…) : même outil que le scanner. */
+async function recadrerPage(pg) {
+  if (!pg) return;
+  terminerEdition();
+  occupe('Préparation de la page…');
+  let c;
+  try {
+    const rot = rotationTotale(pg), vp1 = pg.p.getViewport({ scale: 1, rotation: rot });
+    let s = 170 / 72; if (vp1.width * vp1.height * s * s > 12e6) s = Math.sqrt(12e6 / (vp1.width * vp1.height));
+    const vp = pg.p.getViewport({ scale: s, rotation: rot });
+    c = el('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+    const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+    await pg.p.render({ canvasContext: ctx, viewport: vp, annotationMode: MODE_STOCK }).promise;
+  } catch (e) { console.error(e); toast('Cette page n\'a pas pu être préparée. Réessayez.'); return; }
+  finally { libre(); }
+  const r = await editeurScanner(c, D.sources[pg.src].photos ? 'couleur' : 'original');
+  if (!r || !D) return;
+  occupe('Mise à jour de la page…');
+  try {
+    const avant = instantane();
+    const src = await chargerSource(await imagesVersPdf([r]));
+    src.photos = true;
+    D.sources.push(src);
+    const [nouvelle] = await pagesDe(src, D.sources.length - 1);
+    D.parId.set(nouvelle.id, nouvelle);
+    D.pages[D.pages.indexOf(pg)] = nouvelle;
+    // Les éléments déjà posés suivent la page (positions proportionnelles)
+    const kx = nouvelle.w / pg.w, ky = nouvelle.h / pg.h;
+    D.items.filter(t => t.page === pg.id).forEach(t => { t.page = nouvelle.id; t.x *= kx; t.y *= ky; });
+    if (D.focus === pg.id) D.focus = nouvelle.id;
+    memoriser(avant);
+    apresStructure();
+    toast('Page recadrée', { action: 'Annuler', onAction: annulerAction });
+  } catch (e) { console.error(e); toast('Le recadrage n\'a pas abouti. Réessayez.'); }
+  finally { libre(); }
 }
 
 /* =========================================================
@@ -1571,29 +1649,28 @@ async function exporter(action) {
   else if (await enregistrer(octets, nom)) { D.modifie = false; toast('PDF enregistré dans vos téléchargements'); }
 }
 
-/* Menu ⋮ du document */
-async function menuDocument() {
+/* Onglet Outils : toutes les actions du document, visibles d'un coup d'œil */
+const OUTILS_DOC = [
+  ['rechercher', 'recherche', 'Rechercher', 'Trouver un mot dans le document'],
+  ['ajouter', 'plus', 'Ajouter des fichiers', 'PDF ou photos, à la fin du document'],
+  ['compresser', 'compresser', 'Compresser', 'Alléger pour l\'envoyer par e-mail'],
+  ['numeros', 'numero', 'Numéroter', 'Ajouter les numéros de page'],
+  ['filigrane', 'filigrane', 'Filigrane', '« COPIE », « CONFIDENTIEL »…'],
+  ['images', 'images', 'PDF → images', 'Chaque page en JPG'],
+  ['aplatir', 'masque', 'Aplatir en image', 'Efface vraiment le texte caché'],
+  ['signatures', 'signature', 'Signatures et tampons', 'Créer, renommer, supprimer'],
+  ['info', 'info', 'Informations', 'Pages, taille, champs']
+];
+function rendreOutils() {
+  $('#grille-outils-doc').replaceChildren(...OUTILS_DOC.map(([cle, ico, titre, desc]) =>
+    el('button', { type: 'button', class: 'tuile', onclick: () => actionOutil(cle) }, icone(ico), el('strong', { text: titre }), el('span', { text: desc }))));
+}
+async function actionOutil(choix) {
+  if (!D) return;
   terminerEdition();
-  const choix = await demanderChoix('Document', [
-    { texte: 'Partager', ico: 'partager', valeur: 'partager' },
-    { texte: 'Enregistrer', ico: 'enregistrer', valeur: 'enregistrer' },
-    { texte: D.mode === 'lire' ? 'Remplir et signer' : 'Voir l\'aperçu', ico: D.mode === 'lire' ? 'crayon' : 'oeil', valeur: 'mode' },
-    { texte: 'Gérer les pages', ico: 'pages', valeur: 'pages' },
-    { texte: 'Ajouter des fichiers', ico: 'plus', valeur: 'ajouter' },
-    { texte: 'Compresser', ico: 'compresser', valeur: 'compresser' },
-    { texte: 'Numéroter les pages', ico: 'numero', valeur: 'numeros' },
-    { texte: 'Ajouter un filigrane', ico: 'filigrane', valeur: 'filigrane' },
-    { texte: 'Convertir en images', ico: 'images', valeur: 'images' },
-    { texte: 'Aplatir en image (sécurité)', ico: 'masque', valeur: 'aplatir' },
-    { texte: 'Taille d\'affichage normale', ico: 'zoom', valeur: 'zoom' },
-    { texte: 'Informations', ico: 'info', valeur: 'info' }
-  ]);
-  if (!choix || !D) return;
-  if (choix === 'partager' || choix === 'enregistrer') return exporter(choix);
-  if (choix === 'mode') return changerMode(D.mode === 'lire' ? 'editer' : 'lire');
-  if (choix === 'pages') return choisirOnglet('pages');
+  if (choix === 'rechercher') return ouvrirRecherche();
   if (choix === 'ajouter') { choisirOnglet('pages'); return ajouterFichiers(); }
-  if (choix === 'zoom') { D.zoom = 1; if (D.onglet === 'document') mettreEnPage(); return; }
+  if (choix === 'signatures') return ouvrirParametres();
   if (choix === 'info') {
     const nbChamps = D.sources.reduce((n, s) => n + Object.values(s.champs).filter(l => l.some(o => o.type)).length, 0);
     const fe = feuille({ titre: 'Informations', pied: false });
@@ -1795,8 +1872,24 @@ async function importerTampon(type) {
 /** Tampon à partir de lignes de texte (nom de société, adresse, SIRET…) */
 function tamponTexte() {
   return new Promise(res => {
-    let resultat = null, couleur = '#1d3fb3', cadre = 'oui';
+    let resultat = null, couleur = '#1d3fb3', cadre = 'oui', sigId = '', sigImg = null;
     const fe = feuille({ titre: 'Créer un tampon texte', plein: true, surFermeture: () => res(resultat) });
+    // Signature posée sur le tampon (facultatif)
+    const zoneSig = el('div');
+    const chargerSig = async () => {
+      const t = lireTampons().find(x => x.id === sigId);
+      if (!t) { sigImg = null; return; }
+      sigImg = new Image(); sigImg.src = t.png; await sigImg.decode();
+    };
+    const majSig = () => {
+      const liste = lireTampons().filter(t => t.type === 'signature');
+      zoneSig.replaceChildren(
+        segments('sig-tampon', [['', 'Sans signature'], ...liste.map(t => [t.id, t.nom])], sigId, async v => { sigId = v; await chargerSig(); maj(); }),
+        el('div', { class: 'rangee-btn' }, bouton('Dessiner une signature', { ico: 'crayon', onclick: async () => {
+          const t = await dessinerTampon('signature');
+          if (t) { sigId = t.id; majSig(); await chargerSig(); maj(); }
+        } })));
+    };
     const ta = el('textarea', { class: 'champ', id: 'lignes-tampon', rows: 4 });
     ta.value = 'NOM DE L\'ENTREPRISE\nAdresse\nCode postal Ville\nSIRET : ';
     const zone = el('div', { class: 'zone-apercu damier' });
@@ -1812,6 +1905,13 @@ function tamponTexte() {
       ctx.fillStyle = couleur; ctx.strokeStyle = couleur; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
       lignes.forEach((l, i) => { ctx.font = police(i); ctx.fillText(l, c.width / 2, pad + i * t * inter); });
       if (cadre === 'oui') { ctx.lineWidth = 6; const r = 14; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(3, 3, c.width - 6, c.height - 6, r) : ctx.rect(3, 3, c.width - 6, c.height - 6); ctx.stroke(); }
+      if (sigImg) {
+        // La signature traverse le tampon, comme une vraie signature sur un cachet
+        const ratio = sigImg.naturalHeight / sigImg.naturalWidth;
+        let w = c.width * 0.62, h = w * ratio;
+        if (h > c.height * 0.85) { h = c.height * 0.85; w = h / ratio; }
+        ctx.drawImage(sigImg, (c.width - w) / 2 + c.width * 0.08, c.height - h - 6, w, h);
+      }
       courant = c; zone.replaceChildren(c);
     };
     ta.addEventListener('input', maj);
@@ -1822,7 +1922,9 @@ function tamponTexte() {
       segments('couleur-tampon', [['#1d3fb3', 'Bleu', '#1d3fb3'], ['#b91c1c', 'Rouge', '#b91c1c'], ['#111111', 'Noir', '#111']], couleur, v => { couleur = v; maj(); }),
       el('div', { class: 'etiquette', text: 'Cadre' }),
       segments('cadre-tampon', [['oui', 'Avec cadre'], ['non', 'Sans cadre']], cadre, v => { cadre = v; maj(); }),
+      el('div', { class: 'etiquette', text: 'Signer sur le tampon' }), zoneSig,
       el('label', { class: 'etiquette', for: 'nom-tampon', text: 'Nom' }), nom);
+    majSig();
     fe.pied.append(
       bouton('Annuler', { onclick: () => fe.fermer() }),
       bouton('Enregistrer', { ico: 'valider', cls: 'btn principal', onclick: () => {
@@ -2149,9 +2251,9 @@ function pivoterCanvas(c, sens = 1) {
 }
 
 /** Éditeur « scanner » : 4 coins à placer, puis redressement et nettoyage. */
-function editeurScanner(source) {
+function editeurScanner(source, filtreInitial = 'couleur') {
   return new Promise(res => {
-    let resultat = null, src = source, filtre = 'couleur';
+    let resultat = null, src = source, filtre = filtreInitial;
     let coins = [[0, 0], [src.width, 0], [src.width, src.height], [0, src.height]];
     const fe = feuille({ titre: 'Recadrer et nettoyer', plein: true, surFermeture: () => res(resultat) });
     const zone = el('div', { class: 'scan-zone' }), apercu = el('canvas');
@@ -2338,11 +2440,9 @@ $('#btn-photos').addEventListener('click', async () => { const fs = await choisi
 $('#btn-param').addEventListener('click', ouvrirParametres);
 $$('[data-outil]').forEach(b => b.addEventListener('click', () => lancerOutil(b.dataset.outil)));
 $('#doc-retour').addEventListener('click', () => { terminerEdition(); fermerCouche(); });
-$('#doc-chercher').addEventListener('click', ouvrirRecherche);
-$('#doc-menu').addEventListener('click', menuDocument);
-$('#btn-editer').addEventListener('click', () => changerMode('editer'));
-$('#btn-partager').addEventListener('click', () => exporter('partager'));
-$('#btn-enregistrer').addEventListener('click', () => exporter('enregistrer'));
+$('#doc-annuler').addEventListener('click', () => { if (D) annulerAction(); });
+$('#doc-partager').addEventListener('click', () => exporter('partager'));
+$('#doc-enregistrer').addEventListener('click', () => exporter('enregistrer'));
 addEventListener('beforeunload', e => { if (D && D.modifie) { e.preventDefault(); e.returnValue = ''; } });
 
 // Glisser-déposer (ordinateur)
