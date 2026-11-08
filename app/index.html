@@ -1929,7 +1929,7 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
     el('p', { style: { margin: '0 0 4px' } }, el('strong', { text: nom })),
     el('div', { class: 'etiquette', text: 'Format' }),
     segments('format-export', [['pdf', 'PDF'], ['jpg', 'Images JPG (une par page)']], format, v => { format = v; majAffichage(); }),
-    ligneAplatir, zoneTaille);
+    ...[ligneAplatir, zoneTaille].filter(Boolean)); // (sans zone cachée, pas de case « effacer » : on ne passe pas de vide)
   fe.pied.append(btnGo);
   function relancerCalcul() {
     const g = ++generation; resultats = { aucune: base }; majAffichage();
