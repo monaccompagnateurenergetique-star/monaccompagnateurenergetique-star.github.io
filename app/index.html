@@ -133,15 +133,29 @@ a{color:var(--accent)}
 #doc-apercu[aria-pressed="true"]{background:var(--accent-pale);color:var(--accent-fort)}
 #ecran-doc:not(.onglet-document) :is(#defil,#indic-page,#aide-placement,#barre-recherche,#bandeau-page){display:none!important}
 #ecran-doc:not(.onglet-pages) #vue-pages{display:none}
-#ecran-doc:not(.onglet-outils) #vue-outils{display:none}
+/* Panneau d'outils : sous le PDF (qui reste visible au-dessus), à la place de la barre d'outils */
+.panneau{background:#fff;border-top:1px solid var(--ligne);padding:4px 14px calc(12px + var(--bas-sur));max-height:48dvh;overflow:auto;box-shadow:0 -6px 16px rgba(20,24,35,.08);z-index:5}
+.panneau-tete{display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;padding:4px 0;z-index:1}
+.panneau-tete strong{font-size:16px}
+.panneau .grille-outils .tuile{min-height:84px}
+.panneau .etiquette{margin-top:10px}
+#ecran-doc:not(.onglet-document) #panneau,#ecran-doc.mode-lire #panneau{display:none!important}
+#ecran-doc.avec-panneau #barre-editer,#ecran-doc.avec-panneau #barre-contexte{display:none!important}
+/* Numéros de page et filigrane affichés en direct sur les pages */
+.calque-deco{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1}
+.deco-num{position:absolute;white-space:nowrap;font-family:Helvetica,Arial,sans-serif;color:#333;line-height:1}
+.deco-fil{position:absolute;left:50%;top:50%;white-space:nowrap;font-family:Helvetica,Arial,sans-serif;font-weight:700;line-height:1;transform-origin:center}
+.case-option{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;margin-top:12px;border:1px solid var(--ligne);border-radius:12px;background:#fff}
+.case-option:has(input:checked){border-color:var(--accent);background:var(--accent-pale)}
+.case-option input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--accent);flex:none}
+.case-option .texte{display:flex;flex-direction:column}
+.case-option small{color:var(--doux);font-size:13px;line-height:1.3}
 .btn-icone.plein{background:var(--accent);color:#fff;border-radius:50%;width:40px;height:40px;margin:0 4px}
 .btn-icone.plein:active{background:var(--accent-fort)}
 .bandeau-page{display:flex;align-items:center;gap:0;padding:2px 6px;background:var(--accent-pale);border-bottom:1px solid #c9e2d6;z-index:4}
 .bandeau-page strong{font-size:14px;white-space:nowrap}
 .bandeau-page .espace{flex:1}
 .bandeau-page .tout-voir{min-height:40px;padding:0 10px;font-size:13px}
-#vue-outils{flex:1;overflow:auto;padding:12px 12px 24px}
-#vue-outils .tuile{min-height:96px}
 
 /* Onglet Pages */
 #vue-pages{flex:1;overflow:auto;padding:12px 12px 24px}
@@ -401,7 +415,6 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   <nav class="onglets" role="tablist" aria-label="Affichage">
     <button role="tab" id="onglet-document" aria-selected="true" aria-controls="defil"><svg class="ico"><use href="#i-livre"/></svg>Document</button>
     <button role="tab" id="onglet-pages" aria-selected="false" aria-controls="vue-pages"><svg class="ico"><use href="#i-pages"/></svg>Pages</button>
-    <button role="tab" id="onglet-outils" aria-selected="false" aria-controls="vue-outils"><svg class="ico"><use href="#i-reglages"/></svg>Outils</button>
   </nav>
   <div id="bandeau-page" class="bandeau-page" hidden>
     <button class="btn-icone" id="bp-prec" aria-label="Page précédente" title="Page précédente"><svg class="ico"><use href="#i-gauche"/></svg></button>
@@ -426,9 +439,6 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
     <p class="note">Touchez une page pour l'ouvrir seule. Les flèches changent l'ordre.</p>
     <div class="grille-pages" id="grille-pages"></div>
   </div>
-  <div id="vue-outils" role="tabpanel" aria-labelledby="onglet-outils">
-    <div class="grille-outils" id="grille-outils-doc"></div>
-  </div>
   <button id="indic-page" class="indic-page" aria-label="Aller à une page">1 / 1</button>
   <footer id="barre-editer" class="barre-bas outils-edition">
     <button class="outil" data-action="texte"><svg class="ico"><use href="#i-texte"/></svg>Texte</button>
@@ -436,7 +446,9 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
     <button class="outil" data-action="tampon"><svg class="ico"><use href="#i-tampon"/></svg>Tampon</button>
     <button class="outil" data-action="masque"><svg class="ico"><use href="#i-masque"/></svg>Cacher</button>
     <button class="outil" data-action="corriger"><svg class="ico"><use href="#i-corriger"/></svg>Corriger</button>
+    <button class="outil" data-action="plus" aria-label="Plus d'outils : numéroter, filigrane, rechercher"><svg class="ico"><use href="#i-menu"/></svg>Plus</button>
   </footer>
+  <div id="panneau" class="panneau" hidden aria-label="Outils"></div>
   <footer id="barre-contexte" class="barre-bas barre-contexte" aria-label="Élément sélectionné"></footer>
   <footer id="barre-apercu" class="barre-bas">
     <button class="btn principal" id="ap-retour"><svg class="ico"><use href="#i-crayon"/></svg>Revenir à la modification</button>
@@ -749,8 +761,10 @@ async function ouvrirDocuments(fichiers, { onglet = 'document' } = {}) {
       items: [], images: {}, historique: [], modifie: sources.length > 1, structure: sources.length > 1,
       mode: 'editer', onglet: 'document', focus: null, zoom: 1, s: 1,
       selection: null, edition: null, attente: null, textes: {}, resultats: [], resIndex: -1,
-      vues: new Map(), miniatures: new Map(), vueObsolete: true, conseilMasque: false
+      vues: new Map(), miniatures: new Map(), vueObsolete: true, conseilMasque: false,
+      numeros: null, filigrane: null, panneau: null
     };
+    panneau.hidden = true; panneau.replaceChildren(); avantPanneau = null;
     if (ancien) ancien.sources.forEach(s => s.pdf.destroy());
     majTitre();
     if (!ancien) { afficherEcran('doc'); ouvrirCouche(fermerDocument); }
@@ -784,18 +798,19 @@ function majClassesDoc() {
   if (!D) return;
   ecranDoc.classList.toggle('mode-lire', D.mode === 'lire');
   ecranDoc.classList.toggle('mode-editer', D.mode === 'editer');
-  ['document', 'pages', 'outils'].forEach(o => ecranDoc.classList.toggle('onglet-' + o, D.onglet === o));
+  ['document', 'pages'].forEach(o => ecranDoc.classList.toggle('onglet-' + o, D.onglet === o));
   ecranDoc.classList.toggle('avec-selection', D.mode === 'editer' && !!D.selection);
+  ecranDoc.classList.toggle('avec-panneau', !!D.panneau);
 }
 function choisirOnglet(o) {
   if (!D) return;
   terminerEdition(); annulerPlacement();
+  if (o !== 'document' && D.panneau) fermerPanneau();
   D.onglet = o;
-  ['document', 'pages', 'outils'].forEach(x => $('#onglet-' + x).setAttribute('aria-selected', String(o === x)));
+  ['document', 'pages'].forEach(x => $('#onglet-' + x).setAttribute('aria-selected', String(o === x)));
   if (o !== 'document') selectionner(null);
   majClassesDoc();
   if (o === 'pages') { rendreGrillePages(); vuePages.scrollTo(0, 0); }
-  else if (o === 'outils') rendreOutils();
   else { if (D.vueObsolete) { construireVue(); D.vueObsolete = false; } majIndicateur(); majBandeau(); }
 }
 $('#onglet-document').addEventListener('click', () => { if (D && D.onglet === 'document' && D.focus) voirTout(); else choisirOnglet('document'); });
@@ -823,7 +838,6 @@ $('#ap-retour').addEventListener('click', () => basculerApercu(false));
 $('#ap-partager').addEventListener('click', () => exporter('partager'));
 $('#ap-enregistrer').addEventListener('click', () => exporter('enregistrer'));
 $('#onglet-pages').addEventListener('click', () => choisirOnglet('pages'));
-$('#onglet-outils').addEventListener('click', () => choisirOnglet('outils'));
 
 /* Une page seule (touchée dans l'onglet Pages) */
 function ouvrirPageSeule(i) {
@@ -878,9 +892,9 @@ function construireVue() {
       bouton('', { ico: 'plus', cls: 'btn-inserer', label: `Insérer des fichiers entre la page ${i} et la page ${i + 1}`, onclick: () => ajouterFichiers(i) })));
     const page = el('div', { class: 'page', dataset: { id: pg.id } });
     const v = { page, canvas: el('canvas', { class: 'rendu' }), recherche: el('div', { class: 'calque-recherche' }),
-      formulaire: el('div', { class: 'annotationLayer' }), items: el('div', { class: 'calque-items' }),
+      formulaire: el('div', { class: 'annotationLayer' }), items: el('div', { class: 'calque-items' }), deco: el('div', { class: 'calque-deco' }),
       cle: null, formCle: null, tache: null, visible: false };
-    page.append(v.canvas, v.recherche, v.formulaire, v.items);
+    page.append(v.canvas, v.deco, v.recherche, v.formulaire, v.items);
     pagesEl.append(page);
     D.vues.set(pg.id, v);
   }
@@ -914,7 +928,7 @@ function mettreEnPage() {
     // On redimensionne les éléments existants (sans les recréer) pour ne pas interrompre une saisie en cours
     v.items.querySelectorAll('.item').forEach(e => { const it = D.items.find(t => t.id === e.dataset.id); if (it) majStyleItem(e, it); });
     if (!v.items.childElementCount) rendreItems(pg.id);
-    dessinerSurlignages(pg.id);
+    dessinerSurlignages(pg.id); rendreDeco(pg.id);
     if (v.visible) rendrePage(pg.id);
   }
 }
@@ -1137,12 +1151,15 @@ $('#q-fermer').addEventListener('click', () => fermerRecherche(false));
    7. ÉLÉMENTS POSÉS : texte (modifiable directement sur la page), signature, tampon, zone cachée
    Coordonnées en points PDF, origine en haut à gauche de la page telle qu'on la voit.
    ========================================================= */
-const instantane = (items = D.items) => JSON.stringify({ items, ordre: D.pages.map(pg => [pg.id, pg.rot]) });
+const instantane = (items = D.items) => JSON.stringify({ items, ordre: D.pages.map(pg => [pg.id, pg.rot]), numeros: D.numeros, filigrane: D.filigrane });
 function memoriser(etat = instantane()) { D.historique.push(etat); if (D.historique.length > 60) D.historique.shift(); }
 function restaurer(etat) {
   const h = JSON.parse(etat);
   const avant = D.pages.map(pg => pg.id + pg.rot).join();
   D.items = h.items;
+  D.numeros = h.numeros || null; D.filigrane = h.filigrane || null;
+  if (D.panneau && D.panneau !== 'plus') { D.panneau = null; avantPanneau = null; panneau.hidden = true; panneau.replaceChildren(); majClassesDoc(); }
+  rendreDecoToutes();
   D.pages = h.ordre.map(([id, rot]) => { const pg = D.parId.get(id); if (pg.rot !== rot) { pg.rot = rot; majDims(pg); } return pg; });
   D.selection = null; D.edition = null; D.modifie = true;
   if (D.pages.map(pg => pg.id + pg.rot).join() !== avant) apresStructure(true);
@@ -1488,6 +1505,7 @@ $('#barre-editer').addEventListener('click', async e => {
   const a = b.dataset.action;
   if (D.attente && D.attente.outil === a) { annulerPlacement(); return; }
   annulerPlacement();
+  if (a === 'plus') { if (D.panneau) fermerPanneau(); else ouvrirPanneau('plus'); return; }
   if (a === 'texte') demanderPlacement({ outil: 'texte' }, 'Touchez la page à l\'endroit où écrire.');
   else if (a === 'masque') demanderPlacement({ outil: 'masque' }, 'Touchez la zone à cacher.');
   else if (a === 'corriger') demanderPlacement({ outil: 'corriger' }, 'Touchez le mot à corriger, puis tapez le nouveau texte.');
@@ -1790,7 +1808,9 @@ async function construirePdf() {
       np.drawPage(emb, { x: mb.x, y: mb.y });
     } catch (e) { console.warn('Page vide ou illisible', pg.num, e); }
     np.setRotation(degrees(R));
-    await dessinerItems(out, np, D.items.filter(t => t.page === pg.id), (x, y) => versUtilisateur(cb, R, x, y), R, ressources);
+    const versPdf = (x, y) => versUtilisateur(cb, R, x, y);
+    await dessinerDeco(out, np, pg, D.pages.indexOf(pg), pg.w, pg.h, versPdf, R, ressources);
+    await dessinerItems(out, np, D.items.filter(t => t.page === pg.id), versPdf, R, ressources);
   }
   return out.save();
 }
@@ -1819,11 +1839,12 @@ async function construirePdfImage(dpi = 150) {
     const jpg = await out.embedJpg(img.octets);
     const np = out.addPage([img.w, img.h]);
     np.drawImage(jpg, { x: 0, y: 0, width: img.w, height: img.h });
+    await dessinerDeco(out, np, pg, i, img.w, img.h, (x, y) => [x, img.h - y], 0, ressources);
     await dessinerItems(out, np, D.items.filter(t => t.page === pg.id), (x, y) => [x, img.h - y], 0, ressources);
   }
   return out.save();
 }
-const documentModifie = () => D.items.length > 0 || D.structure || D.sources.some(s => s.pdf.annotationStorage.size > 0);
+const documentModifie = () => D.items.length > 0 || D.structure || !!D.numeros || !!(D.filigrane && D.filigrane.texte.trim()) || D.sources.some(s => s.pdf.annotationStorage.size > 0);
 async function octetsCourants() { return documentModifie() ? construirePdf() : D.sources[0].octets; }
 function nomExport() {
   if (!documentModifie()) return D.nom;
@@ -1831,37 +1852,43 @@ function nomExport() {
   return nomSortie(D.nom, D.items.some(t => t.type === 'image') ? 'signé' : 'modifié');
 }
 
-/** Enregistrer / Partager : on prépare le PDF, puis on demande la taille voulue (compression intégrée au parcours). */
-async function exporter(action) {
+/** Enregistrer / Partager : on prépare le PDF, puis on choisit le format (PDF ou images JPG), la taille,
+ *  et s'il y a des zones cachées, l'effacement définitif du texte caché. */
+async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauInitial } = {}) {
   if (!D) return;
   occupe('Préparation du PDF…');
   let octets;
   try { octets = await construirePdf(); }
-  catch (e) { console.error(e); toast('Le PDF n\'a pas pu être créé. Réessayez, ou utilisez « Aplatir en image » dans l\'onglet Outils.', 6000); return; }
+  catch (e) { console.error(e); toast('Le PDF n\'a pas pu être créé. Réessayez.', 6000); return; }
   finally { libre(); }
   const nom = nomExport();
   const partage = action === 'partager';
+  const aMasques = D.items.some(t => t.type === 'masque');
   const CHOIX = [
     ['aucune', 'Taille d\'origine', 'Qualité parfaite, texte sélectionnable. Pour imprimer ou archiver.'],
     ['legere', 'Légère', 'Très bonne qualité, fichier un peu plus léger.'],
     ['moyenne', 'Moyenne', 'Bonne qualité, idéal pour l\'envoyer par e-mail.'],
     ['forte', 'Forte', 'Le plus léger possible, image un peu moins nette.']
   ];
-  let niveau = CHOIX.some(c => c[0] === prefs.compressionExport) ? prefs.compressionExport : 'aucune';
-  const resultats = { aucune: octets }; // tailles réellement obtenues, calculées en arrière-plan
-  const fe = feuille({ titre: partage ? 'Partager le PDF' : 'Enregistrer le PDF' });
+  let niveau = niveauInitial || (CHOIX.some(c => c[0] === prefs.compressionExport) ? prefs.compressionExport : 'aucune');
+  let format = formatInitial, aplatir = false, base = octets, resultats = { aucune: base }, generation = 0;
+  const fe = feuille({ titre: partage ? 'Partager' : 'Enregistrer' });
   const tailles = {}, btnGo = bouton('', { cls: 'btn principal', onclick: () => valider() });
   const libelleTaille = k => {
     const r = resultats[k];
     if (!r) return 'calcul…';
-    if (k !== 'aucune' && r.length >= octets.length) return `${tailleLisible(octets.length)} · déjà léger`;
-    const gain = Math.round((1 - r.length / octets.length) * 100);
+    if (k !== 'aucune' && r.length >= base.length) return `${tailleLisible(base.length)} · déjà léger`;
+    const gain = Math.round((1 - r.length / base.length) * 100);
     return tailleLisible(r.length) + (k !== 'aucune' && gain > 0 ? ` · −${gain} %` : '');
   };
   const majAffichage = () => {
+    if (fe.ferme()) return;
     for (const [k] of CHOIX) tailles[k].textContent = libelleTaille(k);
+    zoneTaille.hidden = format === 'jpg';
     const r = resultats[niveau];
-    btnGo.replaceChildren(icone(partage ? 'partager' : 'enregistrer'), `${partage ? 'Partager' : 'Enregistrer'}${r ? ' · ' + tailleLisible(Math.min(r.length, octets.length)) : ''}`);
+    const verbe = partage ? 'Partager' : 'Enregistrer';
+    btnGo.replaceChildren(icone(partage ? 'partager' : 'enregistrer'),
+      format === 'jpg' ? `${verbe} ${D.pages.length} image${D.pages.length > 1 ? 's' : ''}` : `${verbe}${r ? ' · ' + tailleLisible(Math.min(r.length, base.length)) : ''}`);
   };
   const liste = el('div', { class: 'choix-taille', role: 'radiogroup', 'aria-label': 'Taille du fichier' }, CHOIX.map(([k, titre, desc]) => {
     tailles[k] = el('span', { class: 'poids' });
@@ -1870,73 +1897,203 @@ async function exporter(action) {
       el('span', { class: 'texte' }, el('strong', { text: titre }), el('small', { text: desc })),
       tailles[k]);
   }));
-  fe.corps.append(
-    el('p', { style: { margin: '0 0 12px' } }, el('strong', { text: nom })),
+  const zoneTaille = el('div', {},
     el('div', { class: 'etiquette', text: 'Quelle taille de fichier ?' }), liste,
     el('p', { class: 'note', text: 'Légère, Moyenne et Forte transforment les pages en images : le fichier est plus léger, mais le texte ne peut plus être sélectionné.' }));
+  const ligneAplatir = aMasques ? el('label', { class: 'case-option' },
+    el('input', { type: 'checkbox', onchange: async e => {
+      aplatir = e.target.checked;
+      occupe('Préparation…');
+      try { base = aplatir ? await construirePdfImage(200) : octets; } catch (err) { console.error(err); base = octets; }
+      finally { libre(); }
+      relancerCalcul();
+    } }),
+    el('span', { class: 'texte' }, el('strong', { text: 'Effacer vraiment le texte caché' }),
+      el('small', { text: 'Sans cette option, le texte sous les zones cachées reste présent dans le fichier. Avec, les pages deviennent des images.' }))) : null;
+  fe.corps.append(
+    el('p', { style: { margin: '0 0 4px' } }, el('strong', { text: nom })),
+    el('div', { class: 'etiquette', text: 'Format' }),
+    segments('format-export', [['pdf', 'PDF'], ['jpg', 'Images JPG (une par page)']], format, v => { format = v; majAffichage(); }),
+    ligneAplatir, zoneTaille);
   fe.pied.append(btnGo);
-  majAffichage();
-  // Calcul des tailles, l'une après l'autre, tant que la fenêtre est ouverte
-  (async () => {
-    for (const k of ['moyenne', 'legere', 'forte']) {
-      if (fe.ferme()) return;
-      try { resultats[k] = await compresserOctets(octets, k); } catch (e) { console.warn(e); resultats[k] = octets; }
-      if (!fe.ferme()) majAffichage();
-    }
-  })();
+  function relancerCalcul() {
+    const g = ++generation; resultats = { aucune: base }; majAffichage();
+    (async () => {
+      for (const k of ['moyenne', 'legere', 'forte']) {
+        if (fe.ferme() || g !== generation) return;
+        let r; try { r = await compresserOctets(base, k); } catch (e) { console.warn(e); r = base; }
+        if (g !== generation) return;
+        resultats[k] = r; majAffichage();
+      }
+    })();
+  }
+  relancerCalcul();
   async function valider() {
+    if (format === 'jpg') {
+      occupe('Création des images…');
+      let fichiers;
+      try { fichiers = await pdfVersImages(base, nomSansExt(nom).replace(SUFFIXES, '')); }
+      catch (e) { console.error(e); toast('Les images n\'ont pas pu être créées. Réessayez.'); return; }
+      finally { libre(); }
+      await fe.fermer();
+      if (partage) await partager(fichiers);
+      else { for (const f of fichiers) { telecharger(new Uint8Array(await f.arrayBuffer()), f.name, f.type); await attendre(400); } toast(`${fichiers.length} image${fichiers.length > 1 ? 's' : ''} enregistrée${fichiers.length > 1 ? 's' : ''}`); }
+      return;
+    }
     prefs.compressionExport = niveau; ecrirePrefs(prefs);
     if (!resultats[niveau]) {
       occupe('Compression…');
-      try { resultats[niveau] = await compresserOctets(octets, niveau); }
-      catch (e) { console.error(e); resultats[niveau] = octets; toast('La compression n\'a pas abouti : le PDF est gardé tel quel.', 5000); }
+      try { resultats[niveau] = await compresserOctets(base, niveau); }
+      catch (e) { console.error(e); resultats[niveau] = base; toast('La compression n\'a pas abouti : le PDF est gardé tel quel.', 5000); }
       finally { libre(); }
     }
     const r = resultats[niveau];
-    const compresse = niveau !== 'aucune' && r.length < octets.length;
-    const final = compresse ? r : octets, nomFinal = compresse ? nomSortie(nom, 'compressé') : nom;
+    const compresse = niveau !== 'aucune' && r.length < base.length;
+    const final = compresse ? r : base;
+    const nomFinal = compresse ? nomSortie(nom, 'compressé') : aplatir ? nomSortie(nom, 'aplati') : nom;
     await fe.fermer();
     if (partage) await partager([fichierPdf(final, nomFinal)]);
     else if (await enregistrer(final, nomFinal)) { D.modifie = false; toast(`PDF enregistré (${tailleLisible(final.length)})`); }
   }
 }
-
-/* Onglet Outils : toutes les actions du document, visibles d'un coup d'œil */
-const OUTILS_DOC = [
-  ['rechercher', 'recherche', 'Rechercher', 'Trouver un mot dans le document'],
-  ['numeros', 'numero', 'Numéroter', 'Ajouter les numéros de page'],
-  ['filigrane', 'filigrane', 'Filigrane', '« COPIE », « CONFIDENTIEL »…'],
-  ['images', 'images', 'PDF → images', 'Chaque page en JPG'],
-  ['aplatir', 'masque', 'Aplatir en image', 'Efface vraiment le texte caché'],
-  ['signatures', 'signature', 'Signatures et tampons', 'Créer, renommer, supprimer'],
-  ['info', 'info', 'Informations', 'Pages, taille, champs']
-];
-function rendreOutils() {
-  $('#grille-outils-doc').replaceChildren(...OUTILS_DOC.map(([cle, ico, titre, desc]) =>
-    el('button', { type: 'button', class: 'tuile', onclick: () => actionOutil(cle) }, icone(ico), el('strong', { text: titre }), el('span', { text: desc }))));
+/** Chaque page d'un PDF en image JPG. */
+async function pdfVersImages(octets, base) {
+  const pdf = await chargerPdfjs(octets);
+  try {
+    const fichiers = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      majOccupe(`Image ${i} / ${pdf.numPages}…`);
+      const img = await pageEnImage(await pdf.getPage(i), 150, 0.88);
+      fichiers.push(new File([img.octets], `${base} - page ${i}.jpg`, { type: 'image/jpeg' }));
+    }
+    return fichiers;
+  } finally { pdf.destroy(); }
 }
-async function actionOutil(choix) {
+
+/* =========================================================
+   PANNEAU « PLUS » : les outils s'appliquent sur le document, sous vos yeux
+   Numéros de page et filigrane sont des réglages du document, visibles en direct et dessinés à l'export.
+   ========================================================= */
+const panneau = $('#panneau');
+let avantPanneau = null;
+function fermerPanneau() {
+  if (!D || !D.panneau) return;
+  if (avantPanneau && instantane() !== avantPanneau) { memoriser(avantPanneau); D.modifie = true; }
+  avantPanneau = null; D.panneau = null;
+  panneau.hidden = true; panneau.replaceChildren();
+  majClassesDoc();
+}
+function enteteP(titre) {
+  return el('div', { class: 'panneau-tete' }, el('strong', { text: titre }),
+    bouton('', { ico: 'fermer', cls: 'btn-icone', label: 'Fermer ce panneau', onclick: fermerPanneau }));
+}
+function ouvrirPanneau(type) {
   if (!D) return;
-  terminerEdition();
-  if (choix === 'rechercher') return ouvrirRecherche();
-  if (choix === 'ajouter') { choisirOnglet('pages'); return ajouterFichiers(); }
-  if (choix === 'signatures') return ouvrirParametres();
-  if (choix === 'info') {
-    const nbChamps = D.sources.reduce((n, s) => n + Object.values(s.champs).filter(l => l.some(o => o.type)).length, 0);
-    const fe = feuille({ titre: 'Informations', pied: false });
-    fe.corps.append(el('ul', { class: 'liste' },
-      ...D.sources.map((s, k) => el('li', { class: 'ligne' }, el('span', { class: 'texte' }, el('strong', { text: k === 0 ? D.nom : `Fichier ajouté n° ${k + 1}` }), el('small', { text: `${s.pdf.numPages} page${s.pdf.numPages > 1 ? 's' : ''} · ${tailleLisible(s.octets.length)}` })))),
-      el('li', { class: 'ligne' }, el('span', { class: 'texte', text: `${D.pages.length} page${D.pages.length > 1 ? 's' : ''} dans le document` })),
-      el('li', { class: 'ligne' }, el('span', { class: 'texte', text: nbChamps ? `Formulaire : ${nbChamps} champs` : 'Pas de champ de formulaire' }))));
-    return;
+  terminerEdition(); annulerPlacement(); selectionner(null);
+  if (D.mode === 'lire') basculerApercu(false);
+  if (D.onglet !== 'document') choisirOnglet('document');
+  if (D.panneau && D.panneau !== 'plus') fermerPanneau();
+  D.panneau = type;
+  panneau.replaceChildren();
+  if (type === 'plus') {
+    const t = (ico, titre, desc, fn) => el('button', { type: 'button', class: 'tuile', onclick: fn }, icone(ico), el('strong', { text: titre }), el('span', { text: desc }));
+    panneau.append(enteteP('Plus d\'outils'), el('div', { class: 'grille-outils' },
+      t('numero', 'Numéroter', 'Numéros de page, en direct', () => ouvrirPanneau('numeros')),
+      t('filigrane', 'Filigrane', '« COPIE », « CONFIDENTIEL »…', () => ouvrirPanneau('filigrane')),
+      t('recherche', 'Rechercher', 'Trouver un mot', () => { fermerPanneau(); ouvrirRecherche(); }),
+      t('info', 'Informations', 'Pages, taille, champs', () => { fermerPanneau(); afficherInfos(); })));
+  } else {
+    avantPanneau = instantane();
+    if (type === 'numeros') {
+      if (!D.numeros) D.numeros = { position: 'bas-centre', format: 'n-sur-total', debut: 1 };
+      const n = D.numeros, maj = () => { D.modifie = true; rendreDecoToutes(); };
+      const debut = el('input', { class: 'champ', id: 'num-debut', type: 'number', min: '0', value: String(n.debut), inputmode: 'numeric', style: { maxWidth: '120px' } });
+      debut.addEventListener('input', () => { n.debut = parseInt(debut.value, 10) || 1; maj(); });
+      panneau.append(enteteP('Numéroter les pages'),
+        el('div', { class: 'etiquette', text: 'Position' }),
+        segments('pos', [['bas-centre', 'En bas au centre'], ['bas-droite', 'En bas à droite'], ['haut-droite', 'En haut à droite']], n.position, v => { n.position = v; maj(); }),
+        el('div', { class: 'etiquette', text: 'Format' }),
+        segments('fmt', [['n', '1'], ['n-sur-total', '1 / 5'], ['page-n-sur', 'Page 1 sur 5']], n.format, v => { n.format = v; maj(); }),
+        el('label', { class: 'etiquette', for: 'num-debut', text: 'Premier numéro' }), debut,
+        el('div', { class: 'rangee-btn' },
+          bouton('Retirer les numéros', { ico: 'poubelle', cls: 'btn danger', onclick: () => { D.numeros = null; rendreDecoToutes(); fermerPanneau(); toast('Numéros retirés', { action: 'Annuler', onAction: annulerAction }); } }),
+          bouton('Terminer', { ico: 'valider', cls: 'btn principal', onclick: fermerPanneau })));
+    } else if (type === 'filigrane') {
+      if (!D.filigrane) D.filigrane = { texte: 'COPIE', couleur: '#9ca3af', opacite: 0.25 };
+      const f = D.filigrane, maj = () => { D.modifie = true; rendreDecoToutes(); };
+      const champ = el('input', { class: 'champ', id: 'fil-texte', value: f.texte, maxlength: 40 });
+      champ.addEventListener('input', () => { f.texte = champ.value; maj(); });
+      panneau.append(enteteP('Filigrane'),
+        el('label', { class: 'etiquette', for: 'fil-texte', text: 'Texte' }), champ,
+        el('div', { class: 'rangee-btn' }, ['COPIE', 'CONFIDENTIEL', 'BROUILLON', 'PAYÉ'].map(t => bouton(t, { onclick: () => { champ.value = f.texte = t; maj(); } }))),
+        el('div', { class: 'etiquette', text: 'Couleur' }),
+        segments('fil-couleur', [['#9ca3af', 'Gris', '#9ca3af'], ['#b91c1c', 'Rouge', '#b91c1c'], ['#1d3fb3', 'Bleu', '#1d3fb3']], f.couleur, v => { f.couleur = v; maj(); }),
+        el('div', { class: 'etiquette', text: 'Intensité' }),
+        segments('fil-op', [['0.15', 'Discrète'], ['0.25', 'Moyenne'], ['0.4', 'Marquée']], String(f.opacite), v => { f.opacite = +v; maj(); }),
+        el('div', { class: 'rangee-btn' },
+          bouton('Retirer le filigrane', { ico: 'poubelle', cls: 'btn danger', onclick: () => { D.filigrane = null; rendreDecoToutes(); fermerPanneau(); toast('Filigrane retiré', { action: 'Annuler', onAction: annulerAction }); } }),
+          bouton('Terminer', { ico: 'valider', cls: 'btn principal', onclick: fermerPanneau })));
+    }
+    D.modifie = true;
+    rendreDecoToutes();
   }
-  occupe('Préparation…');
-  let octets;
-  try { octets = choix === 'aplatir' ? await construirePdfImage(200) : await octetsCourants(); }
-  catch (e) { console.error(e); toast('Cette action n\'a pas abouti. Réessayez.'); return; }
-  finally { libre(); }
-  if (choix === 'aplatir') return feuilleResultat(octets, nomSortie(D.nom, 'aplati'), 'Pages converties en images, texte caché effacé');
-  lancerOutil(choix, [{ nom: D.nom, octets }]);
+  panneau.hidden = false;
+  majClassesDoc();
+}
+
+/** Numéro et filigrane : calculs communs à l'écran et à l'export (points, page telle qu'on la voit). */
+function texteNumero(i) {
+  const { format, debut } = D.numeros, n = i + debut, total = D.pages.length + debut - 1;
+  return format === 'n' ? `${n}` : format === 'n-sur-total' ? `${n} / ${total}` : `Page ${n} sur ${total}`;
+}
+let mesureCanvas;
+function largeurTexte(t, taille, gras) {
+  mesureCanvas ||= el('canvas').getContext('2d');
+  mesureCanvas.font = `${gras ? '700 ' : ''}100px Helvetica, Arial, sans-serif`;
+  return mesureCanvas.measureText(t).width * taille / 100;
+}
+function rendreDeco(id) {
+  const v = D.vues.get(id), pg = D.parId.get(id); if (!v) return;
+  v.deco.replaceChildren();
+  const i = D.pages.indexOf(pg), s = D.s, W = pg.w, H = pg.h;
+  if (D.numeros && i >= 0) {
+    const txt = texteNumero(i), taille = 10, marge = 24, tw = largeurTexte(txt, taille);
+    const vx = D.numeros.position === 'bas-centre' ? (W - tw) / 2 : W - marge - tw;
+    const vy = D.numeros.position.startsWith('bas') ? H - marge + taille * 0.3 : marge + taille;
+    v.deco.append(el('span', { class: 'deco-num', text: txt, style: { left: vx * s + 'px', top: (vy - taille * 0.78) * s + 'px', fontSize: taille * s + 'px' } }));
+  }
+  if (D.filigrane && D.filigrane.texte.trim()) {
+    const t = D.filigrane.texte.trim(), a = Math.atan2(H, W);
+    const taille = Math.min(110, Math.hypot(W, H) * 0.7 / Math.max(1, largeurTexte(t, 1, true)));
+    v.deco.append(el('span', { class: 'deco-fil', text: t, style: { fontSize: taille * s + 'px', color: D.filigrane.couleur, opacity: D.filigrane.opacite, transform: `translate(-50%,-50%) rotate(${-a * 180 / Math.PI}deg)` } }));
+  }
+}
+function rendreDecoToutes() { if (D) D.pages.forEach(pg => rendreDeco(pg.id)); }
+async function dessinerDeco(out, np, pg, i, W, H, versPdf, R, ressources) {
+  if (!ressources.police) ressources.police = await out.embedFont(StandardFonts.Helvetica);
+  if (D.filigrane && D.filigrane.texte.trim()) {
+    if (!ressources.gras) ressources.gras = await out.embedFont(StandardFonts.HelveticaBold);
+    const f = ressources.gras, t = versWinAnsi(D.filigrane.texte.trim()), a = Math.atan2(H, W);
+    const taille = Math.min(110, Math.hypot(W, H) * 0.7 / Math.max(1, f.widthOfTextAtSize(t, 1)));
+    const tw = f.widthOfTextAtSize(t, taille), c = Math.cos(a), s = Math.sin(a);
+    const [x, y] = versPdf(W / 2 - c * tw / 2 + s * taille * 0.35, H / 2 + s * tw / 2 + c * taille * 0.35);
+    np.drawText(t, { x, y, size: taille, font: f, color: hexVersRgb(D.filigrane.couleur), opacity: D.filigrane.opacite, rotate: degrees(R + a * 180 / Math.PI) });
+  }
+  if (D.numeros) {
+    const txt = versWinAnsi(texteNumero(i)), taille = 10, marge = 24, tw = ressources.police.widthOfTextAtSize(txt, taille);
+    const vx = D.numeros.position === 'bas-centre' ? (W - tw) / 2 : W - marge - tw;
+    const vy = D.numeros.position.startsWith('bas') ? H - marge + taille * 0.3 : marge + taille;
+    const [x, y] = versPdf(vx, vy);
+    np.drawText(txt, { x, y, size: taille, font: ressources.police, color: rgb(0.2, 0.2, 0.2), rotate: degrees(R) });
+  }
+}
+function afficherInfos() {
+  const nbChamps = D.sources.reduce((n, s) => n + Object.values(s.champs).filter(l => l.some(o => o.type)).length, 0);
+  const fe = feuille({ titre: 'Informations', pied: false });
+  fe.corps.append(el('ul', { class: 'liste' },
+    ...D.sources.map((s, k) => el('li', { class: 'ligne' }, el('span', { class: 'texte' }, el('strong', { text: k === 0 ? D.nom : `Fichier ajouté n° ${k + 1}` }), el('small', { text: `${s.pdf.numPages} page${s.pdf.numPages > 1 ? 's' : ''} · ${tailleLisible(s.octets.length)}` })))),
+    el('li', { class: 'ligne' }, el('span', { class: 'texte', text: `${D.pages.length} page${D.pages.length > 1 ? 's' : ''} dans le document` })),
+    el('li', { class: 'ligne' }, el('span', { class: 'texte', text: nbChamps ? `Formulaire : ${nbChamps} champs` : 'Pas de champ de formulaire' }))));
 }
 
 /* =========================================================
@@ -2303,16 +2460,13 @@ async function lancerOutil(outil, fichiers) {
       return ouvrirDocuments(fichiers, { onglet: 'pages' });
     }
     if (outil === 'organiser') return ouvrirDocuments([f], { onglet: 'pages' });
-    if (outil === 'compresser') return outilCompresser(f);
-    if (outil === 'numeros') return outilNumeros(f);
-    if (outil === 'filigrane') return outilFiligrane(f);
-    if (outil === 'images') return await outilImages(f);
+    // Même parcours que depuis un document ouvert : on ouvre le fichier, puis l'outil s'applique sous vos yeux
+    await ouvrirDocuments([f]);
+    if (!D) return;
+    if (outil === 'numeros' || outil === 'filigrane') return ouvrirPanneau(outil);
+    if (outil === 'compresser') return exporter('enregistrer', { niveau: 'moyenne' });
+    if (outil === 'images') return exporter('enregistrer', { format: 'jpg' });
   } catch (e) { console.error(e); toast('Cette action n\'a pas abouti. Réessayez.', 5000); }
-}
-async function chargerPdfLib(octets) {
-  const d = await PDFDocument.load(octets, { ignoreEncryption: true });
-  if (d.isEncrypted) throw new Error('ce PDF est protégé par un mot de passe et ne peut pas être modifié');
-  return d;
 }
 
 /** Niveaux de compression : [points par pouce, qualité JPEG, description] */
@@ -2332,114 +2486,6 @@ async function compresserOctets(octets, niveau) {
     return await out.save();
   } finally { pdf.destroy(); }
 }
-function outilCompresser(f) {
-  const niveaux = NIVEAUX_COMPRESSION;
-  let niveau = prefs.compression in niveaux ? prefs.compression : 'moyenne';
-  const fe = feuille({ titre: 'Compresser' });
-  fe.corps.append(
-    el('p', {}, el('strong', { text: f.nom }), ' · ' + tailleLisible(f.octets.length)),
-    el('div', { class: 'etiquette', text: 'Niveau' }),
-    segments('niveau', Object.entries(niveaux).map(([k, v]) => [k, v[2]]), niveau, v => { niveau = v; }),
-    el('p', { class: 'note', text: 'Les pages sont transformées en images : le texte ne pourra plus être sélectionné ni recherché, et les champs de formulaire seront figés.' }));
-  fe.pied.append(bouton('Compresser', { ico: 'compresser', cls: 'btn principal', onclick: async () => {
-    occupe('Compression…');
-    try {
-      const octets = await compresserOctets(f.octets, niveau);
-      libre(); await fe.fermer();
-      const gain = Math.round((1 - octets.length / f.octets.length) * 100);
-      if (gain <= 0) toast('Ce PDF était déjà léger : la version compressée n\'est pas plus petite. Gardez l\'original.', 6000);
-      feuilleResultat(octets, nomSortie(f.nom, 'compressé'), `${tailleLisible(f.octets.length)} → ${tailleLisible(octets.length)}${gain > 0 ? ` (−${gain} %)` : ''}`);
-    } catch (e) { libre(); console.error(e); toast('La compression n\'a pas abouti. Réessayez avec un autre niveau.', 5000); }
-  } }));
-}
-
-function outilNumeros(f) {
-  let position = 'bas-centre', format = 'n-sur-total', debut = 1, taille = 10;
-  const fe = feuille({ titre: 'Numéroter les pages' });
-  fe.corps.append(
-    el('div', { class: 'etiquette', text: 'Position' }),
-    segments('pos', [['bas-centre', 'En bas au centre'], ['bas-droite', 'En bas à droite'], ['haut-droite', 'En haut à droite']], position, v => { position = v; }),
-    el('div', { class: 'etiquette', text: 'Format' }),
-    segments('fmt', [['n', '1'], ['n-sur-total', '1 / 5'], ['page-n-sur', 'Page 1 sur 5']], format, v => { format = v; }),
-    el('label', { class: 'etiquette', for: 'num-debut', text: 'Premier numéro' }),
-    el('input', { class: 'champ', id: 'num-debut', type: 'number', min: 0, value: '1', inputmode: 'numeric', oninput: e => { debut = parseInt(e.target.value, 10) || 1; } }));
-  fe.pied.append(bouton('Numéroter', { ico: 'numero', cls: 'btn principal', onclick: async () => {
-    occupe('Numérotation…');
-    try {
-      const doc = await chargerPdfLib(f.octets), police = await doc.embedFont(StandardFonts.Helvetica), pages = doc.getPages(), total = pages.length + debut - 1;
-      pages.forEach((p, k) => {
-        const n = k + debut, txt = format === 'n' ? `${n}` : format === 'n-sur-total' ? `${n} / ${total}` : `Page ${n} sur ${total}`;
-        const cb = p.getCropBox(), R = angleDe(p), W = R % 180 ? cb.height : cb.width, H = R % 180 ? cb.width : cb.height;
-        const tw = police.widthOfTextAtSize(txt, taille), marge = 24;
-        const vx = position === 'bas-centre' ? (W - tw) / 2 : W - marge - tw;
-        const vy = position.startsWith('bas') ? H - marge + taille * 0.3 : marge + taille;
-        const [x, y] = versUtilisateur(cb, R, vx, vy);
-        p.drawText(txt, { x, y, size: taille, font: police, color: rgb(0.2, 0.2, 0.2), rotate: degrees(R) });
-      });
-      const octets = await doc.save();
-      libre(); await fe.fermer();
-      feuilleResultat(octets, nomSortie(f.nom, 'numéroté'), `${pages.length} pages numérotées`);
-    } catch (e) { libre(); console.error(e); toast('La numérotation n\'a pas abouti : ' + e.message, 5000); }
-  } }));
-}
-
-function outilFiligrane(f) {
-  let texte = 'COPIE', couleur = '#9ca3af', opacite = 0.25;
-  const fe = feuille({ titre: 'Ajouter un filigrane' });
-  const champ = el('input', { class: 'champ', id: 'fil-texte', value: texte, maxlength: 40, oninput: e => { texte = e.target.value; } });
-  fe.corps.append(
-    el('label', { class: 'etiquette', for: 'fil-texte', text: 'Texte' }), champ,
-    el('div', { class: 'rangee-btn' }, ['COPIE', 'CONFIDENTIEL', 'BROUILLON', 'PAYÉ'].map(t => bouton(t, { onclick: () => { champ.value = texte = t; } }))),
-    el('div', { class: 'etiquette', text: 'Couleur' }),
-    segments('fil-couleur', [['#9ca3af', 'Gris', '#9ca3af'], ['#b91c1c', 'Rouge', '#b91c1c'], ['#1d3fb3', 'Bleu', '#1d3fb3']], couleur, v => { couleur = v; }),
-    el('div', { class: 'etiquette', text: 'Intensité' }),
-    segments('fil-op', [['0.15', 'Discrète'], ['0.25', 'Moyenne'], ['0.4', 'Marquée']], '0.25', v => { opacite = +v; }));
-  fe.pied.append(bouton('Ajouter le filigrane', { ico: 'filigrane', cls: 'btn principal', onclick: async () => {
-    const t = versWinAnsi(texte.trim()); if (!t) { toast('Écrivez le texte du filigrane.'); return; }
-    occupe('Filigrane…');
-    try {
-      const doc = await chargerPdfLib(f.octets), police = await doc.embedFont(StandardFonts.HelveticaBold);
-      doc.getPages().forEach(p => {
-        const cb = p.getCropBox(), R = angleDe(p), W = R % 180 ? cb.height : cb.width, H = R % 180 ? cb.width : cb.height;
-        const a = Math.atan2(H, W), taille = Math.min(110, (Math.hypot(W, H) * 0.7) / Math.max(1, police.widthOfTextAtSize(t, 1)));
-        const tw = police.widthOfTextAtSize(t, taille), c = Math.cos(a), s = Math.sin(a);
-        const vx = W / 2 - c * tw / 2 + s * taille * 0.35, vy = H / 2 + s * tw / 2 + c * taille * 0.35;
-        const [x, y] = versUtilisateur(cb, R, vx, vy);
-        p.drawText(t, { x, y, size: taille, font: police, color: hexVersRgb(couleur), opacity: opacite, rotate: degrees(R + a * 180 / Math.PI) });
-      });
-      const octets = await doc.save();
-      libre(); await fe.fermer();
-      feuilleResultat(octets, nomSortie(f.nom, 'filigrane'));
-    } catch (e) { libre(); console.error(e); toast('Le filigrane n\'a pas pu être ajouté : ' + e.message, 5000); }
-  } }));
-}
-
-async function outilImages(f) {
-  occupe('Conversion en images…');
-  let pdf; const fichiers = [];
-  try {
-    pdf = await chargerPdfjs(f.octets);
-    for (let i = 1; i <= pdf.numPages; i++) {
-      majOccupe(`Page ${i} / ${pdf.numPages}…`);
-      const img = await pageEnImage(await pdf.getPage(i), 150, 0.88);
-      fichiers.push(new File([img.octets], `${nomSansExt(f.nom)} - page ${i}.jpg`, { type: 'image/jpeg' }));
-    }
-  } catch (e) { console.error(e); toast('La conversion n\'a pas abouti. Réessayez.', 5000); return; }
-  finally { libre(); pdf?.destroy(); }
-  const fe = feuille({ titre: 'Pages en images' });
-  const urls = fichiers.map(x => URL.createObjectURL(x));
-  fe.corps.append(el('p', { class: 'note', text: `${fichiers.length} image${fichiers.length > 1 ? 's' : ''} JPG prête${fichiers.length > 1 ? 's' : ''}. Touchez une image pour l'enregistrer seule.` }),
-    el('div', { class: 'vignettes' }, fichiers.map((x, i) => el('button', { type: 'button', class: 'vignette', onclick: async () => telecharger(new Uint8Array(await x.arrayBuffer()), x.name, x.type) },
-      el('div', { class: 'cadre' }, el('img', { src: urls[i], alt: x.name })), el('span', { class: 'num', text: `Page ${i + 1}` })))));
-  fe.pied.append(
-    bouton('Partager', { ico: 'partager', onclick: () => partager(fichiers) }),
-    bouton('Tout enregistrer', { ico: 'enregistrer', cls: 'btn principal', onclick: async () => {
-      for (const x of fichiers) { telecharger(new Uint8Array(await x.arrayBuffer()), x.name, x.type); await attendre(400); }
-      toast('Images enregistrées');
-    } }));
-  const nettoyer = setInterval(() => { if (fe.ferme()) { urls.forEach(URL.revokeObjectURL); clearInterval(nettoyer); } }, 2000);
-}
-
 /* =========================================================
    13. PHOTOS → PDF ET EFFET SCANNER
    ========================================================= */
