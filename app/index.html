@@ -491,10 +491,19 @@ a{color:var(--accent)}
 .sommaire-param .btn.puce .ico{width:16px;height:16px;color:var(--accent)}
 .sommaire-param .btn.puce.actif{background:var(--accent);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(13,107,79,.25)}
 .sommaire-param .btn.puce.actif .ico{color:#fff}
-/* Paramètres en onglets : une rubrique à la fois, onglets collants en haut */
+/* Réglages rangés en blocs : chaque bloc a son icône et son titre ; chaque réglage est une ligne séparée */
+.groupe-reglage{margin:12px 0 0;padding:4px 14px 6px;border-radius:14px;background:#f6f9f7;border:1px solid #e3ece6}
+.titre-groupe{display:flex;align-items:center;gap:10px;margin:8px 0 4px;font-size:15px;font-weight:800;color:var(--encre)}
+.pastille-groupe{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--accent-pale);color:var(--accent)}
+.pastille-groupe .ico{width:17px;height:17px}
+.ligne-reglage{display:flex;flex-direction:column;gap:8px;padding:12px 0}
+.ligne-reglage+.ligne-reglage{border-top:1px solid #e3ece6}
+.nom-reglage strong{display:block;font-size:14.5px}
+.nom-reglage small{display:block;font-size:12.5px;color:var(--doux);margin-top:2px}
+@media (min-width:640px){.ligne-reglage{flex-direction:row;align-items:center;justify-content:space-between;gap:16px}.ligne-reglage .segments{flex:none;justify-content:flex-end}}/* Paramètres en onglets : une rubrique à la fois, onglets collants en haut */
 .feuille.parametres .onglets-param{position:sticky;top:-16px;z-index:2;margin:-16px -18px 14px;padding:12px 18px;background:#edf3ef}
 .feuille.parametres .segments.onglets span{background:#fff;border-color:transparent;box-shadow:0 1px 2px rgba(20,24,35,.06);font-size:13px;padding:0 4px;white-space:nowrap}
-@media (max-width:420px){.feuille.parametres .segments.onglets span{font-size:12px;padding:0 2px}.feuille.parametres .segments.onglets{gap:3px}}
+@media (max-width:520px){.feuille.parametres .segments.onglets{display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px}.feuille.parametres .segments.onglets::-webkit-scrollbar{display:none}.feuille.parametres .segments.onglets label{flex:none}.feuille.parametres .segments.onglets span{font-size:13px;padding:0 14px}}
 .feuille.parametres .segments.onglets input:checked+span{background:var(--accent);color:#fff}
 .feuille.parametres .carte-param[hidden]{display:none!important}
 @media (min-width:1000px){
@@ -816,7 +825,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.9.2';
+const VERSION_APPLI = '1.9.3';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;
@@ -3028,14 +3037,15 @@ function renommerEnPlace(span, t, apres) {
 }
 function ouvrirParametres() {
   const fe = feuille({ titre: 'Paramètres', plein: true, pied: false });
-  const sectionTampons = el('div');
+  // Deux rubriques séparées : « Mes signatures » et « Mes tampons », chacune en blocs (comme les Réglages)
+  const sectionSig = el('div'), sectionTam = el('div');
   const majListe = () => {
     const liste = lireTampons();
-    sectionTampons.replaceChildren();
     for (const type of ['signature', 'tampon']) {
+      const cible = type === 'signature' ? sectionSig : sectionTam;
       const items = liste.filter(t => t.type === type);
-      sectionTampons.append(el('h3', { class: 'titre-section', text: type === 'signature' ? 'Mes signatures' : 'Mes tampons' }));
-      sectionTampons.append(items.length ? el('div', { class: 'grille-tampons' }, items.map(t => {
+      const sig = type === 'signature';
+      const cartes = items.length ? el('div', { class: 'grille-tampons' }, items.map(t => {
         const nom = el('span', { class: 'nom', text: t.nom, tabindex: '0', title: 'Touchez pour renommer', 'aria-label': `Nom : ${t.nom}. Touchez pour renommer` });
         nom.addEventListener('click', () => renommerEnPlace(nom, t));
         nom.addEventListener('keydown', e => { if (e.key === 'Enter' && !nom.isContentEditable) { e.preventDefault(); renommerEnPlace(nom, t); } });
@@ -3044,26 +3054,41 @@ function ouvrirParametres() {
           el('div', { class: 'actions' },
             bouton('Renommer', { onclick: () => renommerEnPlace(nom, t) }),
             bouton('', { ico: 'poubelle', cls: 'btn danger', label: `Supprimer « ${t.nom} »`, onclick: async () => {
-              const ok = await confirmer({ titre: `Supprimer « ${t.nom} » ?`, texte: `${type === 'signature' ? 'Cette signature' : 'Ce tampon'} sera retiré${type === 'signature' ? 'e' : ''} de ce téléphone. Les documents déjà enregistrés ne changent pas.`, action: type === 'signature' ? 'Supprimer la signature' : 'Supprimer le tampon' });
+              const ok = await confirmer({ titre: `Supprimer « ${t.nom} » ?`, texte: `${sig ? 'Cette signature' : 'Ce tampon'} sera retiré${sig ? 'e' : ''} de cet appareil. Les documents déjà enregistrés ne changent pas.`, action: sig ? 'Supprimer la signature' : 'Supprimer le tampon' });
               if (ok) { ecrireTampons(lireTampons().filter(y => y.id !== t.id)); majListe(); toast('Supprimé'); }
             } })));
-      })) : el('p', { class: 'vide', text: type === 'signature' ? 'Aucune signature pour l\'instant.' : 'Aucun tampon pour l\'instant.' }));
-      sectionTampons.append(el('div', { class: 'rangee-btn' },
-        bouton('Dessiner', { ico: 'crayon', onclick: async () => { await dessinerTampon(type); majListe(); } }),
-        bouton('Photo', { ico: 'camera', onclick: async () => { await importerTampon(type); majListe(); } }),
-        type === 'tampon' ? bouton('Tampon texte', { ico: 'texte', onclick: async () => { await tamponTexte(); majListe(); } }) : null));
+      })) : el('p', { class: 'vide', text: sig ? 'Aucune signature pour l\'instant : dessinez-la ou prenez-la en photo.' : 'Aucun tampon pour l\'instant : créez celui de votre société en quelques secondes.' });
+      const n = items.length;
+      cible.replaceChildren(
+        el('h3', { class: 'titre-section', text: sig ? 'Mes signatures' : 'Mes tampons' }),
+        el('div', { class: 'groupe-reglage' },
+          el('h4', { class: 'titre-groupe' }, el('span', { class: 'pastille-groupe' }, icone(sig ? 'signature' : 'tampon')),
+            n ? `${n} ${sig ? 'signature' : 'tampon'}${n > 1 ? 's' : ''} enregistré${sig ? 'e' : ''}${n > 1 ? 's' : ''}` : (sig ? 'Vos signatures' : 'Vos tampons')),
+          cartes),
+        el('div', { class: 'groupe-reglage' },
+          el('h4', { class: 'titre-groupe' }, el('span', { class: 'pastille-groupe' }, icone('plus')), sig ? 'Ajouter une signature' : 'Ajouter un tampon'),
+          el('div', { class: 'rangee-btn' },
+            sig ? bouton('Dessiner ma signature', { ico: 'crayon', cls: 'btn principal', onclick: async () => { await dessinerTampon('signature'); majListe(); } })
+                : bouton('Créer un tampon (société)', { ico: 'tampon', cls: 'btn principal', onclick: async () => { await tamponTexte(); majListe(); } }),
+            sig ? null : bouton('Dessiner', { ico: 'crayon', onclick: async () => { await dessinerTampon('tampon'); majListe(); } }),
+            bouton(sig ? 'À partir d\'une photo' : 'Photo d\'un tampon', { ico: 'camera', onclick: async () => { await importerTampon(type); majListe(); } }))));
     }
-  };
-  majListe();
+  };  majListe();
   const espace = el('p', { class: 'note' });
   navigator.storage?.estimate?.().then(({ usage }) => { espace.textContent = `Espace utilisé par l'appli : ${tailleLisible(usage || 0)}.`; }).catch(() => {});
-  const reglage = (cle, titre, options) => el('div', {}, el('div', { class: 'etiquette', text: titre }),
-    segments('pref-' + cle, options, String(prefs[cle]), v => { prefs[cle] = isNaN(+v) ? v : +v; ecrirePrefs(prefs); }));
+  // Un réglage = une ligne : nom + courte explication à gauche, choix à droite (l'un sous l'autre sur téléphone)
+  const reglage = (cle, titre, options, aide) => {
+    const s = segments('pref-' + cle, options, String(prefs[cle]), v => { prefs[cle] = isNaN(+v) ? v : +v; ecrirePrefs(prefs); toast('Réglage enregistré'); });
+    s.setAttribute('aria-label', titre);
+    return el('div', { class: 'ligne-reglage' }, el('div', { class: 'nom-reglage' }, el('strong', { text: titre }), aide ? el('small', { text: aide }) : null), s);
+  };
+  // Les réglages sont rangés en blocs thématiques, chacun avec son icône
+  const groupe = (ico, nom, ...lignes) => el('div', { class: 'groupe-reglage' }, el('h4', { class: 'titre-groupe' }, el('span', { class: 'pastille-groupe' }, icone(ico)), nom), ...lignes);
   // Sommaire : on saute directement à la rubrique voulue
-  const rubriques = [['p-drive', 'Google Drive', 'dossier'], ['p-signatures', 'Signatures et tampons', 'signature'], ['p-reglages', 'Réglages', 'reglages'], ['p-stockage', 'Stockage', 'doc'], ['p-apropos', 'À propos', 'info']].filter(([id]) => id !== 'p-drive' || driveConfigure());
+  const rubriques = [['p-drive', 'Google Drive', 'dossier'], ['p-signatures', 'Signatures', 'signature'], ['p-tampons', 'Tampons', 'tampon'], ['p-reglages', 'Réglages', 'reglages'], ['p-stockage', 'Stockage', 'doc'], ['p-apropos', 'À propos', 'info']].filter(([id]) => id !== 'p-drive' || driveConfigure());
   const titre = (id, texte) => el('h3', { class: 'titre-section', id, text: texte });
   // Sous-menus (onglets), comme dans « Mes documents » : une rubrique à la fois, sans faire défiler la page
-  const COURTS = { 'p-drive': 'Drive', 'p-signatures': 'Signatures', 'p-reglages': 'Réglages', 'p-stockage': 'Stockage', 'p-apropos': 'À propos' };
+  const COURTS = { 'p-drive': 'Drive', 'p-signatures': 'Signatures', 'p-tampons': 'Tampons', 'p-reglages': 'Réglages', 'p-stockage': 'Stockage', 'p-apropos': 'À propos' };
   let rubrique = rubriques.some(([id]) => id === prefs.ongletParametres) ? prefs.ongletParametres : (rubriques.find(([id]) => id === 'p-signatures') || rubriques[0])[0];
   const sommaire = segments('param-onglet', rubriques.map(([id]) => [id, COURTS[id]]), rubrique, v => { rubrique = v; prefs.ongletParametres = v; ecrirePrefs(prefs); montrerRubrique(); });
   sommaire.classList.add('onglets', 'onglets-param');
@@ -3077,14 +3102,18 @@ function ouvrirParametres() {
     sommaire,
     el('div', { class: 'param-contenu' },
     ...(driveConfigure() ? [carte(titre('p-drive', 'Google Drive'), blocDrive())] : []),
-    carte(el('div', { id: 'p-signatures' }, sectionTampons)),
+    carte(el('div', { id: 'p-signatures' }, sectionSig)),
+    carte(el('div', { id: 'p-tampons' }, sectionTam)),
     carte(titre('p-reglages', 'Réglages'),
-    reglage('tailleTexte', 'Taille du texte ajouté', [['9', 'Petite'], ['11', 'Normale'], ['14', 'Grande']]),
-    reglage('couleurTexte', 'Couleur du texte ajouté', COULEURS_TEXTE.map(([c, n]) => [c, n, c])),
-    reglage('largeurSignature', 'Taille des signatures posées', [['100', 'Petite'], ['140', 'Moyenne'], ['190', 'Grande']]),
-    reglage('largeurTampon', 'Taille des tampons posés', [['100', 'Petit'], ['130', 'Moyen'], ['170', 'Grand']]),
-    reglage('formatPhotos', 'Photos → PDF : format des pages', [['a4', 'A4'], ['image', 'Taille de la photo']]),
-    reglage('compression', 'Compression par défaut', [['forte', 'Forte'], ['moyenne', 'Moyenne'], ['legere', 'Légère']])),
+    groupe('texte', 'Texte ajouté',
+      reglage('tailleTexte', 'Taille', [['9', 'Petite'], ['11', 'Normale'], ['14', 'Grande']], 'Pour le texte que vous écrivez sur un PDF'),
+      reglage('couleurTexte', 'Couleur', COULEURS_TEXTE.map(([c, n]) => [c, n, c]), 'Couleur par défaut du texte')),
+    groupe('signature', 'Signatures et tampons posés',
+      reglage('largeurSignature', 'Taille des signatures', [['100', 'Petite'], ['140', 'Moyenne'], ['190', 'Grande']], 'Taille à la pose (ajustable ensuite)'),
+      reglage('largeurTampon', 'Taille des tampons', [['100', 'Petit'], ['130', 'Moyen'], ['170', 'Grand']], 'Taille à la pose (ajustable ensuite)')),
+    groupe('image', 'Photos et compression',
+      reglage('formatPhotos', 'Format des pages', [['a4', 'A4'], ['image', 'Taille de la photo']], 'Quand vous transformez des photos en PDF'),
+      reglage('compression', 'Compression par défaut', [['forte', 'Forte'], ['moyenne', 'Moyenne'], ['legere', 'Légère']], 'Proposée à l\'enregistrement'))),
     carte(titre('p-stockage', 'Stockage sur cet appareil'),
     el('div', {}, el('div', { class: 'etiquette', text: 'Garder mes documents et leur historique sur cet appareil' }),
       segments('pref-garder', [['oui', 'Oui (conseillé)'], ['non', 'Non']], prefs.garderDocuments ? 'oui' : 'non', v => { prefs.garderDocuments = v === 'oui'; ecrirePrefs(prefs); })),
