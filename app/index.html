@@ -1109,7 +1109,10 @@ async function remplirChamps(doc) {
   if (!stock.size) return 0;
   const form = doc.getForm();
   let n = 0;
-  for (const [nom, objets] of Object.entries(D.champs)) {
+  for (const [nom, tous] of Object.entries(D.champs)) {
+    // pdf.js peut lister aussi le champ « parent » (sans type) : on ne garde que les widgets typés
+    const objets = tous.filter(o => o.type);
+    if (!objets.length) continue;
     const valeurs = objets.map(o => ({ o, v: o.id ? stock.getValue(o.id, {}) : {} })).filter(x => 'value' in x.v);
     if (!valeurs.length) continue;
     let champ; try { champ = form.getField(nom); } catch { continue; }
