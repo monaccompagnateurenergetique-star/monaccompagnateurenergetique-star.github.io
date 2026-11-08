@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0d6b4f">
-<title>Atelier PDF – en 20 secondes</title>
-<meta name="description" content="Le tour d'Atelier PDF en 20 secondes : modifier, fusionner, convertir, remplir, signer, enregistrer dans Google Drive.">
+<title>Atelier PDF – la démo</title>
+<meta name="description" content="Le tour d'Atelier PDF en 30 secondes : modifier, fusionner, convertir, remplir, signer, enregistrer dans Google Drive.">
 <link rel="icon" href="assets/icone.png">
 <style>
-/* Teaser animé d'Atelier PDF (≈ 22 s, en boucle). Ouvert seul : plein écran, à montrer ou à filmer.
+/* Teaser animé d'Atelier PDF (≈ 27 s, en boucle). Ouvert seul : plein écran, à montrer ou à filmer.
    Avec ?integre : sans fond, pour tourner dans le téléphone de la page d'accueil. */
 :root{--fond:#f3f2ee;--carte:#fff;--encre:#1b2130;--doux:#5d6576;--ligne:#e1ded6;--accent:#0d6b4f;--accent-fort:#0a5540;--accent-pale:#e2f0ea;--bleu:#2b7cff;--encre-bleue:#1d3fb3;color-scheme:light}
 *{box-sizing:border-box}
@@ -24,13 +24,18 @@ body.integre #cadre{border-radius:0;box-shadow:none}
 .scene *{animation-fill-mode:both!important}
 .scene:not(.active) *{animation:none!important}
 
-/* Barre du haut, commune */
-.barre{position:absolute;left:0;right:0;top:0;height:64px;display:flex;align-items:center;gap:10px;padding:18px 18px 8px;background:#fff;border-bottom:1px solid var(--ligne);font-weight:700;font-size:15px}
-.barre .logo{width:28px;height:28px}
-.barre .vide{flex:1}
-.barre .bouton-rond{width:30px;height:30px;border-radius:50%;background:var(--accent);display:grid;place-items:center}
-.barre .bouton-rond svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-.barre .gris{width:22px;height:22px;border-radius:6px;background:#ebe9e3}
+/* Barres de l'écran Document : identiques à l'appli (mêmes icônes) */
+.ico{width:21px;height:21px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.barre{position:absolute;left:0;right:0;top:0;height:60px;display:flex;align-items:center;gap:0;padding:14px 4px 2px;background:#fff;color:var(--encre)}
+.barre .bi{width:38px;height:40px;display:grid;place-items:center;flex:none}
+.barre .titre-doc{flex:1;min-width:0;padding:0 4px;line-height:1.15}
+.barre .titre-doc b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.barre .titre-doc small{font-size:11px;color:var(--doux)}
+.barre .plein{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;margin:0 4px}
+.onglets-doc{position:absolute;left:0;right:0;top:60px;height:40px;display:flex;background:#fff;border-bottom:1px solid var(--ligne)}
+.onglets-doc span{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:600;color:var(--doux);border-bottom:2px solid transparent}
+.onglets-doc span.actif{color:var(--accent-fort);border-color:var(--accent)}
+.onglets-doc .ico{width:17px;height:17px}
 
 /* Légende en bas */
 .legende{position:absolute;left:24px;right:24px;bottom:44px;text-align:left}
@@ -43,7 +48,7 @@ body.integre #cadre{border-radius:0;box-shadow:none}
 .page{position:absolute;background:#fff;border-radius:3px;box-shadow:0 2px 10px rgba(20,24,35,.12);padding:22px 20px;display:flex;flex-direction:column;gap:10px}
 .page .titre{height:12px;width:58%;margin:0 auto 8px;border-radius:3px;background:var(--encre)}
 .page .l{height:7px;border-radius:3px;background:#e7e5df}
-.zone-doc{position:absolute;left:0;right:0;top:64px;bottom:170px;background:#d9d7d0}
+.zone-doc{position:absolute;left:0;right:0;top:100px;bottom:170px;background:#d9d7d0;overflow:hidden}
 
 /* 1. Intro */
 .intro{display:grid;place-items:center;text-align:center;background:linear-gradient(180deg,#f3f2ee 0%,#e2f0ea 100%)}
@@ -57,16 +62,19 @@ body.integre #cadre{border-radius:0;box-shadow:none}
 @keyframes pop{from{opacity:0;transform:scale(.4) rotate(-8deg)}}
 
 /* 2. Modifier : on touche « Texte » dans la barre d'outils, puis la page ; le texte s'écrit */
-.outils-bas{position:absolute;left:0;right:0;top:554px;height:56px;display:flex;justify-content:space-around;align-items:center;background:#fff;border-top:1px solid var(--ligne)}
-.outils-bas span{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;font-weight:600;color:var(--encre);padding:4px 8px;border-radius:10px}
-.outils-bas span i{font-style:normal;font-size:17px;line-height:1.1}
-.outils-bas span.texte{background:var(--accent-pale);color:var(--accent-fort)}
-.scene.active .outils-bas span.texte{animation:choisi-outil .3s .6s}
+.outils-bas{position:absolute;left:0;right:0;top:554px;height:56px;display:flex;justify-content:space-between;align-items:center;padding:0 2px;background:#fff;border-top:1px solid var(--ligne)}
+.outils-bas span{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9.5px;font-weight:600;color:var(--encre);padding:5px 0;border-radius:10px}
+.outils-bas span.choisi{background:var(--accent-pale);color:var(--accent-fort)}
+.scene.active .outils-bas span.choisi{animation:choisi-outil .3s .6s}
 @keyframes choisi-outil{from{background:transparent;color:var(--encre)}}
-.doigt{position:absolute;width:46px;height:46px;border-radius:50%;background:rgba(43,124,255,.25);border:2px solid rgba(43,124,255,.6);left:132px;top:238px;opacity:0}
+.doigt{position:absolute;width:46px;height:46px;border-radius:50%;background:rgba(43,124,255,.25);border:2px solid rgba(43,124,255,.6);left:132px;top:274px;opacity:0}
 .scene.active .doigt.d1{animation:doigt1 1.7s .15s ease-in-out}
-@keyframes doigt1{0%{opacity:0;transform:translate(-112px,320px)}12%{opacity:1;transform:translate(-112px,320px)}22%{transform:translate(-112px,320px) scale(.72)}32%{transform:translate(-112px,320px) scale(1)}72%{opacity:1;transform:none}82%{transform:scale(.72)}100%{opacity:0;transform:scale(1.3)}}
-.zone-texte{position:absolute;left:120px;top:248px;padding:4px 8px;border:2px dashed var(--bleu);border-radius:4px;background:rgba(43,124,255,.06);font-size:19px;font-weight:600;color:var(--encre-bleue);white-space:nowrap}
+@keyframes doigt1{0%{opacity:0;transform:translate(-128px,285px)}12%{opacity:1;transform:translate(-128px,285px)}22%{transform:translate(-128px,285px) scale(.72)}32%{transform:translate(-128px,285px) scale(1)}72%{opacity:1;transform:none}82%{transform:scale(.72)}100%{opacity:0;transform:scale(1.3)}}
+/* doigt de la scène « Tamponnez » : il touche l'outil Tampon (3e de la barre) */
+.doigt.d2{left:108px;top:560px}
+.scene.active .doigt.d2{animation:doigt2 .9s .2s ease-in-out}
+@keyframes doigt2{0%{opacity:0}30%{opacity:1;transform:none}55%{transform:scale(.72)}100%{opacity:0;transform:scale(1.3)}}
+.zone-texte{position:absolute;left:120px;top:284px;padding:4px 8px;border:2px dashed var(--bleu);border-radius:4px;background:rgba(43,124,255,.06);font-size:19px;font-weight:600;color:var(--encre-bleue);white-space:nowrap}
 .zone-texte .tape{display:inline-block;overflow:hidden;vertical-align:bottom;width:7.2em}
 .scene.active .zone-texte{animation:apparait .25s 1.55s}
 .scene.active .zone-texte .tape{animation:tape 1.2s 1.7s steps(11)}
@@ -122,13 +130,39 @@ body.integre #cadre{border-radius:0;box-shadow:none}
 /* 5. Remplir et signer */
 .champ{height:24px;border-radius:3px;background:rgba(0,84,255,.08);border:1px solid rgba(0,84,255,.25);font-size:13px;font-weight:600;line-height:22px;padding:0 6px;color:#111}
 .etiq{font-size:10px;color:#666;margin-bottom:-6px}
-.signature{position:absolute;left:58px;top:328px;width:170px;height:80px}
-.signature path{fill:none;stroke:var(--encre-bleue);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:600;stroke-dashoffset:0}
-.scene.active .signature path{animation:trace 1.3s .5s ease-in-out}
+/* Tampon d'entreprise (créé dans la scène « Créez votre tampon », puis posé sur le mandat) */
+.tampon-ent{position:relative;display:inline-block;padding:8px 12px 10px;border:2.5px solid var(--encre-bleue);border-radius:9px;color:var(--encre-bleue);text-align:center;line-height:1.3;background:rgba(255,255,255,.5)}
+.tampon-ent b{display:block;font-size:13px;letter-spacing:.02em}
+.tampon-ent span{display:block;font-size:10.5px;font-weight:600}
+.tampon-ent .sig{position:absolute;left:50%;top:50%;width:150px;height:62px;transform:translate(-50%,-38%);overflow:visible}
+.sig path{fill:none;stroke:#1b2130;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:600;stroke-dashoffset:0}
 @keyframes trace{from{stroke-dashoffset:600}}
-.tampon{position:absolute;left:186px;top:384px;padding:7px 12px;border:3px solid #c0392b;border-radius:8px;color:#c0392b;font-weight:800;font-size:13px;line-height:1.25;text-align:center;transform:rotate(-8deg);background:rgba(255,255,255,.6)}
-.scene.active .tampon{animation:tampon .45s 1.9s cubic-bezier(.2,1.4,.4,1)}
-@keyframes tampon{from{opacity:0;transform:rotate(-8deg) scale(2.2)}}
+.pose{position:absolute;left:112px;top:404px;transform:rotate(-5deg) scale(.82);transform-origin:center}
+.scene.active .pose{animation:tampon .5s 1.15s cubic-bezier(.2,1.4,.4,1)}
+@keyframes tampon{from{opacity:0;transform:rotate(-5deg) scale(1.9)}}
+
+/* 5 bis. Créez votre tampon (et signez dessus) */
+.creation{position:absolute;left:0;right:0;bottom:0;top:214px;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -8px 30px rgba(20,24,35,.14);padding:18px 20px 26px;display:flex;flex-direction:column;gap:10px}
+.creation h3{margin:0;font-size:18px}
+.damier{display:grid;place-items:center;height:200px;border-radius:12px;background-color:#fff;background-image:linear-gradient(45deg,#eeece6 25%,transparent 25%),linear-gradient(-45deg,#eeece6 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#eeece6 75%),linear-gradient(-45deg,transparent 75%,#eeece6 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
+.creation .champs{display:grid;gap:8px}`n.creation .damier .tampon-ent{transform:scale(1.12)}
+.creation .ch{border:1px solid var(--ligne);border-radius:9px;padding:7px 10px;font-size:13.5px;white-space:nowrap;overflow:hidden;background:#faf9f6}
+.creation .ch .tape{display:inline-block;vertical-align:bottom}
+.creation .boutons{display:flex;gap:8px;margin-top:auto}
+.creation .boutons span{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:12px 6px;border-radius:12px;border:1px solid var(--ligne);font-weight:700;font-size:14px}
+.creation .boutons span.ok{background:var(--accent);border-color:transparent;color:#fff}
+/* les lignes du tampon apparaissent en même temps qu'on les tape */
+.scene.active .creation{animation:glisse .45s .1s cubic-bezier(.2,.8,.2,1)}
+.scene.active .creation .tl1{animation:apparait .2s .5s}
+.scene.active .creation .tl2{animation:apparait .2s 1.15s}
+.scene.active .creation .tl3{animation:apparait .2s 1.8s}
+.scene.active .c1 .tape{animation:devoile .6s .45s steps(14)}
+.scene.active .c2 .tape{animation:devoile .6s 1.1s steps(14)}
+.scene.active .c3 .tape{animation:devoile .6s 1.75s steps(14)}`n@keyframes devoile{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.scene.active .creation .sig path{animation:trace 1.1s 2.35s ease-in-out}
+.scene.active .creation .boutons .ok{animation:appui .3s 3.55s}
+.toast.t2{top:150px}
+.scene.active .toast.t2{animation:toast .4s 3.8s cubic-bezier(.2,.8,.2,1)}
 
 /* 6. Enregistrer dans Google Drive */
 .feuille{position:absolute;left:0;right:0;bottom:0;height:430px;background:#fff;border-radius:22px 22px 0 0;box-shadow:0 -8px 30px rgba(20,24,35,.18);padding:20px 20px 30px;display:flex;flex-direction:column;gap:12px}
@@ -195,6 +229,22 @@ body.integre .nav-teaser,body.integre .aide-teaser{display:none}
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="logo" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0d6b4f"/><path d="M19 12h19l9 9v31H19z" fill="#fff"/><path d="M38 12v9h9" fill="#cfe6dc"/><path d="M24 40c4-1 5-9 8-9s-1 9 2 9 4-4 6-4" fill="none" stroke="#0d6b4f" stroke-width="3" stroke-linecap="round"/></symbol>
+  <symbol id="i-fermer" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-oeil" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-annuler" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-partager" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
+  <symbol id="i-enregistrer" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></symbol>
+  <symbol id="i-livre" viewBox="0 0 24 24"><path d="M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3z"/><path d="M21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/></symbol>
+  <symbol id="i-pages" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-texte" viewBox="0 0 24 24"><path d="M5 7V5h14v2"/><path d="M12 5v14"/><path d="M9 19h6"/></symbol>
+  <symbol id="i-signature" viewBox="0 0 24 24"><path d="M3 17c3-1 4-9 6-9s-1 9 1 9 3-5 4-5 1 4 3 4 2-1 4-1"/></symbol>
+  <symbol id="i-tampon" viewBox="0 0 24 24"><path d="M9.5 13V9.5a2.5 2.5 0 1 1 5 0V13"/><rect x="5" y="13" width="14" height="4" rx="1"/><path d="M6 20.5h12"/></symbol>
+  <symbol id="i-stylo" viewBox="0 0 24 24"><path d="M3 21c2-1 3.5-1 5 0s3 1 5-.5"/><path d="M14.5 4.5l5 5L10 19H5v-5z"/></symbol>
+  <symbol id="i-masque" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="1.5"/><path d="M9 17l6-10"/></symbol>
+  <symbol id="i-corriger" viewBox="0 0 24 24"><path d="M4 20l1-4 9-9 3 3-9 9-4 1z"/><path d="M14 20h6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/></symbol>
+  <symbol id="i-valider" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
   <symbol id="logo-blanc" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#fff"/><path d="M19 12h19l9 9v31H19z" fill="#0d6b4f"/><path d="M38 12v9h9" fill="#0a5540"/><path d="M24 40c4-1 5-9 8-9s-1 9 2 9 4-4 6-4" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></symbol>
 </svg>
 
@@ -208,7 +258,7 @@ body.integre .nav-teaser,body.integre .aide-teaser{display:none}
   <div class="progres" id="progres"></div>
 
   <!-- 1. Intro -->
-  <section class="scene intro" data-duree="2600">
+  <section class="scene intro" data-duree="2400">
     <div class="bloc">
       <svg class="gros-logo"><use href="#logo"/></svg>
       <h1>Atelier PDF</h1>
@@ -217,8 +267,9 @@ body.integre .nav-teaser,body.integre .aide-teaser{display:none}
   </section>
 
   <!-- 2. Modifier -->
-  <section class="scene" data-duree="3900">
-    <div class="barre"><svg class="logo"><use href="#logo"/></svg>contrat.pdf<span class="vide"></span><span class="gris"></span><span class="bouton-rond"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></span></div>
+  <section class="scene" data-duree="3700">
+    <div class="barre"><span class="bi"><svg class="ico"><use href="#i-fermer"/></svg></span><span class="titre-doc"><b>contrat.pdf</b><small>2 pages</small></span><span class="bi"><svg class="ico"><use href="#i-oeil"/></svg></span><span class="bi"><svg class="ico"><use href="#i-annuler"/></svg></span><span class="bi"><svg class="ico"><use href="#i-partager"/></svg></span><span class="plein"><svg class="ico"><use href="#i-enregistrer"/></svg></span></div>
+    <div class="onglets-doc"><span class="actif"><svg class="ico"><use href="#i-livre"/></svg>Document</span><span><svg class="ico"><use href="#i-pages"/></svg>Pages</span></div>
     <div class="zone-doc">
       <div class="page" style="left:30px;top:22px;width:300px;height:520px">
         <div class="titre"></div>
@@ -227,14 +278,14 @@ body.integre .nav-teaser,body.integre .aide-teaser{display:none}
         <div class="l"></div><div class="l" style="width:78%"></div><div class="l" style="width:88%"></div><div class="l" style="width:60%"></div>
       </div>
     </div>
-    <div class="outils-bas"><span class="texte"><i>T</i>Texte</span><span><i>✍</i>Signature</span><span><i>◎</i>Tampon</span><span><i>✎</i>Dessiner</span><span><i>▭</i>Cacher</span></div>
+    <div class="outils-bas"><span class="choisi"><svg class="ico"><use href="#i-texte"/></svg>Texte</span><span><svg class="ico"><use href="#i-signature"/></svg>Signature</span><span><svg class="ico"><use href="#i-tampon"/></svg>Tampon</span><span><svg class="ico"><use href="#i-stylo"/></svg>Dessiner</span><span><svg class="ico"><use href="#i-masque"/></svg>Cacher</span><span><svg class="ico"><use href="#i-corriger"/></svg>Corriger</span><span><svg class="ico"><use href="#i-menu"/></svg>Plus</span></div>
     <div class="doigt d1"></div>
     <div class="zone-texte"><span class="tape">Jean Dupont</span></div>
     <div class="legende"><b>Modifiez</b><span>Touchez « Texte », puis la page : écrivez.</span></div>
   </section>
 
   <!-- 3. Fusionner -->
-  <section class="scene" data-duree="4200">
+  <section class="scene" data-duree="4000">
     <div class="titre-scene">Vos fichiers</div>
     <div class="fichier f1"><span class="type">PDF</span><div class="l" style="width:70%;background:#1b2130;height:6px"></div><div class="l"></div><div class="l" style="width:80%"></div><div class="l"></div><span class="nom">devis.pdf</span></div>
     <div class="signe s1">+</div>
@@ -261,9 +312,26 @@ body.integre .nav-teaser,body.integre .aide-teaser{display:none}
     <div class="legende"><b>Convertissez</b><span>Vos photos deviennent des PDF.</span></div>
   </section>
 
-  <!-- 5. Remplir et signer -->
-  <section class="scene" data-duree="3700">
-    <div class="barre"><svg class="logo"><use href="#logo"/></svg>mandat.pdf<span class="vide"></span><span class="gris"></span><span class="bouton-rond"><svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></span></div>
+  <!-- 5. Créez votre tampon (et signez dessus) -->
+  <section class="scene" data-duree="4400">
+    <div class="legende haut"><b>Créez votre tampon</b><span>Votre société, et votre signature dessus.</span></div>
+    <div class="toast t2"><i>✓</i>Tampon enregistré</div>
+    <div class="creation">
+      <h3>Nouveau tampon</h3>
+      <div class="damier"><div class="tampon-ent"><b class="tl1">SARL DUPONT RÉNOVATION</b><span class="tl2">12 rue des Lilas · 75011 Paris</span><span class="tl3">SIRET 123 456 789 00012</span><svg class="sig" viewBox="0 0 150 62"><path d="M4 44c12-3 15-30 25-30s-5 35 7 35 12-24 20-24-2 21 8 21 13-18 21-18 5 14 13 14 12-8 20-11"/></svg></div></div>
+      <div class="champs">
+        <div class="ch c1"><span class="tape">SARL DUPONT RÉNOVATION</span></div>
+        <div class="ch c2"><span class="tape">12 rue des Lilas · 75011 Paris</span></div>
+        <div class="ch c3"><span class="tape">SIRET 123 456 789 00012</span></div>
+      </div>
+      <div class="boutons"><span><svg class="ico"><use href="#i-signature"/></svg>Signer dessus</span><span class="ok"><svg class="ico"><use href="#i-valider"/></svg>Enregistrer</span></div>
+    </div>
+  </section>
+
+  <!-- 6. Remplissez et tamponnez -->
+  <section class="scene" data-duree="3200">
+    <div class="barre"><span class="bi"><svg class="ico"><use href="#i-fermer"/></svg></span><span class="titre-doc"><b>mandat.pdf</b><small>2 pages</small></span><span class="bi"><svg class="ico"><use href="#i-oeil"/></svg></span><span class="bi"><svg class="ico"><use href="#i-annuler"/></svg></span><span class="bi"><svg class="ico"><use href="#i-partager"/></svg></span><span class="plein"><svg class="ico"><use href="#i-enregistrer"/></svg></span></div>
+    <div class="onglets-doc"><span class="actif"><svg class="ico"><use href="#i-livre"/></svg>Document</span><span><svg class="ico"><use href="#i-pages"/></svg>Pages</span></div>
     <div class="zone-doc">
       <div class="page" style="left:30px;top:22px;width:300px;height:520px">
         <div class="titre"></div>
@@ -271,14 +339,14 @@ body.integre .nav-teaser,body.integre .aide-teaser{display:none}
         <span class="etiq">Prénom</span><div class="champ">Jean</div>
         <span class="etiq">Fait le</span><div class="champ" style="width:55%">08/11/2026</div>
         <div class="l" style="margin-top:8px"></div><div class="l" style="width:70%"></div>
-        <span class="etiq" style="margin-top:6px">Signature</span>
+        <span class="etiq" style="margin-top:6px">Cachet et signature</span>
       </div>
     </div>
-    <svg class="signature" viewBox="0 0 170 80"><path d="M6 56c14-4 18-38 30-38s-6 44 8 44 14-30 24-30-2 26 10 26 16-22 26-22 6 18 16 18 14-10 22-14"/></svg>
-    <div class="tampon">BON POUR ACCORD<br>08/11/2026</div>
-    <div class="legende"><b>Remplissez et signez</b><span>Cerfa, mandats, contrats…</span></div>
+    <div class="pose"><div class="tampon-ent"><b class="tl1">SARL DUPONT RÉNOVATION</b><span class="tl2">12 rue des Lilas · 75011 Paris</span><span class="tl3">SIRET 123 456 789 00012</span><svg class="sig" viewBox="0 0 150 62"><path d="M4 44c12-3 15-30 25-30s-5 35 7 35 12-24 20-24-2 21 8 21 13-18 21-18 5 14 13 14 12-8 20-11"/></svg></div></div>
+    <div class="outils-bas"><span><svg class="ico"><use href="#i-texte"/></svg>Texte</span><span><svg class="ico"><use href="#i-signature"/></svg>Signature</span><span class="choisi"><svg class="ico"><use href="#i-tampon"/></svg>Tampon</span><span><svg class="ico"><use href="#i-stylo"/></svg>Dessiner</span><span><svg class="ico"><use href="#i-masque"/></svg>Cacher</span><span><svg class="ico"><use href="#i-corriger"/></svg>Corriger</span><span><svg class="ico"><use href="#i-menu"/></svg>Plus</span></div>
+    <div class="doigt d2"></div>
+    <div class="legende"><b>Remplissez et signez</b><span>Votre tampon signé, posé en un geste.</span></div>
   </section>
-
   <!-- 6. Google Drive -->
   <section class="scene" data-duree="3700">
     <div class="legende haut"><b>Enregistrez où vous voulez</b><span>Sur l'appareil, dans Google Drive, ou les deux.</span></div>
