@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d6b4f">
+<title>Atelier PDF – la démo sur PC</title>
+<meta name="description" content="Le tour d'Atelier PDF sur ordinateur : fusionner, modifier, tamponner, enregistrer dans Google Drive.">
+<link rel="icon" href="assets/icone.png">
+<style>
+/* Démo animée d'Atelier PDF sur PC (format 16:9, ≈ 24 s, en boucle).
+   Ouverte seule : plein écran. Avec ?integre : sans fond, pour la page d'accueil. */
+:root{--fond:#f3f2ee;--carte:#fff;--encre:#1b2130;--doux:#5d6576;--ligne:#e1ded6;--accent:#0d6b4f;--accent-fort:#0a5540;--accent-pale:#e2f0ea;--bleu:#2b7cff;--encre-bleue:#1d3fb3;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--encre);background:#11161f}
+body.integre{background:transparent}
+#cadre{width:1280px;height:760px;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);transform-origin:center;border-radius:14px;overflow:hidden;background:var(--fond);box-shadow:0 30px 80px rgba(0,0,0,.45)}
+body.integre #cadre{border-radius:0;box-shadow:none}
+body:not(.integre) #cadre{cursor:pointer}
+.ico{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Fenêtre de navigateur */
+.fenetre{position:absolute;left:0;right:0;top:0;height:40px;background:#e9e7e1;display:flex;align-items:center;gap:8px;padding:0 16px;z-index:6}
+.fenetre i{width:12px;height:12px;border-radius:50%;background:#f26b5e}
+.fenetre i:nth-child(2){background:#f4bd4f}.fenetre i:nth-child(3){background:#5ec46a}
+.fenetre .url{margin-left:18px;flex:0 1 520px;height:26px;border-radius:13px;background:#fff;display:flex;align-items:center;padding:0 14px;font-size:13px;color:var(--doux)}
+.ecran{position:absolute;left:0;right:0;top:40px;bottom:0}
+
+.scene{position:absolute;inset:0;opacity:0;transition:opacity .45s ease;overflow:hidden;background:var(--fond)}
+.scene.active{opacity:1}
+.scene *{animation-fill-mode:both!important}
+.scene:not(.active) *{animation:none!important}
+@keyframes monte{from{opacity:0;transform:translateY(16px)}}
+@keyframes pop{from{opacity:0;transform:scale(.5)}}
+@keyframes apparait{from{opacity:0}}
+
+/* Légende (en bas à gauche, sur fond sombre) */
+.legende{position:absolute;left:40px;bottom:36px;z-index:5;padding:16px 22px;border-radius:18px;background:rgba(17,22,31,.9);color:#fff;box-shadow:0 14px 30px rgba(0,0,0,.25);max-width:520px}
+.legende b{display:block;font-size:30px;letter-spacing:-.02em;line-height:1.1}
+.legende span{display:block;margin-top:4px;font-size:16px;color:#b8c0cc}
+.scene.active .legende{animation:monte .5s .15s cubic-bezier(.2,.8,.2,1)}
+.legende.haut{top:126px;bottom:auto;left:28px;max-width:330px}
+.legende.haut b{font-size:26px}
+
+/* Pointeur de souris */
+.curseur{position:absolute;width:26px;height:26px;z-index:8;left:0;top:0;pointer-events:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+.clic{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;border:3px solid rgba(43,124,255,.7);z-index:7;opacity:0}
+@keyframes onde{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(1.4)}}
+
+/* 1. Intro */
+.intro{display:flex;align-items:center;justify-content:center;gap:48px;background:radial-gradient(800px 400px at 30% 40%,#d5ece1,rgba(213,236,225,0)),var(--fond)}
+.intro .gros-logo{width:150px;height:150px;filter:drop-shadow(0 16px 30px rgba(13,107,79,.3))}
+.intro h1{margin:0;font-size:72px;letter-spacing:-.04em;line-height:1}
+.intro p{margin:12px 0 0;font-size:28px;color:var(--doux)}
+.intro p b{color:var(--accent)}
+.scene.active.intro .gros-logo{animation:pop .7s cubic-bezier(.2,1.4,.4,1)}
+.scene.active.intro h1{animation:monte .5s .3s cubic-bezier(.2,.8,.2,1)}
+.scene.active.intro p{animation:monte .5s .55s cubic-bezier(.2,.8,.2,1)}
+
+/* 2. Accueil PC */
+.accueil{position:absolute;left:0;right:0;top:0;bottom:0;background:radial-gradient(900px 300px at 50% -60px,#d5ece1,rgba(213,236,225,0)),var(--fond);padding:18px 120px}
+.tete{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;margin-bottom:18px}
+.tete svg{width:30px;height:30px}
+.tete .pastille{margin-left:auto;font-size:13px;font-weight:700;border:1px solid var(--ligne);background:#fff;border-radius:16px;padding:5px 12px;display:flex;align-items:center;gap:6px}
+.tete .pastille i{width:9px;height:9px;border-radius:50%;background:#1e8e3e}
+.bandeau{display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;padding:20px;border-radius:24px;background:radial-gradient(520px 220px at 0% 0%,rgba(31,174,118,.22),rgba(31,174,118,0) 70%),#1b2130;box-shadow:0 18px 40px rgba(27,33,48,.22);color:#fff}
+.bandeau .gauche{display:flex;flex-direction:column;justify-content:space-between;gap:12px}
+.bandeau .modifier{display:flex;align-items:center;gap:14px}
+.bandeau .modifier .ico{width:48px;height:48px;padding:12px;border-radius:50%;background:#1fae76;box-shadow:0 6px 16px rgba(31,174,118,.35)}
+.bandeau .modifier b{display:block;font-size:26px}
+.bandeau .modifier span{font-size:14px;color:#b8c0cc}
+.bandeau .drive{padding:11px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.22);font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
+.carte{background:#fff;color:var(--encre);border-radius:16px;padding:16px;box-shadow:0 6px 18px rgba(0,0,0,.12)}
+.carte .ico,.tuile .ico{width:40px;height:40px;padding:9px;border-radius:12px;background:var(--pf);color:var(--pc)}
+.carte b{display:block;margin-top:10px;font-size:16px}
+.carte span{font-size:13px;color:var(--doux)}
+.titre-sec{display:flex;align-items:center;gap:10px;margin:20px 2px 10px;font-size:16px;font-weight:800}
+.titre-sec::before{content:"";width:14px;height:4px;border-radius:2px;background:#1fae76}
+.grille{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.tuile{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--ligne);border-radius:14px;padding:12px 14px}
+.tuile b{font-size:15px}
+.grille.plus{padding:10px;border-radius:18px;background:#e9f2ec}
+.scene.active .bandeau{animation:monte .5s .1s cubic-bezier(.2,.8,.2,1)}
+.scene.active .tuile{animation:monte .45s cubic-bezier(.2,.8,.2,1)}
+.scene.active .tuile:nth-child(2){animation-delay:.05s}.scene.active .tuile:nth-child(3){animation-delay:.1s}.scene.active .tuile:nth-child(4){animation-delay:.15s}
+.scene.active .c-fusion{animation:survol .3s 1.5s}
+@keyframes survol{to{box-shadow:0 0 0 3px #1fae76}}
+.s-accueil .curseur{animation:va-accueil 1.6s .2s ease-in-out}
+@keyframes va-accueil{from{transform:translate(900px,640px)}to{transform:translate(820px,150px)}}
+.s-accueil .clic{left:826px;top:156px}
+.scene.active.s-accueil .clic{animation:onde .5s 1.85s}
+
+/* Écran Document (PC) : barre du haut, onglets, page au centre, outils en bas */
+.barre-doc{position:absolute;left:0;right:0;top:0;height:56px;background:#fff;display:flex;align-items:center;gap:2px;padding:0 10px;border-bottom:1px solid var(--ligne)}
+.barre-doc .bi{width:42px;height:42px;display:grid;place-items:center}
+.barre-doc .titre{flex:1;padding:0 6px;line-height:1.15}
+.barre-doc .titre b{display:block;font-size:16px}
+.barre-doc .titre small{font-size:12px;color:var(--doux)}
+.barre-doc .plein{width:40px;height:40px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;margin-left:6px}
+.onglets{position:absolute;left:0;right:0;top:56px;height:42px;background:#fff;border-bottom:1px solid var(--ligne);display:flex;justify-content:center}
+.onglets span{width:200px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;font-weight:600;color:var(--doux);border-bottom:2px solid transparent}
+.onglets span.actif{color:var(--accent-fort);border-color:var(--accent)}
+.onglets .ico{width:18px;height:18px}
+.zone{position:absolute;left:0;right:0;top:98px;bottom:0;background:#d9d7d0;overflow:hidden}
+.page{position:absolute;left:50%;top:24px;width:470px;height:640px;margin-left:-235px;background:#fff;border-radius:3px;box-shadow:0 2px 12px rgba(20,24,35,.14);padding:34px 34px;display:flex;flex-direction:column;gap:12px}
+.page .titre{height:14px;width:55%;margin:0 auto 10px;border-radius:3px;background:var(--encre)}
+.page .l{height:8px;border-radius:4px;background:#e7e5df}
+.outils{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);display:flex;gap:2px;padding:6px;background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(20,24,35,.18)}
+.outils span{width:76px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 0;border-radius:11px;font-size:12px;font-weight:600}
+.outils span.choisi{background:var(--accent-pale);color:var(--accent-fort)}
+@keyframes choisi-outil{from{background:transparent;color:var(--encre)}}
+
+/* 3. Fusionner (onglet Pages) */
+.pages{position:absolute;left:0;right:0;top:98px;bottom:0;background:var(--fond);padding:30px 130px}
+.fichiers{display:flex;align-items:center;justify-content:center;gap:18px}
+.fichier{width:150px;height:110px;border-radius:12px;background:#fff;border:1px solid var(--ligne);box-shadow:0 6px 16px rgba(20,24,35,.1);display:flex;flex-direction:column;justify-content:flex-end;padding:12px;position:relative;font-weight:700;font-size:14px}
+.fichier em{position:absolute;top:10px;right:10px;font-style:normal;font-size:11px;font-weight:800;color:#fff;background:#c0392b;border-radius:5px;padding:2px 6px}
+.fichier.photo{background:linear-gradient(160deg,#f6e7c8,#d9c19a)}
+.fichier.photo em{background:#8a6d3b}
+.plus-signe{font-size:30px;font-weight:800;color:var(--accent)}
+.scene.active .fichier:nth-child(1){animation:pop .45s .1s cubic-bezier(.2,1.4,.4,1)}
+.scene.active .fichier:nth-child(3){animation:pop .45s .3s cubic-bezier(.2,1.4,.4,1)}
+.scene.active .fichier:nth-child(5){animation:pop .45s .5s cubic-bezier(.2,1.4,.4,1)}
+.scene.active .plus-signe{animation:apparait .3s .7s}
+.resultat{margin-top:26px;background:#fff;border:2px solid var(--accent);border-radius:20px;padding:18px 22px;box-shadow:0 16px 34px rgba(13,107,79,.16)}
+.resultat .entete{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.resultat .entete b{font-size:18px}
+.resultat .entete small{margin-left:auto;font-size:13px;font-weight:800;color:var(--accent-fort);background:var(--accent-pale);padding:4px 12px;border-radius:12px}
+.vignettes{display:flex;gap:22px;justify-content:center}
+.vignette{display:flex;flex-direction:column;align-items:center;gap:6px}
+.vignette .mini{width:150px;height:200px;border-radius:4px;background:#fff;box-shadow:0 0 0 1px var(--ligne),0 3px 8px rgba(20,24,35,.08);padding:14px 12px;display:flex;flex-direction:column;gap:7px}
+.vignette .mini .l{height:6px;border-radius:3px;background:#e7e5df}
+.vignette .mini.photo{background:linear-gradient(180deg,#9fd0f0 0%,#cfe8f7 55%,#7db36b 56%,#5d9a4f 100%);padding:0}
+.vignette .num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center}
+.vignette small{font-size:12px;color:var(--doux)}
+.scene.active .resultat{animation:pop .5s 1.1s cubic-bezier(.2,1.2,.4,1)}
+.scene.active .vignette:nth-child(1){animation:monte .4s 1.45s}
+.scene.active .vignette:nth-child(2){animation:monte .4s 1.6s}
+.scene.active .vignette:nth-child(3){animation:monte .4s 1.75s}
+
+/* 4. Modifier */
+.zone-texte{position:absolute;left:560px;top:322px;padding:5px 10px;border:2px dashed var(--bleu);border-radius:4px;background:rgba(43,124,255,.06);font-size:24px;font-weight:600;color:var(--encre-bleue);white-space:nowrap}
+.zone-texte .tape{display:inline-block;vertical-align:bottom}
+@keyframes devoile{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.s-modifier .outils span.choisi{animation:choisi-outil .3s 1s}
+.scene.active.s-modifier .zone-texte{animation:apparait .25s 2.1s}
+.scene.active.s-modifier .zone-texte .tape{animation:devoile 1.1s 2.25s steps(11)}
+.s-modifier .curseur{animation:va-modifier 2s .2s ease-in-out}
+@keyframes va-modifier{0%{transform:translate(1000px,560px)}40%{transform:translate(400px,655px)}55%{transform:translate(400px,655px)}100%{transform:translate(570px,330px)}}
+.s-modifier .clic.c1{left:406px;top:661px}.s-modifier .clic.c2{left:576px;top:336px}
+.scene.active.s-modifier .clic.c1{animation:onde .5s 1s}
+.scene.active.s-modifier .clic.c2{animation:onde .5s 2.05s}
+
+/* 5. Tamponner */
+.champ{height:30px;border-radius:3px;background:rgba(0,84,255,.08);border:1px solid rgba(0,84,255,.25);font-size:15px;font-weight:600;line-height:28px;padding:0 8px}
+.etiq{font-size:12px;color:#666;margin-bottom:-8px}
+.tampon-ent{display:inline-block;position:relative;padding:10px 16px 12px;border:3px solid var(--encre-bleue);border-radius:10px;color:var(--encre-bleue);text-align:center;line-height:1.3;background:rgba(255,255,255,.5)}
+.tampon-ent b{display:block;font-size:16px}
+.tampon-ent span{display:block;font-size:12px;font-weight:600}
+.tampon-ent svg{position:absolute;left:50%;top:50%;width:180px;height:74px;transform:translate(-50%,-38%);overflow:visible}
+.tampon-ent path{fill:none;stroke:#1b2130;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+.pose{position:absolute;left:600px;top:470px;transform:rotate(-5deg)}
+.scene.active .pose{animation:tamponne .5s 1.5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes tamponne{from{opacity:0;transform:rotate(-5deg) scale(1.9)}}
+.s-tampon .outils span.choisi{animation:choisi-outil .3s .9s}
+.s-tampon .curseur{animation:va-tampon 1.3s .2s ease-in-out}
+@keyframes va-tampon{from{transform:translate(900px,400px)}to{transform:translate(565px,655px)}}
+.s-tampon .clic{left:571px;top:661px}
+.scene.active.s-tampon .clic{animation:onde .5s .95s}
+
+/* 6. Drive : fenêtre centrée */
+.voile{position:absolute;inset:0;background:rgba(20,24,35,.35)}
+.boite{position:absolute;left:50%;top:70px;width:520px;margin-left:-260px;background:#fff;border-radius:20px;box-shadow:0 30px 70px rgba(0,0,0,.3);padding:22px 24px 24px;display:flex;flex-direction:column;gap:12px}
+.boite h3{margin:0 0 4px;font-size:20px}
+.boite .lib{font-size:12px;font-weight:800;color:var(--doux);text-transform:uppercase;letter-spacing:.05em}
+.boite .saisie{display:flex;border:1px solid var(--accent);box-shadow:0 0 0 3px var(--accent-pale);border-radius:10px;padding:11px 13px;font-size:16px}
+.boite .saisie span{margin-left:auto;color:var(--doux)}
+.choix{display:flex;gap:8px}
+.choix i{flex:1;font-style:normal;text-align:center;padding:11px 4px;border:1px solid var(--ligne);border-radius:22px;font-size:14px;font-weight:600}
+.choix i.drive{border-color:var(--accent);background:var(--accent-pale);color:var(--accent-fort)}
+.dossier{display:flex;align-items:center;gap:8px;padding:11px 13px;border:1px solid var(--ligne);border-radius:12px;font-size:14px}
+.dossier b{margin-right:auto}
+.go{padding:15px;border-radius:14px;background:var(--accent);color:#fff;font-weight:700;font-size:17px;text-align:center;margin-top:6px}
+.toast{position:absolute;left:50%;top:22px;transform:translateX(-50%);padding:12px 20px;border-radius:14px;background:var(--encre);color:#fff;font-weight:600;font-size:16px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 24px rgba(0,0,0,.25);z-index:4}
+.toast i{width:22px;height:22px;border-radius:50%;background:#1e8e3e;display:grid;place-items:center;font-style:normal;font-size:12px}
+.scene.active .boite{animation:monte .45s .15s cubic-bezier(.2,.8,.2,1)}
+.scene.active .choix i.drive{animation:choisi .4s 1.1s}
+@keyframes choisi{from{border-color:var(--ligne);background:#fff;color:var(--encre)}}
+.scene.active .go{animation:appui .3s 2s}
+@keyframes appui{50%{transform:scale(.97);background:var(--accent-fort)}}
+.scene.active .toast{animation:toast .4s 2.4s cubic-bezier(.2,.8,.2,1)}
+@keyframes toast{from{opacity:0;transform:translate(-50%,-14px)}}
+.s-drive .curseur{animation:va-drive 1.9s .2s ease-in-out}
+@keyframes va-drive{0%{transform:translate(1000px,600px)}45%{transform:translate(660px,268px)}60%{transform:translate(660px,268px)}100%{transform:translate(660px,505px)}}
+.s-drive .clic.c1{left:666px;top:274px}.s-drive .clic.c2{left:666px;top:511px}
+.scene.active.s-drive .clic.c1{animation:onde .5s 1.05s}
+.scene.active.s-drive .clic.c2{animation:onde .5s 2s}
+
+/* 7. Fin */
+.fin{display:flex;align-items:center;justify-content:center;gap:56px;background:linear-gradient(120deg,#0b5e45 0%,#0d6b4f 45%,#16956a 100%);color:#fff}
+.fin .gros-logo{width:140px;height:140px}
+.fin h2{margin:0;font-size:64px;letter-spacing:-.03em}
+.fin p{margin:8px 0 16px;font-size:24px;color:#d6ece2}
+.puces{display:flex;gap:10px}
+.puces span{padding:8px 16px;border-radius:20px;background:rgba(255,255,255,.14);font-weight:700}
+.fin .url{display:inline-block;margin-top:18px;padding:12px 18px;border-radius:12px;background:#fff;color:var(--accent-fort);font-weight:800;font-size:18px}
+.scene.active.fin .gros-logo{animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
+.scene.active.fin .texte>*{animation:monte .5s cubic-bezier(.2,.8,.2,1)}
+.scene.active.fin .texte>*:nth-child(2){animation-delay:.12s}
+.scene.active.fin .texte>*:nth-child(3){animation-delay:.24s}
+.scene.active.fin .texte>*:nth-child(4){animation-delay:.36s}
+
+.progres{position:absolute;left:0;right:0;top:40px;display:flex;gap:4px;z-index:9;padding:0 2px}
+.progres i{flex:1;height:3px;background:rgba(27,33,48,.12);overflow:hidden}
+.progres i b{display:block;height:100%;width:0;background:var(--accent)}
+body.integre .progres{display:none}
+.nav-teaser{position:fixed;left:0;right:0;top:0;z-index:10;display:flex;justify-content:space-between;padding:14px 16px;pointer-events:none}
+.nav-teaser a{pointer-events:auto;display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border-radius:12px;font-weight:700;font-size:15px;text-decoration:none;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18)}
+.nav-teaser a:hover{background:rgba(255,255,255,.2)}
+.nav-teaser a.appli{background:#0d6b4f;border-color:transparent}
+body.integre .nav-teaser{display:none}
+
+@media (prefers-reduced-motion:reduce){.scene *{animation:none!important}.scene{transition:opacity .2s}.curseur,.clic{display:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="logo" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0d6b4f"/><path d="M19 12h19l9 9v31H19z" fill="#fff"/><path d="M38 12v9h9" fill="#cfe6dc"/><path d="M24 40c4-1 5-9 8-9s-1 9 2 9 4-4 6-4" fill="none" stroke="#0d6b4f" stroke-width="3" stroke-linecap="round"/></symbol>
+  <symbol id="i-fermer" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-oeil" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-annuler" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-partager" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
+  <symbol id="i-enregistrer" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></symbol>
+  <symbol id="i-livre" viewBox="0 0 24 24"><path d="M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3z"/><path d="M21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/></symbol>
+  <symbol id="i-pages" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-texte" viewBox="0 0 24 24"><path d="M5 7V5h14v2"/><path d="M12 5v14"/><path d="M9 19h6"/></symbol>
+  <symbol id="i-signature" viewBox="0 0 24 24"><path d="M3 17c3-1 4-9 6-9s-1 9 1 9 3-5 4-5 1 4 3 4 2-1 4-1"/></symbol>
+  <symbol id="i-tampon" viewBox="0 0 24 24"><path d="M9.5 13V9.5a2.5 2.5 0 1 1 5 0V13"/><rect x="5" y="13" width="14" height="4" rx="1"/><path d="M6 20.5h12"/></symbol>
+  <symbol id="i-stylo" viewBox="0 0 24 24"><path d="M3 21c2-1 3.5-1 5 0s3 1 5-.5"/><path d="M14.5 4.5l5 5L10 19H5v-5z"/></symbol>
+  <symbol id="i-masque" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="1.5"/><path d="M9 17l6-10"/></symbol>
+  <symbol id="i-corriger" viewBox="0 0 24 24"><path d="M4 20l1-4 9-9 3 3-9 9-4 1z"/><path d="M14 20h6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/></symbol>
+  <symbol id="i-valider" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="logo-blanc" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#fff"/><path d="M19 12h19l9 9v31H19z" fill="#0d6b4f"/><path d="M38 12v9h9" fill="#0a5540"/><path d="M24 40c4-1 5-9 8-9s-1 9 2 9 4-4 6-4" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/></symbol>
+  <symbol id="i-crayon" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-dossier" viewBox="0 0 24 24"><path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-fusion" viewBox="0 0 24 24"><rect x="3" y="3" width="9" height="12" rx="1.5"/><rect x="12" y="9" width="9" height="12" rx="1.5"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M20 15l-4.5-4.5L6 20"/></symbol>
+  <symbol id="i-images" viewBox="0 0 24 24"><rect x="7" y="3" width="14" height="14" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/><path d="M21 13l-4-4-6 6"/></symbol>
+  <symbol id="i-compresser" viewBox="0 0 24 24"><path d="M12 3v6M9 6l3 3 3-3"/><path d="M12 21v-6M9 18l3-3 3 3"/><path d="M4 12h16"/></symbol>
+  <symbol id="i-copier" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
+</svg>
+
+<nav class="nav-teaser" aria-label="Navigation"><a href="./" id="retour-site">← Retour au site</a><a href="app/" class="appli">Ouvrir l'appli</a></nav>
+
+<div id="cadre" role="img" aria-label="Démonstration d'Atelier PDF sur ordinateur : accueil, fusion de fichiers, ajout de texte, tampon signé, enregistrement dans Google Drive.">
+  <div class="fenetre"><i></i><i></i><i></i><span class="url">monaccompagnateurenergetique-star.github.io/app</span></div>
+  <div class="progres" id="progres"></div>
+  <div class="ecran">
+
+  <section class="scene intro" data-duree="2600">
+    <svg class="gros-logo"><use href="#logo"/></svg>
+    <div><h1>Atelier PDF</h1><p>Tous vos outils PDF, <b>sur votre PC aussi.</b></p></div>
+  </section>
+
+  <section class="scene s-accueil" data-duree="3000">
+    <div class="accueil">
+      <div class="tete"><svg><use href="#logo"/></svg>Atelier PDF<span class="pastille"><i></i>Drive</span></div>
+      <div class="bandeau">
+        <div class="gauche">
+          <div class="modifier"><svg class="ico"><use href="#i-crayon"/></svg><div><b>Modifier un PDF</b><span>Ouvrir, ajouter du texte, corriger, réorganiser</span></div></div>
+          <div class="drive"><svg class="ico" style="width:18px;height:18px"><use href="#i-dossier"/></svg>Ouvrir un PDF depuis Google Drive</div>
+        </div>
+        <div class="carte c-fusion" style="--pc:#2563eb;--pf:#e3ebfd"><svg class="ico"><use href="#i-fusion"/></svg><b>Fusionner</b><span>Plusieurs PDF et photos en un seul</span></div>
+        <div class="carte" style="--pc:#db2777;--pf:#fbe4ef"><svg class="ico"><use href="#i-image"/></svg><b>JPG → PDF</b><span>Convertir vos photos</span></div>
+      </div>
+      <div class="titre-sec">Tous les outils</div>
+      <div class="grille">
+        <div class="tuile" style="--pc:#1e7d4f;--pf:#e3f4ea"><svg class="ico"><use href="#i-pages"/></svg><b>Excel → PDF</b></div>
+        <div class="tuile" style="--pc:#c2410c;--pf:#fdebdd"><svg class="ico"><use href="#i-images"/></svg><b>PDF → JPG</b></div>
+        <div class="tuile" style="--pc:#4338ca;--pf:#e8e7fb"><svg class="ico"><use href="#i-pages"/></svg><b>Organiser</b></div>
+        <div class="tuile" style="--pc:#0e7490;--pf:#dcf3f7"><svg class="ico"><use href="#i-compresser"/></svg><b>Compresser</b></div>
+      </div>
+      <div class="titre-sec">En plus</div>
+      <div class="grille plus">
+        <div class="tuile" style="--pc:#1d4ed8;--pf:#e3ebfd"><svg class="ico"><use href="#i-texte"/></svg><b>Remplir un formulaire</b></div>
+        <div class="tuile" style="--pc:#be185d;--pf:#fbe4ef"><svg class="ico"><use href="#i-signature"/></svg><b>Signer un PDF</b></div>
+        <div class="tuile" style="--pc:#0d6b4f;--pf:#e2f0ea"><svg class="ico"><use href="#i-dossier"/></svg><b>Mes documents</b></div>
+        <div class="tuile" style="--pc:#9333ea;--pf:#f1e6fd"><svg class="ico"><use href="#i-copier"/></svg><b>Modèles</b></div>
+      </div>
+    </div>
+    <div class="clic"></div>
+    <svg class="curseur" viewBox="0 0 24 24"><path d="M4 2l16 10-7 1.6L10 21z" fill="#fff" stroke="#1b2130" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    <div class="legende"><b>Tout est visible d'un coup d'œil</b><span>Les outils du quotidien, en un clic.</span></div>
+  </section>
+
+  <section class="scene" data-duree="3700">
+    <div class="barre-doc"><span class="bi"><svg class="ico"><use href="#i-fermer"/></svg></span><span class="titre"><b>Dossier complet.pdf</b><small>3 pages</small></span><span class="bi"><svg class="ico"><use href="#i-oeil"/></svg></span><span class="bi"><svg class="ico"><use href="#i-annuler"/></svg></span><span class="bi"><svg class="ico"><use href="#i-partager"/></svg></span><span class="plein"><svg class="ico"><use href="#i-enregistrer"/></svg></span></div>
+    <div class="onglets"><span><svg class="ico"><use href="#i-livre"/></svg>Document</span><span class="actif"><svg class="ico"><use href="#i-pages"/></svg>Pages</span></div>
+    <div class="pages">
+      <div class="fichiers"><div class="fichier"><em>PDF</em>devis.pdf</div><span class="plus-signe">+</span><div class="fichier photo"><em>JPG</em>photo.jpg</div><span class="plus-signe">+</span><div class="fichier"><em>PDF</em>facture.pdf</div></div>
+      <div class="resultat">
+        <div class="entete"><b>Dossier complet.pdf</b><small>3 fichiers → 1 seul PDF</small></div>
+        <div class="vignettes">
+          <div class="vignette"><div class="mini"><div class="l" style="width:70%;background:#1b2130"></div><div class="l"></div><div class="l" style="width:80%"></div><div class="l"></div><div class="l" style="width:60%"></div></div><span class="num">1</span><small>devis</small></div>
+          <div class="vignette"><div class="mini photo"></div><span class="num">2</span><small>photo</small></div>
+          <div class="vignette"><div class="mini"><div class="l" style="width:60%;background:#1b2130"></div><div class="l"></div><div class="l"></div><div class="l" style="width:70%"></div></div><span class="num">3</span><small>facture</small></div>
+        </div>
+      </div>
+    </div>
+    <div class="legende"><b>Fusionnez</b><span>3 fichiers deviennent un seul PDF, dans l'ordre voulu.</span></div>
+  </section>
+
+  <section class="scene s-modifier" data-duree="4000">
+    <div class="barre-doc"><span class="bi"><svg class="ico"><use href="#i-fermer"/></svg></span><span class="titre"><b>contrat.pdf</b><small>2 pages</small></span><span class="bi"><svg class="ico"><use href="#i-oeil"/></svg></span><span class="bi"><svg class="ico"><use href="#i-annuler"/></svg></span><span class="bi"><svg class="ico"><use href="#i-partager"/></svg></span><span class="plein"><svg class="ico"><use href="#i-enregistrer"/></svg></span></div>
+    <div class="onglets"><span class="actif"><svg class="ico"><use href="#i-livre"/></svg>Document</span><span><svg class="ico"><use href="#i-pages"/></svg>Pages</span></div>
+    <div class="zone">
+      <div class="page"><div class="titre"></div><div class="l"></div><div class="l" style="width:88%"></div><div class="l" style="width:92%"></div><div class="l" style="width:40%;margin-top:80px"></div><div class="l"></div><div class="l" style="width:80%"></div><div class="l" style="width:90%"></div><div class="l" style="width:60%"></div></div>
+    </div>
+    <div class="outils"><span class="choisi"><svg class="ico"><use href="#i-texte"/></svg>Texte</span><span><svg class="ico"><use href="#i-signature"/></svg>Signature</span><span><svg class="ico"><use href="#i-tampon"/></svg>Tampon</span><span><svg class="ico"><use href="#i-stylo"/></svg>Dessiner</span><span><svg class="ico"><use href="#i-masque"/></svg>Cacher</span><span><svg class="ico"><use href="#i-corriger"/></svg>Corriger</span><span><svg class="ico"><use href="#i-menu"/></svg>Plus</span></div>
+    <div class="zone-texte"><span class="tape">Jean Dupont</span></div>
+    <div class="clic c1"></div><div class="clic c2"></div>
+    <svg class="curseur" viewBox="0 0 24 24"><path d="M4 2l16 10-7 1.6L10 21z" fill="#fff" stroke="#1b2130" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    <div class="legende haut"><b>Modifiez</b><span>Cliquez sur « Texte », puis sur la page : écrivez.</span></div>
+  </section>
+
+  <section class="scene s-tampon" data-duree="3400">
+    <div class="barre-doc"><span class="bi"><svg class="ico"><use href="#i-fermer"/></svg></span><span class="titre"><b>mandat.pdf</b><small>2 pages</small></span><span class="bi"><svg class="ico"><use href="#i-oeil"/></svg></span><span class="bi"><svg class="ico"><use href="#i-annuler"/></svg></span><span class="bi"><svg class="ico"><use href="#i-partager"/></svg></span><span class="plein"><svg class="ico"><use href="#i-enregistrer"/></svg></span></div>
+    <div class="onglets"><span class="actif"><svg class="ico"><use href="#i-livre"/></svg>Document</span><span><svg class="ico"><use href="#i-pages"/></svg>Pages</span></div>
+    <div class="zone">
+      <div class="page"><div class="titre"></div><span class="etiq">Nom</span><div class="champ">DUPONT</div><span class="etiq">Prénom</span><div class="champ">Jean</div><span class="etiq">Fait le</span><div class="champ" style="width:50%">08/11/2026</div><div class="l" style="margin-top:10px"></div><div class="l" style="width:70%"></div><span class="etiq" style="margin-top:10px">Cachet et signature</span></div>
+    </div>
+    <div class="pose"><div class="tampon-ent"><b>SARL DUPONT RÉNOVATION</b><span>12 rue des Lilas · 75011 Paris</span><span>SIRET 123 456 789 00012</span><svg viewBox="0 0 150 62"><path d="M4 44c12-3 15-30 25-30s-5 35 7 35 12-24 20-24-2 21 8 21 13-18 21-18 5 14 13 14 12-8 20-11"/></svg></div></div>
+    <div class="outils"><span><svg class="ico"><use href="#i-texte"/></svg>Texte</span><span><svg class="ico"><use href="#i-signature"/></svg>Signature</span><span class="choisi"><svg class="ico"><use href="#i-tampon"/></svg>Tampon</span><span><svg class="ico"><use href="#i-stylo"/></svg>Dessiner</span><span><svg class="ico"><use href="#i-masque"/></svg>Cacher</span><span><svg class="ico"><use href="#i-corriger"/></svg>Corriger</span><span><svg class="ico"><use href="#i-menu"/></svg>Plus</span></div>
+    <div class="clic"></div>
+    <svg class="curseur" viewBox="0 0 24 24"><path d="M4 2l16 10-7 1.6L10 21z" fill="#fff" stroke="#1b2130" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    <div class="legende haut"><b>Tamponnez et signez</b><span>Votre tampon d'entreprise signé, posé en un clic.</span></div>
+  </section>
+
+  <section class="scene s-drive" data-duree="3800">
+    <div class="zone" style="top:0"><div class="page" style="top:30px"><div class="titre"></div><div class="l"></div><div class="l" style="width:80%"></div><div class="l"></div></div></div>
+    <div class="voile"></div>
+    <div class="toast"><i>✓</i>« Mandat Dupont.pdf » est dans Google Drive</div>
+    <div class="boite">
+      <h3>Enregistrer</h3>
+      <span class="lib">Nom du fichier</span>
+      <div class="saisie">Mandat Dupont<span>.pdf</span></div>
+      <span class="lib">Où l'enregistrer ?</span>
+      <div class="choix"><i>Appareil</i><i class="drive">Google Drive</i><i>Les deux</i></div>
+      <div class="dossier">📁 Dossier Drive : <b>Clients 2026</b><span style="color:var(--doux)">Changer</span></div>
+      <div class="go">Enregistrer dans Drive</div>
+    </div>
+    <div class="clic c1"></div><div class="clic c2"></div>
+    <svg class="curseur" viewBox="0 0 24 24"><path d="M4 2l16 10-7 1.6L10 21z" fill="#fff" stroke="#1b2130" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    <div class="legende"><b>Enregistrez où vous voulez</b><span>Sur le PC, dans Google Drive, ou les deux.</span></div>
+  </section>
+
+  <section class="scene fin" data-duree="3400">
+    <svg class="gros-logo"><use href="#logo-blanc"/></svg>
+    <div class="texte">
+      <h2>Atelier PDF</h2>
+      <p>Sur votre téléphone et votre PC.</p>
+      <div class="puces"><span>Gratuit</span><span>Sans compte</span><span>Google Drive</span></div>
+      <span class="url">monaccompagnateurenergetique-star.github.io</span>
+    </div>
+  </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const integre = new URLSearchParams(location.search).has('integre');
+  if (integre) document.body.classList.add('integre');
+  const cadre = document.getElementById('cadre');
+  const scenes = [...document.querySelectorAll('.scene')];
+  const progres = document.getElementById('progres');
+  const barres = scenes.map(() => { const i = document.createElement('i'); const b = document.createElement('b'); i.append(b); progres.append(i); return b; });
+  function ajuster() {
+    const marge = integre ? 0 : 70;
+    const s = Math.min((innerWidth - (integre ? 0 : 40)) / 1280, (innerHeight - marge * 2) / 760);
+    cadre.style.transform = `translate(-50%,-50%) scale(${s})`;
+  }
+  addEventListener('resize', ajuster); ajuster();
+  let n = -1, minuteur = null, enPause = false;
+  function scene(k) {
+    n = (k + scenes.length) % scenes.length;
+    scenes.forEach((s, i) => s.classList.toggle('active', i === n));
+    const s = scenes[n]; s.classList.remove('active'); void s.offsetWidth; s.classList.add('active');
+    barres.forEach((b, i) => { b.style.transition = 'none'; b.style.width = i < n ? '100%' : '0'; });
+    const duree = +s.dataset.duree;
+    requestAnimationFrame(() => { const b = barres[n]; b.style.transition = `width ${duree}ms linear`; b.style.width = '100%'; });
+    clearTimeout(minuteur);
+    minuteur = setTimeout(() => scene(n + 1), duree);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { clearTimeout(minuteur); enPause = true; }
+    else if (enPause) { enPause = false; scene(n); }
+  });
+  if (!integre) cadre.addEventListener('click', () => scene(0));
+  document.getElementById('retour-site').addEventListener('click', e => {
+    try { if (document.referrer && new URL(document.referrer).origin === location.origin && history.length > 1) { e.preventDefault(); history.back(); } } catch {}
+  });
+  scene(0);
+})();
+</script>
+</body>
+</html>

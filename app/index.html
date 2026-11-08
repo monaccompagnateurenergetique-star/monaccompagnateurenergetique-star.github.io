@@ -128,7 +128,78 @@ a{color:var(--accent)}
   .tuile{padding:9px 12px}
   .tuile span{display:none}
   .col-principale .confiance{margin-top:12px}
-}@media (min-width:1000px) and (prefers-reduced-motion:reduce){.carte-mini,.tuile{transition:none}}
+}
+/* Couleurs : chaque outil a sa pastille de couleur (téléphone et PC) */
+.carte-mini .ico,.tuile .ico{width:40px;height:40px;padding:9px;border-radius:12px;background:var(--pf,#e2f0ea);color:var(--pc,var(--accent));margin-bottom:6px}
+.duo .carte-mini:nth-child(1){--pc:#2563eb;--pf:#e3ebfd}
+.duo .carte-mini:nth-child(2){--pc:#db2777;--pf:#fbe4ef}
+.outils-base .tuile:nth-child(1){--pc:#1e7d4f;--pf:#e3f4ea}
+.outils-base .tuile:nth-child(2){--pc:#c2410c;--pf:#fdebdd}
+.outils-base .tuile:nth-child(3){--pc:#4338ca;--pf:#e8e7fb}
+.outils-base .tuile:nth-child(4){--pc:#0e7490;--pf:#dcf3f7}
+.outils-base .tuile:nth-child(5){--pc:#7c3aed;--pf:#efe6fd}
+.outils-base .tuile:nth-child(6){--pc:#b45309;--pf:#fbf0d9}
+.outils-base .tuile:nth-child(7){--pc:#0369a1;--pf:#e0f0fb}
+.outils-plus .tuile:nth-child(1){--pc:#1d4ed8;--pf:#e3ebfd}
+.outils-plus .tuile:nth-child(2){--pc:#be185d;--pf:#fbe4ef}
+.outils-plus .tuile:nth-child(3){--pc:#0d6b4f;--pf:#e2f0ea}
+.outils-plus .tuile:nth-child(4){--pc:#9333ea;--pf:#f1e6fd}
+/* « Modifier un PDF » : dégradé vert, avec un reflet */
+.carte-ouvrir{position:relative;overflow:hidden;background:linear-gradient(135deg,#0b5e45 0%,#0d6b4f 45%,#16956a 100%)}
+.carte-ouvrir::after{content:"";position:absolute;right:-40px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),rgba(255,255,255,0) 70%);pointer-events:none}
+.carte-ouvrir>*{position:relative;z-index:1}
+/* Entrée en douceur des cartes à l'ouverture */
+@keyframes entree{from{opacity:0;transform:translateY(10px)}}
+@media (prefers-reduced-motion:no-preference){
+  .carte-ouvrir,.ouvrir-drive,.carte-mini,.tuile{animation:entree .45s cubic-bezier(.2,.8,.2,1) both}
+  .carte-mini:nth-child(2),.tuile:nth-child(2){animation-delay:.04s}
+  .tuile:nth-child(3){animation-delay:.08s}.tuile:nth-child(4){animation-delay:.12s}.tuile:nth-child(5){animation-delay:.16s}
+  .tuile:nth-child(6){animation-delay:.2s}.tuile:nth-child(7){animation-delay:.24s}
+}
+/* PC : bandeau dégradé en haut (Modifier + Drive + Fusionner + JPG), titres soulignés de couleur, « En plus » sur fond teinté */
+@media (min-width:1000px){
+  /* « L'établi » : bandeau anthracite (couleur signature, celle des messages « ✓ ») et vert vif de la coche pour l'action principale */
+  #ecran-accueil{--anthracite:#1b2130;--vif:#1fae76;background:var(--fond)}
+  .accueil{padding-top:18px}
+  .accueil::before{content:"";grid-column:1/-1;grid-row:1/3;margin:-12px -16px;border-radius:24px;background:radial-gradient(520px 220px at 0% 0%,rgba(31,174,118,.22),rgba(31,174,118,0) 70%),var(--anthracite);box-shadow:0 18px 40px rgba(27,33,48,.22);position:relative;z-index:0}
+  #btn-ouvrir,#btn-ouvrir-drive,.col-outils .duo{position:relative;z-index:1}
+  #btn-ouvrir{background:transparent;box-shadow:none;padding:16px 18px;border-radius:16px}
+  #btn-ouvrir::after{display:none}
+  #btn-ouvrir strong{font-size:26px;letter-spacing:-.02em}
+  #btn-ouvrir span{color:#b8c0cc;opacity:1}
+  #btn-ouvrir .ico{width:48px;height:48px;padding:12px;border-radius:50%;background:var(--vif);color:#fff;box-shadow:0 6px 16px rgba(31,174,118,.35)}
+  #btn-ouvrir:hover{background:rgba(255,255,255,.05)}
+  #btn-ouvrir:focus-visible,#btn-ouvrir-drive:focus-visible{outline:3px solid var(--vif);outline-offset:2px}
+  #btn-ouvrir-drive{background:transparent;border-color:rgba(255,255,255,.22);color:#fff;justify-content:flex-start;padding:0 16px;margin-bottom:2px}
+  #btn-ouvrir-drive .ico{color:var(--vif)}
+  #btn-ouvrir-drive:hover{border-color:var(--vif)}
+  .col-outils .duo .carte-mini{background:#fff;border-color:transparent;box-shadow:none}
+  .col-outils .duo .carte-mini:hover{box-shadow:0 0 0 2px var(--vif)}
+  #reprendre{margin-top:18px}
+  /* titres en minuscules, gras, soulignés d'un trait vert (pas de majuscules espacées) */
+  #reprendre .titre-section,.col-outils>.titre-section{display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font-size:15px;font-weight:800;color:var(--anthracite)}
+  #reprendre .titre-section{margin:10px 2px 6px}
+  .col-outils>.titre-section{margin:12px 2px 6px}
+  .col-outils>.titre-section::before,#reprendre .titre-section::before{content:"";width:14px;height:4px;border-radius:2px;background:var(--vif)}
+  .tuile{padding:10px 12px;grid-template-columns:40px 1fr}
+  .tuile .ico{margin:0}
+  .outils-plus{padding:8px;margin:0 -8px;border-radius:18px;background:#e9f2ec}
+  .carte-mini,.tuile{transition:border-color .15s,box-shadow .15s}
+  .tuile:hover{border-color:var(--vif)}
+  .col-principale .confiance{background:transparent;color:var(--doux);border:1px dashed #cfd8d2}
+}
+@media (min-width:1000px) and (max-height:720px){
+  .accueil{padding-top:20px}
+  #reprendre{margin-top:22px}
+  #btn-ouvrir strong{font-size:22px}
+  .carte-mini .ico,.tuile .ico{width:34px;height:34px;padding:7px}
+  .tuile{grid-template-columns:34px 1fr}
+  .outils-plus{padding:6px}
+  #reprendre-liste .ligne-doc-principal{min-height:44px;padding:3px 8px}
+  #reprendre-liste .ligne-doc-principal img{width:30px;height:38px}
+  #reprendre-liste .ligne-doc-ico{width:34px;height:34px}
+}
+@media (min-width:1000px) and (prefers-reduced-motion:reduce){.carte-mini,.tuile{transition:none}.tuile:hover,.col-outils .duo .carte-mini:hover{transform:none}}
 
 /* =========================================================
    3. DOCUMENT : barre du haut, onglets, pages
@@ -534,7 +605,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
       <button class="carte-mini" id="btn-photos"><svg class="ico"><use href="#i-image"/></svg><strong>JPG → PDF</strong><span>Convertir vos photos et images</span></button>
     </div>
     <h2 class="titre-section">Tous les outils</h2>
-    <div class="grille-outils">
+    <div class="grille-outils outils-base">
       <button class="tuile" id="btn-excel"><svg class="ico"><use href="#i-pages"/></svg><strong>Excel → PDF</strong><span>Tableurs xlsx, ods, csv</span></button>
       <button class="tuile" data-outil="images"><svg class="ico"><use href="#i-images"/></svg><strong>PDF → JPG</strong><span>Chaque page en image</span></button>
       <button class="tuile" data-outil="organiser"><svg class="ico"><use href="#i-pages"/></svg><strong>Organiser</strong><span>Trier, pivoter, supprimer des pages</span></button>
@@ -544,7 +615,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
       <button class="tuile" data-outil="filigrane"><svg class="ico"><use href="#i-filigrane"/></svg><strong>Filigrane</strong><span>« COPIE », « CONFIDENTIEL »…</span></button>
     </div>
     <h2 class="titre-section">En plus</h2>
-    <div class="grille-outils">
+    <div class="grille-outils outils-plus">
       <button class="tuile" id="btn-remplir"><svg class="ico"><use href="#i-texte"/></svg><strong>Remplir un formulaire</strong><span>Cerfa, mandat, contrat…</span></button>
       <button class="tuile" id="btn-signer"><svg class="ico"><use href="#i-signature"/></svg><strong>Signer un PDF</strong><span>Signature et tampon</span></button>
       <button class="tuile" id="btn-mesdocs"><svg class="ico"><use href="#i-dossier"/></svg><strong>Mes documents</strong><span>Reprendre, historique des envois</span></button>
@@ -625,7 +696,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.6.1';
+const VERSION_APPLI = '1.7.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;

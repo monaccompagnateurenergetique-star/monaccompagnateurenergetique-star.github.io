@@ -111,6 +111,14 @@ section{padding:40px 0 56px}
 .demo .bouton{background:#fff;color:var(--accent-fort)}
 .demo .lecteur{position:relative;justify-self:center;width:250px;height:542px;border-radius:30px;overflow:hidden;box-shadow:0 30px 60px rgba(0,0,0,.4)}
 .demo .lecteur iframe{width:100%;height:100%;border:0}
+.lien-clair{display:inline-flex;align-items:center;min-height:48px;color:#8fe3c0;font-weight:700;text-decoration:none}
+.lien-clair:hover{text-decoration:underline}
+/* Fenêtre d'ordinateur pour la démo PC */
+.ecran-pc{display:none;width:100%;border-radius:16px;overflow:hidden;background:#e9e7e1;box-shadow:0 30px 70px rgba(0,0,0,.45)}
+.ecran-pc .barre-fen{display:flex;gap:7px;padding:10px 14px;background:#2a3140}
+.ecran-pc .barre-fen i{width:11px;height:11px;border-radius:50%;background:#f26b5e}
+.ecran-pc .barre-fen i:nth-child(2){background:#f4bd4f}.ecran-pc .barre-fen i:nth-child(3){background:#5ec46a}
+.ecran-pc iframe{display:block;width:100%;aspect-ratio:1280/760;border:0;background:var(--fond)}
 
 .confiance{background:var(--accent-pale);border-radius:24px;padding:30px;color:#244a3c}
 .confiance h2{color:var(--accent-fort)}
@@ -141,19 +149,59 @@ footer{border-top:1px solid var(--ligne);padding:26px 0 40px;color:var(--doux);f
   .plus{grid-template-columns:1fr 1fr}
   .etapes{grid-template-columns:repeat(3,1fr)}
   .partout{grid-template-columns:1fr 1fr;padding:40px}
-  .demo{grid-template-columns:1fr auto;padding:48px}
+  .demo{grid-template-columns:1fr;padding:48px;gap:30px}
+  .demo>div:first-child{display:grid;grid-template-columns:1fr auto;align-items:end;column-gap:40px}
+  .demo>div:first-child .etiquette-sec,.demo>div:first-child h2,.demo>div:first-child p{grid-column:1}
+  .demo>div:first-child .actions{grid-column:2;grid-row:1/4;align-self:end}
+  .demo p{margin:0}
+  .demo .ecran-pc{display:block}
+  .demo .lecteur{display:none}
   .bulle{display:flex}
   .cta-mobile{display:none}
 }
 @media (min-width:1000px){.grille{grid-template-columns:repeat(4,1fr)}}
 @media (min-width:760px) and (max-height:860px){.heros{padding:28px 0 48px}.telephone{width:286px;border-radius:40px}.telephone iframe{width:266px;height:576px;border-radius:30px}}
 @media (max-width:759px){.grille{grid-template-columns:1fr 1fr;gap:10px}.grille .carte{padding:16px 14px}.grille .carte p{font-size:14px}.grille .carte h3{font-size:16px}.carte .nouveau{display:block;width:max-content;margin:4px 0 0}}
-@media (max-width:380px){.telephone{width:280px}.telephone iframe{width:260px;height:563px}}
+/* Téléphone : appareil plus petit, pour voir toute la démo d'un coup */
+@media (max-width:759px){
+  .scene-tel::before{width:300px;height:300px}
+  .telephone{width:238px;border-radius:36px;padding:9px}
+  .telephone::before{top:15px;width:64px;height:18px}
+  .telephone iframe{width:220px;height:477px;border-radius:28px}
+  .demo .lecteur{width:220px;height:477px}
+}
 @media (prefers-reduced-motion:no-preference){
   .bulle{animation:flotte 5s ease-in-out infinite}
   .bulle.b2{animation-delay:-1.6s}
   .bulle.b3{animation-delay:-3.2s}
   @keyframes flotte{50%{transform:translateY(-8px)}}
+  /* Arrivée sur la page : titre, texte, bouton puis téléphone, l'un après l'autre */
+  .heros>div:first-child>*{animation:arrive .7s cubic-bezier(.2,.8,.2,1) both}
+  .heros>div:first-child>*:nth-child(2){animation-delay:.08s}
+  .heros>div:first-child>*:nth-child(3){animation-delay:.16s}
+  .heros>div:first-child>*:nth-child(4){animation-delay:.24s}
+  .heros>div:first-child>*:nth-child(5){animation-delay:.32s}
+  .scene-tel{animation:arrive-tel .9s .2s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes arrive{from{opacity:0;transform:translateY(18px)}}
+  @keyframes arrive-tel{from{opacity:0;transform:translateY(40px) rotate(3deg)}}
+  /* Quand une carte d'outil apparaît, son icône « rebondit » */
+  .carte.apparait .ic{transform:scale(.6);transition:transform .5s cubic-bezier(.2,1.6,.4,1) .15s}
+  .carte.apparait.vu .ic{transform:none}
+  /* Bloc Drive : les trois points arrivent l'un après l'autre */
+  .partout li{opacity:0;transform:translateX(-14px);transition:opacity .5s,transform .5s cubic-bezier(.2,.8,.2,1)}
+  .partout.vu li{opacity:1;transform:none}
+  .partout.vu li:nth-child(2){transition-delay:.15s}
+  .partout.vu li:nth-child(3){transition-delay:.3s}
+  /* Formats : les pastilles apparaissent en cascade */
+  .formats span{opacity:0;transform:translateY(10px) scale(.95);transition:opacity .4s,transform .4s cubic-bezier(.2,1.4,.4,1)}
+  .formats.vu span{opacity:1;transform:none}
+  .formats.vu span:nth-child(2){transition-delay:.08s}.formats.vu span:nth-child(3){transition-delay:.16s}.formats.vu span:nth-child(4){transition-delay:.24s}.formats.vu span:nth-child(5){transition-delay:.32s}
+  /* Dernier appel : le bouton « respire » doucement */
+  .final .bouton{animation:respire 2.6s ease-in-out infinite}
+  @keyframes respire{50%{box-shadow:0 0 0 10px rgba(255,255,255,.18)}}
+  .final::before,.final::after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.08);animation:flotte 7s ease-in-out infinite}
+  .final::before{width:220px;height:220px;left:-60px;top:-80px}
+  .final::after{width:160px;height:160px;right:-40px;bottom:-60px;animation-delay:-3s}
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
@@ -196,7 +244,7 @@ footer{border-top:1px solid var(--ligne);padding:26px 0 40px;color:var(--doux);f
       <div class="scene-tel">
         <div class="porte-tel">
           <div class="telephone">
-            <iframe src="teaser.html?integre&amp;v=28" title="Démonstration animée d'Atelier PDF" tabindex="-1"></iframe>
+            <iframe src="teaser.html?integre&amp;v=29" title="Démonstration animée d'Atelier PDF" tabindex="-1"></iframe>
           </div>
           <div class="bulle b1" aria-hidden="true"><i>✓</i>Mandat signé</div>
           <div class="bulle b2" aria-hidden="true"><i>⇄</i>3 fichiers → 1 PDF</div>
@@ -267,11 +315,16 @@ footer{border-top:1px solid var(--ligne);padding:26px 0 40px;color:var(--doux);f
       <div class="demo apparait">
         <div>
           <span class="etiquette-sec" style="color:#8fe3c0">Démo</span>
-          <h2>Le tour complet en 30 secondes</h2>
-          <p>Modifier, fusionner, convertir, créer votre tampon, signer, enregistrer dans Drive : regardez l'appli en action. Parfait pour la présenter à vos collègues ou vos clients.</p>
-          <a class="bouton" href="teaser.html"><svg viewBox="0 0 24 24"><path d="M4 4h6M4 4v6M20 4h-6M20 4v6M4 20h6M4 20v-6M20 20h-6M20 20v-6"/></svg>Voir en plein écran</a>
+          <h2 id="demo-titre">L'appli en action</h2>
+          <p id="demo-texte">Fusionner, modifier, tamponner, enregistrer dans Drive : regardez l'appli sur ordinateur. Parfait pour la présenter à vos collègues ou vos clients.</p>
+          <div class="actions">
+            <a class="bouton" id="demo-plein" href="teaser-pc.html?v=29"><svg viewBox="0 0 24 24"><path d="M4 4h6M4 4v6M20 4h-6M20 4v6M4 20h6M4 20v-6M20 20h-6M20 20v-6"/></svg>Voir en plein écran</a>
+            <a class="lien-clair" id="demo-autre" href="teaser.html?v=29">Voir la version téléphone</a>
+          </div>
         </div>
-        <div class="lecteur"><iframe src="teaser.html?integre&amp;v=28" title="Démonstration animée d'Atelier PDF" loading="lazy" tabindex="-1"></iframe></div>
+        <!-- Sur PC : la démo PC dans une fenêtre ; sur téléphone : la démo téléphone -->
+        <div class="ecran-pc"><iframe data-src="teaser-pc.html?integre&amp;v=29" title="Démonstration animée d'Atelier PDF sur ordinateur" tabindex="-1"></iframe></div>
+        <div class="lecteur"><iframe data-src="teaser.html?integre&amp;v=29" title="Démonstration animée d'Atelier PDF sur téléphone" tabindex="-1"></iframe></div>
       </div>
     </section>
 
@@ -332,7 +385,7 @@ footer{border-top:1px solid var(--ligne);padding:26px 0 40px;color:var(--doux);f
 
   <footer>
     <span>© 2026 Atelier PDF · <a href="mailto:monaccompagnateurenergetique@gmail.com">Nous écrire</a></span>
-    <span><a href="confidentialite.html">Confidentialité</a> · <a href="teaser.html">Démo</a> · <a href="app/">Ouvrir l'appli</a></span>
+    <span><a href="confidentialite.html">Confidentialité</a> · <a href="teaser-pc.html?v=29">Démo PC</a> · <a href="teaser.html?v=29">Démo téléphone</a> · <a href="app/">Ouvrir l'appli</a></span>
   </footer>
 </div>
 
@@ -348,6 +401,19 @@ footer{border-top:1px solid var(--ligne);padding:26px 0 40px;color:var(--doux);f
   // Apparition douce des blocs au défilement
   const io = 'IntersectionObserver' in window ? new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('vu'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' }) : null;
   document.querySelectorAll('.apparait').forEach((el, i) => { el.style.transitionDelay = (i % 4) * 60 + 'ms'; io ? io.observe(el) : el.classList.add('vu'); });
+
+  // Démo : version PC sur grand écran, version téléphone sur téléphone (seule la bonne est chargée)
+  const grand = matchMedia('(min-width:760px)').matches;
+  const cadreDemo = document.querySelector(grand ? '.ecran-pc iframe' : '.lecteur iframe');
+  if (cadreDemo) {
+    const charger = () => { if (!cadreDemo.src) cadreDemo.src = cadreDemo.dataset.src; };
+    io ? new IntersectionObserver((es, o) => { if (es.some(e => e.isIntersecting)) { charger(); o.disconnect(); } }, { rootMargin: '300px' }).observe(cadreDemo) : charger();
+  }
+  if (!grand) {
+    document.getElementById('demo-texte').textContent = "Fusionner, modifier, créer votre tampon, signer, enregistrer dans Drive : regardez l'appli en action. Parfait pour la présenter à vos collègues ou vos clients.";
+    document.getElementById('demo-plein').href = 'teaser.html?v=29';
+    const autre = document.getElementById('demo-autre'); autre.href = 'teaser-pc.html?v=29'; autre.textContent = 'Voir la version PC';
+  }
 
   // Exemple interactif « Où l'enregistrer ? »
   const textes = {
