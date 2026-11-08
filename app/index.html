@@ -887,7 +887,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.14.0';
+const VERSION_APPLI = '1.15.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -1268,6 +1268,13 @@ function afficherEcran(nom) {
 function majClassesDoc() {
   if (!D) return;
   $('#bandeau-modele').hidden = !D.creationModele;
+  // Document scanné : le bouton « Photo » devient « Scanner » (appareil photo, page suivante)
+  const bPhoto = $('#barre-editer [data-action="photo"]');
+  if (bPhoto && bPhoto.dataset.scan !== String(!!D.scan)) {
+    bPhoto.dataset.scan = String(!!D.scan);
+    bPhoto.replaceChildren(icone(D.scan ? 'camera' : 'image'), D.scan ? 'Scanner' : 'Photo');
+    bPhoto.title = D.scan ? 'Scanner une feuille (page suivante)' : 'Ajouter une photo sur la page';
+  }
   ecranDoc.classList.toggle('mode-lire', D.mode === 'lire');
   ecranDoc.classList.toggle('mode-editer', D.mode === 'editer');
   ['document', 'pages'].forEach(o => ecranDoc.classList.toggle('onglet-' + o, D.onglet === o));
@@ -1718,6 +1725,7 @@ function elementItem(it) {
 function selectionner(id) {
   if (!D) return;
   if (D.rognage && id !== D.rognage.id) validerRognage(false); // on touche ailleurs : le rognage est gardé (comme dans Word)
+  if (D.renduOuvert && id !== D.renduOuvert) D.renduOuvert = null;
   if (id !== D.selection) paletteOuverte = false;
   D.selection = id;
   $$('.item', pagesEl).forEach(e => e.classList.toggle('sel', e.dataset.id === id));
@@ -1880,13 +1888,18 @@ async function validerRognage(garderSelection = true) {
   const r = D.rognage, it = D.items.find(t => t.id === r.id); D.rognage = null;
   if (!it) { majBarreContexte(); return; }
   if (r.g + r.d + r.h + r.b < 0.002) { rendreItems(it.page); if (garderSelection) selectionner(it.id); return; }
-  const img = new Image(); img.src = D.images[it.img];
-  try { await img.decode(); } catch { rendreItems(it.page); return; }
-  const W = img.naturalWidth, H = img.naturalHeight;
-  const sx = Math.round(r.g * W), sy = Math.round(r.h * H), sw = Math.max(1, Math.round((1 - r.g - r.d) * W)), sh = Math.max(1, Math.round((1 - r.h - r.b) * H));
-  const c = el('canvas'); c.width = sw; c.height = sh; c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+  // la même coupe s'applique à la photo affichée et à sa version d'origine (pour changer le rendu ensuite)
+  const couper = async id => {
+    const img = new Image(); img.src = D.images[id]; await img.decode();
+    const W = img.naturalWidth, H = img.naturalHeight;
+    const sx = Math.round(r.g * W), sy = Math.round(r.h * H), sw = Math.max(1, Math.round((1 - r.g - r.d) * W)), sh = Math.max(1, Math.round((1 - r.h - r.b) * H));
+    const c = el('canvas'); c.width = sw; c.height = sh; c.getContext('2d').drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+    const nid = 'photo-' + idUnique(); D.images[nid] = c.toDataURL('image/jpeg', 0.9); return nid;
+  };
+  let idImg, idBrut = null;
+  try { idImg = await couper(it.img); if (it.brut && it.brut !== it.img) idBrut = await couper(it.brut); } catch { rendreItems(it.page); return; }
   memoriser();
-  const idImg = 'photo-' + idUnique(); D.images[idImg] = c.toDataURL('image/jpeg', 0.9);
+  if (it.brut) it.brut = idBrut || idImg;
   // nouveau centre (dans le repère éventuellement tourné de la photo), puis nouvelle taille
   const th = (it.rot || 0) * Math.PI / 180, ox = (r.g - r.d) / 2 * it.w, oy = (r.h - r.b) / 2 * it.h;
   const cx = it.x + it.w / 2 + ox * Math.cos(th) - oy * Math.sin(th), cy = it.y + it.h / 2 + ox * Math.sin(th) + oy * Math.cos(th);
@@ -1981,10 +1994,14 @@ function majBarreContexte() {
       outil('Annuler', 'fermer', annulerRognage),
       outil('4 coins', 'scanner', () => { D.rognage = null; rendreItems(it.page); selectionner(it.id); recadrerPhoto(it); }),
       outil('Valider', 'valider', () => validerRognage(true), 'outil principal'));
+  } else if (it.type === 'image' && it.photo && D.renduOuvert === it.id) {
+    // Choix du rendu : appliqué tout de suite sur la page
+    RENDUS.forEach(([v, nom]) => { const b = outil(nom, v === 'original' ? 'image' : 'palette', () => appliquerRendu(it, v)); if ((it.rendu || 'original') === v) b.classList.add('actif'); b.setAttribute('aria-pressed', String((it.rendu || 'original') === v)); barreContexte.append(b); });
+    barreContexte.append(outil('OK', 'valider', () => { D.renduOuvert = null; majBarreContexte(); }, 'outil principal'));
   } else if (it.type === 'image' && it.photo) {
     barreContexte.append(
+      outil('Rendu', 'palette', () => { D.renduOuvert = it.id; majBarreContexte(); }),
       outil('Rogner', 'rogner', () => commencerRognage(it)),
-      outil('Ajouter une photo', 'image', () => ajouterPhotoSurPage(D.parId.get(it.page))),
       pivoter,
       outil('Supprimer', 'poubelle', () => supprimerItem(it.id), 'outil danger'), fini);
   } else if (it.type === 'note') {
@@ -2325,7 +2342,12 @@ $('#barre-editer').addEventListener('click', async e => {
   if (D.attente && D.attente.outil === a) { annulerPlacement(); return; }
   annulerPlacement();
   if (a === 'plus') { if (D.panneau) fermerPanneau(); else ouvrirPanneau('plus'); return; }
-  if (a === 'photo') { annulerPlacement(); ajouterPhotoSurPage(D.focus ? D.parId.get(D.focus) : D.pages[pageCourante()]); return; }
+  if (a === 'photo') {
+    annulerPlacement();
+    const pg = D.focus ? D.parId.get(D.focus) : D.pages[pageCourante()];
+    if (D.scan) scannerSurPage(pg); else ajouterPhotoSurPage(pg); // document scanné : le bouton devient « Scanner »
+    return;
+  }
   if (a === 'texte') demanderPlacement({ outil: 'texte' }, 'Touchez la page à l\'endroit où écrire.');
   else if (a === 'masque') demanderPlacement({ outil: 'masque' }, 'Touchez la zone à cacher.');
   else if (a === 'corriger') demanderPlacement({ outil: 'corriger' }, 'Touchez le mot à corriger, puis tapez le nouveau texte.');
@@ -2514,7 +2536,82 @@ async function ajouterFichiers(position) {
   } finally { libre(); }
 }
 
-/** Recadrer et nettoyer une page (photo ajoutée, scan de travers…) : même outil que le scanner. */
+/* =========================================================
+   SCANNER : un document de pages A4 blanches, chaque feuille photographiée y est posée comme une photo modifiable
+   ========================================================= */
+/** PDF de pages blanches (fond blanc dessiné : une page sans contenu ne peut pas être reprise à l'export). */
+async function pdfBlanc(nb = 1, dims = A4) {
+  const v = await PDFDocument.create(); v.setProducer('Atelier PDF');
+  for (let i = 0; i < nb; i++) v.addPage(dims).drawRectangle({ x: 0, y: 0, width: dims[0], height: dims[1], color: rgb(1, 1, 1) });
+  return v.save();
+}
+/** Insère une page blanche (même sens que la page « apres ») juste après elle. */
+async function ajouterPageBlanche(apres) {
+  const s = await chargerSource(await pdfBlanc(1, apres && apres.w > apres.h ? [A4[1], A4[0]] : A4));
+  D.sources.push(s);
+  const [pg] = await pagesDe(s, D.sources.length - 1); D.parId.set(pg.id, pg);
+  D.pages.splice(apres ? D.pages.indexOf(apres) + 1 : D.pages.length, 0, pg);
+  D.structure = true;
+  return pg;
+}
+/** Accueil → Scanner : on choisit d'abord la photo (le téléphone l'exige pendant le geste), puis le document s'ouvre. */
+async function nouveauScan() {
+  const fichiers = await choisirFichiers({ accept: 'image/*', capture: 'environment' });
+  if (!fichiers.some(estImage)) return;
+  const d = new Date(), nom = `Scan ${d.toLocaleDateString('fr-FR').replace(/\//g, '-')} ${String(d.getHours()).padStart(2, '0')}h${String(d.getMinutes()).padStart(2, '0')}.pdf`;
+  occupe('Préparation du document…');
+  try { await ouvrirPdf(await pdfBlanc(1), nom); } finally { libre(); }
+  if (!D) return;
+  D.scan = true; D.modifie = true; majClassesDoc();
+  await scannerSurPage(D.pages[0], fichiers);
+}
+/** Scanne une feuille : 4 coins et rendu, puis la pose sur la page (ou sur une nouvelle page si celle-ci a déjà un scan). */
+async function scannerSurPage(pg, fichiers) {
+  if (!pg || !D) return;
+  terminerEdition(); annulerPlacement(); selectionner(null);
+  if (!fichiers) fichiers = await choisirFichiers({ accept: 'image/*', capture: 'environment' });
+  const f = (fichiers || []).find(estImage);
+  if (!f || !D) return;
+  let c; occupe('Chargement de la photo…');
+  try { c = await chargerImage(f); } catch { toast('Ce format d\'image n\'est pas pris en charge.'); return; } finally { libre(); }
+  const r = await editeurScanner(c, prefs.renduScan || 'couleur');
+  if (!r || !D) return;
+  prefs.renduScan = r.filtre; ecrirePrefs(prefs);
+  const avant = instantane();
+  let cible = pg, nouvelle = false;
+  if (D.items.some(t => t.page === pg.id && t.photo)) { cible = await ajouterPageBlanche(pg); nouvelle = true; }
+  const m = 18, k = Math.min((cible.w - 2 * m) / r.width, (cible.h - 2 * m) / r.height), w = r.width * k, h = r.height * k;
+  const idImg = 'photo-' + idUnique(), idBrut = 'photo-' + idUnique();
+  D.images[idImg] = r.toDataURL('image/jpeg', 0.85); D.images[idBrut] = r.brut.toDataURL('image/jpeg', 0.85);
+  const it = { id: idUnique(), type: 'image', photo: true, scan: true, img: idImg, brut: idBrut, rendu: r.filtre, page: cible.id, x: (cible.w - w) / 2, y: (cible.h - h) / 2, w, h };
+  D.items.push(it);
+  memoriser(avant); D.modifie = true; journaliser('Page scannée');
+  if (nouvelle) apresStructure(true); else rendreItems(cible.id);
+  const n = D.pages.indexOf(cible);
+  if (D.onglet !== 'document') choisirOnglet('document');
+  requestAnimationFrame(() => { if (!D.focus) allerPage(n); setTimeout(() => { if (D && D.items.includes(it)) { selectionner(it.id); elItem(it.id)?.scrollIntoView({ block: 'center' }); } }, 250); });
+  toast(`Page ${n + 1} scannée. Touchez « Scanner » en bas pour la page suivante.`, 6000);
+}
+/** Change le rendu d'une photo posée (couleur nette, gris, noir et blanc, origine), à partir de la photo d'origine. */
+const RENDUS = [['couleur', 'Couleur nette'], ['gris', 'Gris'], ['nb', 'Noir et blanc'], ['original', 'Origine']];
+async function appliquerRendu(it, filtre) {
+  if (!it.brut) it.brut = it.img; // la photo telle qu'elle est sert d'origine
+  occupe('Rendu de la photo…'); await attendre(20);
+  try {
+    let url = D.images[it.brut];
+    if (filtre !== 'original') {
+      const img = new Image(); img.src = url; await img.decode();
+      const c = el('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d').drawImage(img, 0, 0);
+      url = ameliorer(c, filtre).toDataURL('image/jpeg', 0.85);
+    }
+    memoriser();
+    const id = 'photo-' + idUnique(); D.images[id] = url;
+    it.img = id; it.rendu = filtre; D.modifie = true;
+    if (it.scan) { prefs.renduScan = filtre; ecrirePrefs(prefs); } // la page scannée suivante reprend ce rendu
+    rendreItems(it.page); selectionner(it.id);
+  } catch (e) { console.error(e); toast('Le rendu n\'a pas pu être appliqué.'); }
+  finally { libre(); }
+}
 /** Ajoute une ou plusieurs photos sur une page existante (page blanche comprise) : elles se déplacent et se redimensionnent. */
 async function ajouterPhotoSurPage(pg) {
   if (!pg) return;
@@ -2554,13 +2651,16 @@ async function ajouterPhotoSurPage(pg) {
 async function recadrerPhoto(it) {
   if (!it || !D.images[it.img]) return;
   terminerEdition();
-  const img = new Image(); img.src = D.images[it.img];
+  // on repart de la photo d'origine (sans rendu) quand on l'a, avec le rendu actuel présélectionné
+  const img = new Image(); img.src = D.images[it.brut || it.img];
   try { await img.decode(); } catch { toast('Cette photo n\'a pas pu être ouverte.'); return; }
   const c = el('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d').drawImage(img, 0, 0);
-  const r = await editeurScanner(c, 'original');
+  const r = await editeurScanner(c, it.brut ? (it.rendu || 'original') : 'original');
   if (!r || !D) return;
   memoriser();
   const idImg = 'photo-' + idUnique(); D.images[idImg] = r.toDataURL('image/jpeg', 0.88);
+  const idBrut = 'photo-' + idUnique(); D.images[idBrut] = r.brut.toDataURL('image/jpeg', 0.88);
+  it.brut = idBrut; it.rendu = r.filtre;
   // Même échelle qu'avant : la partie gardée reste à sa taille, la photo rétrécit (on voit tout de suite la coupe)
   const k = it.w / c.width, cx = it.x + it.w / 2, cy = it.y + it.h / 2;
   it.img = idImg; it.w = Math.max(20, r.width * k); it.h = it.w * r.height / r.width;
@@ -3862,7 +3962,9 @@ function editeurScanner(source, filtreInitial = 'couleur') {
         try {
           const plein = coins.every(([x, y], k) => Math.abs(x - [0, src.width, src.width, 0][k]) < 2 && Math.abs(y - [0, 0, src.height, src.height][k]) < 2);
           const c = plein ? (() => { const r = el('canvas'); r.width = src.width; r.height = src.height; r.getContext('2d').drawImage(src, 0, 0); return r; })() : redresser(src, coins);
-          resultat = ameliorer(c, filtre);
+          // on garde aussi la photo redressée « brute » : le rendu pourra être changé plus tard sur la page
+          const brut = el('canvas'); brut.width = c.width; brut.height = c.height; brut.getContext('2d').drawImage(c, 0, 0);
+          resultat = ameliorer(c, filtre); resultat.brut = brut; resultat.filtre = filtre;
         } catch (e) { console.error(e); toast('Le traitement de la photo n\'a pas abouti. Réessayez.'); }
         finally { libre(); }
         fe.fermer();
@@ -4148,6 +4250,17 @@ async function preparerOcr() {
   });
   return workerOcr;
 }
+/** Dessine sur un canvas de page les images posées (photos, signatures…), à l'échelle k. */
+async function dessinerImagesPosees(ctx, pg, k) {
+  for (const it of D.items.filter(t => t.page === pg.id && t.type === 'image' && D.images[t.img])) {
+    const img = new Image(); img.src = D.images[it.img];
+    try { await img.decode(); } catch { continue; }
+    ctx.save();
+    ctx.translate((it.x + it.w / 2) * k, (it.y + it.h / 2) * k); ctx.rotate((it.rot || 0) * Math.PI / 180);
+    ctx.drawImage(img, -it.w / 2 * k, -it.h / 2 * k, it.w * k, it.h * k);
+    ctx.restore();
+  }
+}
 async function lancerOcr() {
   if (!D) return;
   let pages = D.pages;
@@ -4160,7 +4273,7 @@ async function lancerOcr() {
   }
   // Les pages qui contiennent déjà du vrai texte n'en ont pas besoin
   const aTraiter = [];
-  for (const pg of pages) { const tc = await texteDePage(pg); if (tc.items.map(i => i.str).join('').replace(/\s/g, '').length < 30) aTraiter.push(pg); }
+  for (const pg of pages) { const tc = await texteDePage(pg); if (tc.items.map(i => i.str).join('').replace(/\s/g, '').length < 30 || D.items.some(t => t.page === pg.id && t.photo)) aTraiter.push(pg); }
   if (!aTraiter.length) { toast('Ces pages contiennent déjà du texte : la recherche et la copie fonctionnent sans OCR.', 5000); return; }
   occupe('Préparation de la reconnaissance de texte…');
   const textes = [];
@@ -4174,6 +4287,7 @@ async function lancerOcr() {
       const c = el('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
       const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
       await pg.p.render({ canvasContext: ctx, viewport: vp, annotationMode: MODE_STOCK }).promise;
+      await dessinerImagesPosees(ctx, pg, kz); // les photos scannées posées sur la page sont lues aussi
       const { data } = await w.recognize(c);
       c.width = c.height = 0;
       D.ocr[pg.id] = (data.words || []).filter(m => m.confidence > 35 && m.text.trim())
@@ -4248,7 +4362,7 @@ function journaliser(texte, d = D) {
 }
 function etatDe(d) {
   return {
-    items: d.items, ordre: d.pages.map(p => [p.src, p.num, p.rot, p.id]), numeros: d.numeros, filigrane: d.filigrane, structure: !!d.structure, ocr: d.ocr || null, journal: d.journal || [],
+    items: d.items, ordre: d.pages.map(p => [p.src, p.num, p.rot, p.id]), numeros: d.numeros, filigrane: d.filigrane, structure: !!d.structure, ocr: d.ocr || null, journal: d.journal || [], scan: !!d.scan,
     champs: d.sources.map(s => { const m = s.pdf.annotationStorage.serializable?.map; return m ? [...m.entries()] : []; })
   };
 }
@@ -4270,7 +4384,7 @@ async function sauvegarder(d, { force = false, modele = false, nom } = {}) {
   // le lien avec la copie Google Drive (synchronisation) est conservé
   let lienDrive = {};
   if (!modele) try { const a = await bdGet('documents', id); if (a?.driveId) lienDrive = { driveId: a.driveId, driveMaj: a.driveMaj }; } catch {}
-  const images = {}; for (const it of etat.items) if (it.img && d.images[it.img]) images[it.img] = d.images[it.img];
+  const images = {}; for (const it of etat.items) for (const k of [it.img, it.brut]) if (k && d.images[k]) images[k] = d.images[k];
   const sources = d.sources.map(s => s.octets), deja = modele ? 0 : (d.sauvees || 0);
   if (!modele) d.sigSauvee = sig;
   try {
@@ -4331,7 +4445,7 @@ function appliquerSauvegarde({ doc, modele }) {
   if (pages.length) D.pages = pages;
   D.parId = new Map([...parSrcNum.values()].map(p => [p.id, p]));
   D.items = e.items || []; D.images = { ...(doc.images || {}) };
-  D.numeros = e.numeros || null; D.filigrane = e.filigrane || null; D.structure = !!e.structure; D.ocr = e.ocr || null; D.journal = (e.journal || []).slice();
+  D.numeros = e.numeros || null; D.filigrane = e.filigrane || null; D.structure = !!e.structure; D.ocr = e.ocr || null; D.journal = (e.journal || []).slice(); D.scan = !!e.scan;
   (e.champs || []).forEach((liste, k) => { const st = D.sources[k]?.pdf.annotationStorage; if (st) for (const [id, v] of liste) st.setValue(id, v); });
   if (modele) {
     D.docId = idUnique(); D.cree = Date.now(); D.journal = [{ d: Date.now(), t: 'Créé à partir du modèle « ' + nomSansExt(doc.nom) + ' »' }];
@@ -5025,7 +5139,7 @@ majCarteInstall();
    16. DÉMARRAGE
    ========================================================= */
 $('#btn-ouvrir').addEventListener('click', async () => { const [f] = await choisirFichiers(); if (f) ouvrirFichier(f); });
-$('#btn-scanner').addEventListener('click', () => outilPhotos({ camera: true }));
+$('#btn-scanner').addEventListener('click', () => nouveauScan());
 $('#btn-photos').addEventListener('click', async () => { const fs = await choisirFichiers({ accept: 'image/*', multiple: true }); if (fs.length) outilPhotos({ fichiers: fs }); });
 $('#btn-param').addEventListener('click', ouvrirParametres);
 $('#btn-mesdocs').addEventListener('click', () => ouvrirMesDocuments('documents'));
