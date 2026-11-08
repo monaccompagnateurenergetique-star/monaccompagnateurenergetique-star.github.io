@@ -390,6 +390,8 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* Sélecteur de fichiers de Google : au-dessus des fenêtres de l'appli */
 .picker-dialog-bg{z-index:9990!important}
 .picker-dialog{z-index:9991!important;max-width:100vw}
+.secours-selecteur{position:fixed;left:0;right:0;top:0;z-index:9995;display:flex;justify-content:center;gap:8px;padding:calc(8px + var(--haut-sur)) 8px 8px;background:rgba(27,33,48,.92)}
+.secours-selecteur .btn{background:#fff;white-space:nowrap;font-size:13px}
 </style>
 </head>
 <body>
@@ -570,7 +572,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.4.2';
+const VERSION_APPLI = '1.5.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;
@@ -3707,7 +3709,7 @@ async function retenirCompteGoogle() {
 
 /* Sélecteur de fichiers de Google DANS l'appli (fenêtre par-dessus, sans quitter l'appli ni redemander l'accord).
    Il demande une clé API (publique, limitée à ce site et au sélecteur). Sans clé : on passe par la page de Google. */
-const GOOGLE_CLE_API = ''; // ← clé API « Google Picker API » (AIza…), à renseigner
+const GOOGLE_CLE_API = 'AIzaSyDHPnMxApN3dJK96-hkq19z_baFd6cwUb0'; // ← clé API « Google Picker API » (AIza…), à renseigner
 const GOOGLE_NUMERO_PROJET = '1066116338685'; // = début de l'identifiant client
 function chargerSelecteurGoogle() {
   return chargerScript('https://apis.google.com/js/api.js')
@@ -3720,15 +3722,27 @@ async function selecteurDansAppli(choix) {
     ? new P.DocsView(P.ViewId.FOLDERS).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes('application/vnd.google-apps.folder')
     : new P.DocsView(P.ViewId.DOCS).setIncludeFolders(true).setMimeTypes('application/pdf');
   return new Promise(res => {
+    let selecteur = null, fini = false;
+    // Barre de secours à nous, au-dessus du sélecteur : si Google affiche une erreur, on n'est jamais bloqué
+    const secours = el('div', { class: 'secours-selecteur' },
+      bouton('Passer par la page Google', { cls: 'btn mini', label: 'Le sélecteur ne marche pas ? Passer par la page de Google', onclick: () => terminer(undefined) }),
+      bouton('Fermer', { ico: 'fermer', cls: 'btn mini', onclick: () => terminer(null) }));
+    const terminer = v => {
+      if (fini) return; fini = true;
+      secours.remove();
+      try { selecteur?.setVisible(false); selecteur?.dispose(); } catch {}
+      res(v);
+    };
+    document.body.append(secours);
     const b = new P.PickerBuilder().addView(vue).setOAuthToken(jetonDrive).setDeveloperKey(GOOGLE_CLE_API).setAppId(GOOGLE_NUMERO_PROJET)
       .setLocale('fr').setTitle(choix === 'dossier' ? 'Choisir le dossier où enregistrer' : 'Choisir un PDF')
-      .setSize(Math.min(1051, innerWidth - 8), Math.min(650, innerHeight - 8))
+      .setSize(Math.min(1051, innerWidth - 8), Math.min(650, innerHeight - 140)) // (place en haut pour la barre de secours)
       .setCallback(d => {
-        if (d[P.Response.ACTION] === P.Action.PICKED) res((d[P.Response.DOCUMENTS] || []).map(x => x[P.Document.ID]));
-        else if (d[P.Response.ACTION] === P.Action.CANCEL) res(null);
+        if (d[P.Response.ACTION] === P.Action.PICKED) terminer((d[P.Response.DOCUMENTS] || []).map(x => x[P.Document.ID]));
+        else if (d[P.Response.ACTION] === P.Action.CANCEL) terminer(null);
       });
     if (choix !== 'dossier') b.enableFeature(P.Feature.MULTISELECT_ENABLED);
-    b.build().setVisible(true);
+    selecteur = b.build(); selecteur.setVisible(true);
   });
 }
 /** Choisir un PDF (ouvrir, créer un modèle) ou un dossier (où enregistrer) dans tout son Drive. */
