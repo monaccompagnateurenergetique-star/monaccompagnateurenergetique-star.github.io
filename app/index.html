@@ -431,6 +431,21 @@ a{color:var(--accent)}
 .mode-lire .item{pointer-events:none}
 .item-texte .contenu{display:block;white-space:pre;line-height:1.15;font-family:Helvetica,Arial,sans-serif;min-width:1ch;min-height:1.15em;outline:none}
 .item-texte .contenu:empty::before{content:"Écrivez ici";color:rgba(0,0,0,.35)}
+/* Texte en paragraphe (outil Corriger) : largeur fixe, retour à la ligne automatique ; mise en forme */
+.item-texte.paragraphe .contenu{white-space:pre-wrap;overflow-wrap:break-word;width:100%}
+.item-texte.gras .contenu{font-weight:700}
+.item-texte.souligne .contenu{text-decoration:underline;text-underline-offset:.12em}
+/* Petite barre de mise en forme, juste au-dessus du texte en cours d'écriture */
+.barre-format{position:absolute;left:0;bottom:calc(100% + 34px);display:flex;align-items:center;gap:4px;padding:5px;background:#1b2130;border-radius:12px;box-shadow:0 8px 22px rgba(0,0,0,.25);z-index:6;white-space:nowrap;font:600 13px system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.barre-format button{min-width:40px;height:40px;padding:0 10px;border:0;border-radius:9px;background:transparent;color:#fff;font:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.barre-format button:hover{background:rgba(255,255,255,.1)}
+.barre-format button[aria-pressed="true"]{background:#1fae76}
+.barre-format .b-gras{font-weight:900;font-size:16px}
+.barre-format .b-souligne{text-decoration:underline;font-size:16px}
+.barre-format .sep{width:1px;height:24px;background:rgba(255,255,255,.2);margin:0 2px}
+.barre-format .teinte{min-width:28px;width:28px;height:28px;padding:0;border-radius:50%;border:2px solid rgba(255,255,255,.7)}
+.barre-format .teinte[aria-pressed="true"]{box-shadow:0 0 0 3px #1fae76;background-clip:padding-box}
+.barre-format .teinte.aucune{background:linear-gradient(135deg,transparent 45%,#e53935 45%,#e53935 55%,transparent 55%),#fff}
 .item-image img{width:100%;height:100%;display:block;pointer-events:none;-webkit-user-drag:none}
 /* Traits (stylo, surligneur) */
 .item-trait svg,.trait-encours{width:100%;height:100%;display:block;overflow:visible;pointer-events:none}
@@ -511,7 +526,15 @@ a{color:var(--accent)}
   .feuille.large.parametres .param-contenu{columns:auto;max-width:900px;margin:0 auto}
   .feuille.large.parametres .carte-param{display:block;width:100%}
   .feuille.large.parametres .grille-tampons{grid-template-columns:repeat(4,1fr)}
-}/* Mes documents : recherche + cartes blanches */
+}/* Badges « Signé », « Rempli »… et historique des actions */
+.badges-doc{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.badge-doc{font-style:normal;font-size:11px;font-weight:700;padding:2px 7px;border-radius:8px;background:#eef1ee;color:#4b5563}
+.badge-doc.vert{background:#e2f0ea;color:#0a5540}.badge-doc.bleu{background:#e3ebfd;color:#1d3fb3}.badge-doc.violet{background:#efe6fd;color:#6d28d9}
+.badge-doc.orange{background:#fdebdd;color:#b45309}.badge-doc.alerte{background:#1b2130;color:#fff}
+.journal{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.journal li{display:flex;gap:12px;align-items:baseline;padding:10px 14px;background:#fff;border-radius:12px;box-shadow:0 1px 2px rgba(20,24,35,.05)}
+.journal .quand{flex:none;min-width:120px;font-size:12.5px;color:var(--doux)}
+@media (min-width:900px){#panneau{width:min(760px,calc(100% - 40px))!important}.barre-plus .outil{min-width:84px;font-size:12px}}/* Mes documents : recherche + cartes blanches */
 .barre-recherche-docs{display:flex;align-items:center;gap:8px;margin:0 0 12px;padding:4px 4px 4px 14px;background:#fff;border-radius:14px;box-shadow:0 1px 2px rgba(20,24,35,.05),0 6px 16px rgba(20,24,35,.05)}
 .barre-recherche-docs .lib-recherche{display:flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:var(--accent-fort);white-space:nowrap}
 .barre-recherche-docs .lib-recherche .ico{width:20px;height:20px}
@@ -525,6 +548,20 @@ a{color:var(--accent)}
 .feuille.mes-docs .liste-docs{margin-top:12px}
 .feuille.mes-docs .ligne-doc{background:#fff;border-color:transparent;box-shadow:0 1px 2px rgba(20,24,35,.05),0 6px 16px rgba(20,24,35,.05);border-radius:14px}
 .feuille.mes-docs .ligne-doc[hidden]{display:none}
+@media (max-width:599px){.barre-recherche-docs .lib-recherche{font-size:0;gap:0}}
+.choix-vue{display:flex;gap:2px;padding:3px;border-radius:10px;background:#edf3ef;flex:none}
+.choix-vue .btn-icone{width:40px;height:40px;border-radius:8px;color:var(--doux)}
+.choix-vue .btn-icone[aria-pressed="true"]{background:#fff;color:var(--accent);box-shadow:0 1px 3px rgba(20,24,35,.12)}
+/* Vue en cartes : grande vignette, nom et badges dessous, actions en bas à droite */
+.feuille.mes-docs .liste-docs.vue-cartes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;align-items:stretch}
+.feuille.mes-docs .liste-docs.vue-cartes>:not(.ligne-doc){grid-column:1/-1}
+.feuille.mes-docs .vue-cartes .ligne-doc{flex-wrap:wrap;align-content:space-between;justify-content:flex-end;padding:8px;margin:0;gap:0}
+.vue-cartes .ligne-doc-principal{flex:1 0 100%;flex-direction:column;align-items:stretch;gap:8px;padding:0}
+.vue-cartes .ligne-doc-principal img,.vue-cartes .ligne-doc-ico{width:100%;height:auto;aspect-ratio:3/4;border-radius:8px}
+.vue-cartes .ligne-doc-ico .ico{width:40px;height:40px}
+.vue-cartes .ligne-doc .texte strong{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3}
+.vue-cartes .ligne-doc .texte small{font-size:12px}
+.vue-cartes .ligne-doc>.btn-icone{width:40px;height:40px}
 @media (min-width:1000px){
   .feuille.mes-docs .liste-docs{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}
   .feuille.mes-docs .liste-docs>:not(.ligne-doc){grid-column:1/-1}
@@ -673,7 +710,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   <symbol id="i-numero" viewBox="0 0 24 24"><path d="M10 4L8 20M16 4l-2 16M5 9h15M4 15h15"/></symbol>
   <symbol id="i-filigrane" viewBox="0 0 24 24"><path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/></symbol>
   <symbol id="i-images" viewBox="0 0 24 24"><rect x="7" y="3" width="14" height="14" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/><path d="M21 13l-4-4-6 6"/></symbol>
-  <symbol id="i-reglages" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></symbol>
+  <symbol id="i-reglages" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></symbol>
   <symbol id="i-haut" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
   <symbol id="i-bas" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
   <symbol id="i-gauche" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
@@ -693,6 +730,8 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   <symbol id="i-note" viewBox="0 0 24 24"><path d="M4 4h16v12H10l-5 4v-4H4z"/><path d="M8 9h8M8 12h5"/></symbol>
   <symbol id="i-dossier" viewBox="0 0 24 24"><path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/></symbol>
   <symbol id="i-horloge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-vue-liste" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><rect x="3.5" y="5" width="3" height="3" rx=".8"/><rect x="3.5" y="10.5" width="3" height="3" rx=".8"/><rect x="3.5" y="16" width="3" height="3" rx=".8"/></symbol>
+  <symbol id="i-vue-cartes" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></symbol>
   <symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></symbol>
 </svg>
 
@@ -825,7 +864,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.9.3';
+const VERSION_APPLI = '1.10.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;
@@ -1160,7 +1199,7 @@ async function ouvrirDocuments(fichiers, { onglet = 'document', restaurer = null
       selection: null, edition: null, attente: null, textes: {}, resultats: [], resIndex: -1,
       vues: new Map(), miniatures: new Map(), vueObsolete: true, conseilMasque: false,
       numeros: null, filigrane: null, panneau: null, ocr: null,
-      docId: idUnique(), cree: Date.now(), sauvees: 0, sigSauvee: null, apercu: null
+      docId: idUnique(), cree: Date.now(), sauvees: 0, sigSauvee: null, apercu: null, journal: [{ d: Date.now(), t: fichiers.length > 1 ? fichiers.length + ' fichiers réunis' : 'Document ouvert' }]
     };
     if (restaurer) appliquerSauvegarde(restaurer);
     if (!D.apercu) { const d = D; apercuDe(d).then(a => { d.apercu = a; }); }
@@ -1599,7 +1638,13 @@ function majStyleItem(e, it) {
   e.style.transform = it.rot ? `rotate(${it.rot}deg)` : '';
   if (it.type === 'texte') {
     e.style.fontSize = it.taille * s + 'px'; e.style.color = it.couleur;
-    if (D.edition !== it.id) e.querySelector('.contenu').textContent = it.texte;
+    // paragraphe (largeur fixe), gras, souligné, fond de surlignage, interligne d'origine
+    e.classList.toggle('paragraphe', !!it.largeur); e.classList.toggle('gras', !!it.gras); e.classList.toggle('souligne', !!it.souligne);
+    e.style.width = it.largeur ? it.largeur * s + 'px' : '';
+    const z = e.querySelector('.contenu');
+    z.style.lineHeight = it.interligne ? String(it.interligne) : '';
+    z.style.backgroundColor = it.fond || '';
+    if (D.edition !== it.id) z.textContent = it.texte;
   } else if (it.type === 'note') {
     const t = Math.max(26, 18 * s) + 'px'; e.style.width = t; e.style.height = t;
     if (D.edition !== it.id) e.querySelector('.contenu').textContent = it.texte;
@@ -1672,6 +1717,7 @@ function commencerEdition(it, avant) {
   D.edition = it.id; D.avantEdition = avant || instantane(); D.texteAvant = it.texte;
   selectionner(it.id);
   e.classList.add('edition');
+  if (it.type === 'texte' && !e.querySelector('.barre-format')) e.append(barreFormat(it, e));
   try { z.contentEditable = 'plaintext-only'; } catch {}
   if (z.contentEditable !== 'plaintext-only') z.contentEditable = 'true';
   z.textContent = it.texte;
@@ -1681,13 +1727,39 @@ function commencerEdition(it, avant) {
   setTimeout(() => { if (D && D.edition === it.id) e.scrollIntoView({ block: 'center', inline: 'center' }); }, 350);
   majBarreContexte();
 }
+/** Barre de mise en forme (au-dessus du texte en cours d'écriture) : gras, souligné, surlignage du fond. */
+const TEINTES_FOND = [['', 'Aucun surlignage'], ['#fff176', 'Jaune'], ['#b9f6ca', 'Vert'], ['#ffc1e3', 'Rose'], ['#bbdefb', 'Bleu']];
+function barreFormat(it, e) {
+  const changer = f => { f(); D.modifie = true; majStyleItem(e, it); etats(); };
+  const bGras = el('button', { type: 'button', class: 'b-gras', title: 'Gras', 'aria-label': 'Gras', text: 'G', onclick: () => changer(() => { it.gras = !it.gras || undefined; }) });
+  const bSoul = el('button', { type: 'button', class: 'b-souligne', title: 'Souligné', 'aria-label': 'Souligné', text: 'S', onclick: () => changer(() => { it.souligne = !it.souligne || undefined; }) });
+  const teintes = TEINTES_FOND.map(([c, nom]) => el('button', { type: 'button', class: 'teinte' + (c ? '' : ' aucune'), title: nom, 'aria-label': nom, style: c ? { background: c } : null,
+    onclick: () => changer(() => { it.fond = c || undefined; }) }));
+  const etats = () => {
+    bGras.setAttribute('aria-pressed', String(!!it.gras)); bSoul.setAttribute('aria-pressed', String(!!it.souligne));
+    teintes.forEach((b, k) => b.setAttribute('aria-pressed', String((it.fond || '') === TEINTES_FOND[k][0])));
+  };
+  const barre = el('div', { class: 'barre-format', role: 'toolbar', 'aria-label': 'Mise en forme du texte' },
+    bGras, bSoul, el('span', { class: 'sep' }), el('span', { text: 'Surligner', style: { color: '#b8c0cc', padding: '0 4px 0 2px' } }), ...teintes);
+  // On garde le curseur dans le texte : la barre ne prend pas le focus et ne déclenche pas le déplacement
+  barre.addEventListener('pointerdown', ev => { ev.preventDefault(); ev.stopPropagation(); });
+  barre.addEventListener('mousedown', ev => ev.preventDefault());
+  etats();
+  return barre;
+}
 function terminerEdition(annuler) {
   if (!D || !D.edition) return;
   const it = D.items.find(t => t.id === D.edition), e = elItem(D.edition);
   D.edition = null;
-  if (e) { e.classList.remove('edition'); const z = e.querySelector('.contenu'); z.contentEditable = 'false'; if (document.activeElement === z) z.blur(); }
+  if (e) { e.classList.remove('edition'); e.querySelector('.barre-format')?.remove(); const z = e.querySelector('.contenu'); z.contentEditable = 'false'; if (document.activeElement === z) z.blur(); }
   if (!it) return;
   if (annuler) it.texte = D.texteAvant;
+  // Paragraphe corrigé plus long que l'original : on prévient (on ne cache pas le paragraphe suivant en douce)
+  if (e && it.masqueLie && it.largeur && !annuler) {
+    const m = D.items.find(t => t.id === it.masqueLie);
+    const h = e.querySelector('.contenu').offsetHeight / D.s;
+    if (m && it.y + h > m.y + m.h + it.taille * 0.5) setTimeout(() => toast('Le texte dépasse la place du paragraphe d\'origine : réduisez la taille (A−) ou raccourcissez-le.', 6000), 50);
+  }
   if (!it.texte.trim()) {
     D.items = D.items.filter(t => t.id !== it.id && t.id !== it.masqueLie);
     rendreItems(it.page); D.selection = null;
@@ -1914,20 +1986,20 @@ pagesEl.addEventListener('click', async e => {
   const avant = instantane();
   let it;
   if (a.outil === 'texte') {
-    it = { id: idUnique(), type: 'texte', page: id, x, y: y - prefs.tailleTexte * 0.6, texte: '', taille: prefs.tailleTexte, couleur: prefs.couleurTexte };
+    it = { id: idUnique(), type: 'texte', page: id, x, y: y - prefs.tailleTexte * 0.6, texte: '', taille: prefs.tailleTexte, couleur: prefs.couleurTexte }; journaliser('Texte ajouté');
     D.items.push(it); rendreItems(id); commencerEdition(it, avant);
     return;
   }
   if (a.outil === 'note') {
     const pgN = D.parId.get(id);
-    it = { id: idUnique(), type: 'note', page: id, x: clamp(x - 9, 0, pgN.w - 18), y: clamp(y - 9, 0, pgN.h - 18), texte: '' };
+    it = { id: idUnique(), type: 'note', page: id, x: clamp(x - 9, 0, pgN.w - 18), y: clamp(y - 9, 0, pgN.h - 18), texte: '' }; journaliser('Commentaire ajouté');
     D.items.push(it); rendreItems(id); commencerEdition(it, avant);
     return;
   }
   if (a.outil === 'texte-rapide') {
     memoriser(avant);
     it = { id: idUnique(), type: 'texte', page: id, x, y: y - prefs.tailleTexte * 0.6, texte: a.texte, taille: prefs.tailleTexte, couleur: prefs.couleurTexte, date: /^\d{2}\/\d{2}\/\d{4}$/.test(a.texte) || undefined };
-    D.items.push(it); D.modifie = true; rendreItems(id); selectionner(it.id);
+    D.items.push(it); D.modifie = true; rendreItems(id); selectionner(it.id); journaliser(it.date ? 'Date ajoutée' : 'Texte rapide ajouté');
     return;
   }
   memoriser(avant);
@@ -1940,6 +2012,7 @@ pagesEl.addEventListener('click', async e => {
     it = { id: idUnique(), type: 'image', page: id, x: x - w / 2, y: y - h / 2, w, h, img: a.tampon.id };
   }
   D.items.push(it); D.modifie = true;
+  journaliser(it.type === 'masque' ? 'Zone cachée' : (lireTampons().find(x => x.id === it.img)?.type === 'signature' ? 'Signature posée' : 'Tampon posé'));
   rendreItems(id); selectionner(it.id);
 });
 
@@ -1960,12 +2033,68 @@ async function corrigerTexte(id, x, y) {
   annulerPlacement();
   const avant = instantane();
   const { t, r } = meilleur;
-  const masque = { id: idUnique(), type: 'masque', page: id, x: r.x - 1, y: r.y - 1, w: r.w + 2, h: r.h + 2, couleur: '#ffffff' };
-  const taille = Math.round(r.taille * 10) / 10;
-  const texte = { id: idUnique(), type: 'texte', page: id, x: r.x, y: Math.abs(r.angle) > 0.05 ? r.y : r.base - taille * 0.92, texte: t.str, taille, couleur: '#111111', masqueLie: masque.id };
-  D.items.push(masque, texte); D.modifie = true;
+  // Texte incliné : on garde l'ancien comportement (une seule ligne)
+  if (Math.abs(r.angle) > 0.05) {
+    const masque = { id: idUnique(), type: 'masque', page: id, x: r.x - 1, y: r.y - 1, w: r.w + 2, h: r.h + 2, couleur: '#ffffff' };
+    const taille = Math.round(r.taille * 10) / 10;
+    const texte = { id: idUnique(), type: 'texte', page: id, x: r.x, y: r.y, texte: t.str, taille, couleur: '#111111', masqueLie: masque.id };
+    D.items.push(masque, texte); D.modifie = true; rendreItems(id); commencerEdition(texte, avant); return;
+  }
+  // Tout le paragraphe : on reconstitue les lignes de la page, puis on prend les lignes voisines du même paragraphe
+  const para = paragrapheAutour(pg, tc, t, r);
+  const taille = Math.round(para.taille * 10) / 10;
+  const interligne = para.interligne;
+  const masque = { id: idUnique(), type: 'masque', page: id, x: para.x - 1.5, y: para.y - 1.5, w: para.w + 3, h: para.h + 3, couleur: '#ffffff' };
+  const texte = { id: idUnique(), type: 'texte', page: id, x: para.x, y: para.base - taille * ((interligne - 1.15) / 2 + 0.92), texte: para.texte, taille, couleur: '#111111', masqueLie: masque.id,
+    largeur: Math.round((para.w + taille * 0.3) * 10) / 10, interligne, gras: para.gras || undefined };
+  D.items.push(masque, texte); D.modifie = true; journaliser('Texte corrigé');
   rendreItems(id);
   commencerEdition(texte, avant);
+  if (para.nbLignes > 1) toast(`Paragraphe de ${para.nbLignes} lignes : le texte revient à la ligne tout seul.`);
+}
+/** Lignes de la page autour du texte touché : même taille de caractères, lignes rapprochées, sans changer de puce (–, •). */
+function paragrapheAutour(pg, tc, t0, r0) {
+  // 1. regrouper les morceaux de texte par ligne (même ligne de base)
+  const morceaux = tc.items.filter(t => t.str && t.str.trim()).map(t => ({ t, r: rectTexte(pg, t) })).filter(m => Math.abs(m.r.angle) <= 0.05);
+  const lignes = [];
+  for (const m of morceaux.sort((a, b) => a.r.base - b.r.base || a.r.x - b.r.x)) {
+    const l = lignes.find(l => Math.abs(l.base - m.r.base) < m.r.taille * 0.35);
+    if (l) l.m.push(m); else lignes.push({ base: m.r.base, m: [m] });
+  }
+  for (const l of lignes) {
+    l.m.sort((a, b) => a.r.x - b.r.x);
+    l.x = Math.min(...l.m.map(m => m.r.x)); l.y = Math.min(...l.m.map(m => m.r.y));
+    l.droite = Math.max(...l.m.map(m => m.r.x + m.r.w)); l.bas = Math.max(...l.m.map(m => m.r.y + m.r.h));
+    l.taille = Math.max(...l.m.map(m => m.r.taille));
+    l.texte = l.m.reduce((s, m, k) => { if (!k) return m.t.str; const ecart = m.r.x - (l.m[k - 1].r.x + l.m[k - 1].r.w); return s + (ecart > l.taille * 0.15 && !/\s$/.test(s) && !/^\s/.test(m.t.str) ? ' ' : '') + m.t.str; }, '').replace(/\s+/g, ' ').trim();
+    l.gras = l.m.every(m => /bold|black|heavy|semibold/i.test(tc.styles?.[m.t.fontName]?.fontFamily || m.t.fontName || ''));
+  }
+  lignes.sort((a, b) => a.base - b.base);
+  let i = lignes.findIndex(l => l.m.some(m => m.t === t0));
+  if (i < 0) return { ...r0, texte: t0.str, nbLignes: 1, interligne: 1.15 };
+  const puce = s => /^[–—•▪●○■\-*]\s|^\d+[.)]\s|^[a-z][.)]\s/i.test(s);
+  const meme = (a, b) => Math.abs(a.taille - b.taille) < b.taille * 0.2 && a.x < b.droite && a.droite > b.x;
+  let debut = i, fin = i;
+  // vers le haut : tant que la ligne courante n'est pas un début de puce, et que l'écart reste celui d'un paragraphe
+  while (debut > 0 && !puce(lignes[debut].texte)) {
+    const p = lignes[debut - 1], c = lignes[debut], ecart = c.base - p.base;
+    if (!meme(p, c) || ecart > c.taille * 1.7 || ecart < c.taille * 0.8) break;
+    debut--;
+  }
+  // vers le bas : on s'arrête à la ligne suivante qui commence une nouvelle puce
+  while (fin < lignes.length - 1) {
+    const c = lignes[fin], n = lignes[fin + 1], ecart = n.base - c.base;
+    if (puce(n.texte) || !meme(n, c) || ecart > c.taille * 1.7 || ecart < c.taille * 0.8) break;
+    fin++;
+  }
+  const sel = lignes.slice(debut, fin + 1);
+  // texte continu : « appar-» + « tient » → « appartient »
+  const texte = sel.map(l => l.texte).reduce((s, l) => !s ? l : (/[a-zà-ÿ]-$/i.test(s) && /^[a-zà-ÿ]/.test(l) ? s.slice(0, -1) + l : s + ' ' + l), '');
+  const ecarts = sel.slice(1).map((l, k) => l.base - sel[k].base);
+  const taille = sel[0].taille;
+  const interligne = ecarts.length ? Math.round(Math.min(1.8, Math.max(1.05, ecarts.reduce((a, b) => a + b, 0) / ecarts.length / taille)) * 100) / 100 : 1.15;
+  const x = Math.min(...sel.map(l => l.x)), y = Math.min(...sel.map(l => l.y));
+  return { x, y, w: Math.max(...sel.map(l => l.droite)) - x, h: Math.max(...sel.map(l => l.bas)) - y, base: sel[0].base, taille, interligne, texte, nbLignes: sel.length, gras: sel.every(l => l.gras) };
 }
 
 /* Barre d'outils d'édition */
@@ -2048,7 +2177,7 @@ async function dessinerMiniature(id) {
 }
 /** Après un changement de pages : on met à jour la grille et on reconstruira la lecture. */
 function apresStructure(sansMarquer) {
-  if (!sansMarquer) { D.structure = true; D.modifie = true; }
+  if (!sansMarquer) { D.structure = true; D.modifie = true; journaliser('Pages réorganisées'); }
   D.resultats = []; D.selection = null;
   if (D.onglet === 'document') { construireVue(); D.vueObsolete = false; majBandeau(); }
   else { D.vueObsolete = true; if (D.onglet === 'pages') rendreGrillePages(); }
@@ -2065,8 +2194,9 @@ function pivoterPage(pg) {
   const H = pg.h;
   // Les éléments posés tournent avec la page, comme s'ils étaient collés dessus.
   for (const it of D.items.filter(t => t.page === pg.id)) {
-    const w = it.type === 'texte' ? it.taille * 0.55 * Math.max(1, ...it.texte.split('\n').map(l => l.length)) : it.w;
-    const h = it.type === 'texte' ? it.taille * 1.15 * it.texte.split('\n').length : it.h;
+    const elT = it.type === 'texte' ? elItem(it.id) : null;
+    const w = it.type === 'texte' ? (it.largeur || (elT ? elT.offsetWidth / D.s : it.taille * 0.55 * Math.max(1, ...it.texte.split('\n').map(l => l.length)))) : it.w;
+    const h = it.type === 'texte' ? (elT ? elT.offsetHeight / D.s : it.taille * (it.interligne || 1.15) * it.texte.split('\n').length) : it.h;
     const cx = it.x + w / 2, cy = it.y + h / 2, ncx = H - cy, ncy = cx;
     it.x = ncx - w / 2; it.y = ncy - h / 2;
     it.rot = Math.round((((it.rot || 0) + 90) % 360) * 10) / 10;
@@ -2211,16 +2341,39 @@ async function remplirChamps(doc, src) {
   return n;
 }
 
+/** Coupe une ligne en morceaux qui tiennent dans la largeur (entre les mots ; un mot trop long est coupé). */
+function couperLigne(ligne, police, taille, largeur) {
+  if (!ligne) return [''];
+  const mots = ligne.split(/(\s+)/), res = [];
+  let cour = '';
+  const tient = s => police.widthOfTextAtSize(s, taille) <= largeur + 0.01;
+  for (const m of mots) {
+    const essai = cour + m;
+    if (!cour || tient(essai.trimEnd())) { cour = essai; continue; }
+    res.push(cour.trimEnd());
+    cour = /^\s+$/.test(m) ? '' : m;
+    while (cour && !tient(cour)) { // mot plus long que la ligne
+      let n = cour.length; while (n > 1 && !tient(cour.slice(0, n))) n--;
+      res.push(cour.slice(0, n)); cour = cour.slice(n);
+    }
+  }
+  res.push(cour.trimEnd());
+  return res;
+}
 async function dessinerItems(out, np, items, versPdf, R, ressources) {
   if (!ressources.police) ressources.police = await out.embedFont(StandardFonts.Helvetica);
   for (const it of items) {
     // Rotation de l'élément autour de son centre (sens des aiguilles d'une montre, comme à l'écran)
     const a = (it.rot || 0) * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
-    let w = it.w, h = it.h, lignes = null;
+    let w = it.w, h = it.h, lignes = null, police = ressources.police, inter = 1.15;
     if (it.type === 'texte') {
+      if (it.gras) { if (!ressources.gras) ressources.gras = await out.embedFont(StandardFonts.HelveticaBold); police = ressources.gras; }
+      inter = it.interligne || 1.15;
       lignes = versWinAnsi(it.texte).split('\n');
-      w = Math.max(1, ...lignes.map(l => ressources.police.widthOfTextAtSize(l, it.taille)));
-      h = it.taille * 1.15 * lignes.length;
+      // Paragraphe : retour à la ligne automatique dans la largeur (même règle que l'écran : on coupe entre les mots)
+      if (it.largeur) lignes = lignes.flatMap(l => couperLigne(l, police, it.taille, it.largeur));
+      w = it.largeur || Math.max(1, ...lignes.map(l => police.widthOfTextAtSize(l, it.taille)));
+      h = it.taille * inter * lignes.length;
     }
     const cx = it.x + w / 2, cy = it.y + h / 2;
     const point = (vx, vy) => { const ox = vx - cx, oy = vy - cy; return versPdf(cx + ox * c - oy * s, cy + ox * s + oy * c); };
@@ -2242,10 +2395,22 @@ async function dessinerItems(out, np, items, versPdf, R, ressources) {
       np.drawSvgPath(cheminTrait(it.pts), { x, y, scale: it.w / it.vb[0], rotate: rot, borderColor: hexVersRgb(it.couleur), borderWidth: it.ep,
         borderLineCap: LineCapStyle.Round, borderOpacity: it.surligneur ? 0.55 : 1, blendMode: it.surligneur ? BlendMode.Multiply : BlendMode.Normal });
     } else if (it.type === 'texte') {
+      const T = it.taille, decal = (inter - 1.15) / 2 + 0.92; // ligne de base dans chaque ligne (comme à l'écran)
+      // Fond de surlignage : un rectangle derrière tout le bloc de texte
+      if (it.fond) {
+        const lf = it.largeur || w, [x, y] = point(it.x, it.y + h);
+        np.drawRectangle({ x, y, width: lf, height: h, color: hexVersRgb(it.fond), rotate: rot, borderWidth: 0 });
+      }
       lignes.forEach((ligne, k) => {
         if (!ligne) return;
-        const [x, y] = point(it.x, it.y + it.taille * (0.92 + 1.15 * k));
-        np.drawText(ligne, { x, y, size: it.taille, font: ressources.police, color: hexVersRgb(it.couleur), rotate: rot });
+        const base = it.y + T * (decal + inter * k);
+        const [x, y] = point(it.x, base);
+        np.drawText(ligne, { x, y, size: T, font: police, color: hexVersRgb(it.couleur), rotate: rot });
+        if (it.souligne) {
+          const lw = police.widthOfTextAtSize(ligne, T), sous = base + T * 0.14;
+          const [x1, y1] = point(it.x, sous), [x2, y2] = point(it.x + lw, sous);
+          np.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, thickness: Math.max(0.5, T * 0.07), color: hexVersRgb(it.couleur) });
+        }
       });
     }
   }
@@ -2563,7 +2728,7 @@ pagesEl.addEventListener('pointerup', e => {
   const x = Math.min(...xs) - ep / 2, y = Math.min(...ys) - ep / 2, w = Math.max(...xs) + ep / 2 - x, h = Math.max(...ys) + ep / 2 - y;
   memoriser();
   D.items.push({ id: idUnique(), type: 'trait', page: t.pageEl.dataset.id, x, y, w, h, vb: [w, h], pts: pts.map(([px, py]) => [arrondi(px - x), arrondi(py - y)]), couleur: d.couleur, ep, surligneur: d.mode === 'surligneur' });
-  D.modifie = true;
+  D.modifie = true; journaliser(d.mode === 'surligneur' ? 'Surlignage' : 'Dessin à main levée');
   rendreItems(t.pageEl.dataset.id);
 });
 pagesEl.addEventListener('pointercancel', e => { if (traitEnCours && e.pointerId === traitEnCours.id) annulerTrait(); });
@@ -3675,9 +3840,18 @@ function demanderPersistance() {
   persistanceDemandee = true; navigator.storage.persist().catch(() => {});
 }
 /** État du travail en cours, à garder (sans les octets des PDF). */
+/** Historique des actions du document (gardé avec lui). Une même action répétée dans la minute est regroupée. */
+function journaliser(texte, d = D) {
+  if (!d) return;
+  d.journal ||= [];
+  const der = d.journal[d.journal.length - 1];
+  if (der && der.t === texte && Date.now() - der.d < 60000) { der.n = (der.n || 1) + 1; der.d = Date.now(); }
+  else d.journal.push({ d: Date.now(), t: texte });
+  if (d.journal.length > 300) d.journal.splice(0, d.journal.length - 300);
+}
 function etatDe(d) {
   return {
-    items: d.items, ordre: d.pages.map(p => [p.src, p.num, p.rot, p.id]), numeros: d.numeros, filigrane: d.filigrane, structure: !!d.structure, ocr: d.ocr || null,
+    items: d.items, ordre: d.pages.map(p => [p.src, p.num, p.rot, p.id]), numeros: d.numeros, filigrane: d.filigrane, structure: !!d.structure, ocr: d.ocr || null, journal: d.journal || [],
     champs: d.sources.map(s => { const m = s.pdf.annotationStorage.serializable?.map; return m ? [...m.entries()] : []; })
   };
 }
@@ -3723,6 +3897,8 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && D &
 async function noterHistorique(d, action, octets, nom) {
   if (!d || !prefs.garderDocuments) return;
   try {
+    if (d.sources.some(s => s.pdf.annotationStorage.size > 0) && !(d.journal || []).some(j => j.t === 'Formulaire rempli')) journaliser('Formulaire rempli', d);
+    journaliser(({ enregistré: 'Enregistré', partagé: 'Partagé', images: 'Converti en images JPG', drive: 'Enregistré dans Google Drive' })[action] + ' : ' + nom, d);
     await sauvegarder(d, { force: true });
     const id = await bdPut('historique', { docId: d.docId, docNom: d.nom, nom, action, date: Date.now(), taille: octets.length });
     await bdPut('fichiers', octets, 'h' + id);
@@ -3758,10 +3934,10 @@ function appliquerSauvegarde({ doc, modele }) {
   if (pages.length) D.pages = pages;
   D.parId = new Map([...parSrcNum.values()].map(p => [p.id, p]));
   D.items = e.items || []; D.images = { ...(doc.images || {}) };
-  D.numeros = e.numeros || null; D.filigrane = e.filigrane || null; D.structure = !!e.structure; D.ocr = e.ocr || null;
+  D.numeros = e.numeros || null; D.filigrane = e.filigrane || null; D.structure = !!e.structure; D.ocr = e.ocr || null; D.journal = (e.journal || []).slice();
   (e.champs || []).forEach((liste, k) => { const st = D.sources[k]?.pdf.annotationStorage; if (st) for (const [id, v] of liste) st.setValue(id, v); });
   if (modele) {
-    D.docId = idUnique(); D.cree = Date.now();
+    D.docId = idUnique(); D.cree = Date.now(); D.journal = [{ d: Date.now(), t: 'Créé à partir du modèle « ' + nomSansExt(doc.nom) + ' »' }];
     const auj = new Date().toLocaleDateString('fr-FR');
     D.nom = `${nomSansExt(doc.nom)} - ${auj.replace(/\//g, '-')}.pdf`;
     remplirDates();
@@ -3807,12 +3983,41 @@ const quand = t => {
 const LIBELLES_ACTION = { enregistré: 'Enregistré', partagé: 'Partagé', images: 'Converti en images', drive: 'Enregistré dans Drive' };
 
 /** Ligne de liste : aperçu, nom, détail, actions. */
-function ligneDoc({ apercu, ico, titre, detail, onclick, actions = [] }) {
+function ligneDoc({ apercu, ico, titre, detail, onclick, actions = [], badges = [] }) {
   return el('div', { class: 'ligne-doc' },
     el('button', { type: 'button', class: 'ligne-doc-principal', onclick, 'aria-label': `Ouvrir ${titre}` },
       apercu ? el('img', { src: apercu, alt: '' }) : el('span', { class: 'ligne-doc-ico' }, icone(ico || 'doc')),
-      el('span', { class: 'texte' }, el('strong', { text: titre }), el('small', { text: detail }))),
+      el('span', { class: 'texte' }, el('strong', { text: titre }), el('small', { text: detail }),
+        badges.length ? el('span', { class: 'badges-doc' }, badges.map(([txt, cls]) => el('i', { class: 'badge-doc ' + (cls || ''), text: txt }))) : null)),
     ...actions);
+}
+/** Ce qui a été fait sur un document gardé (pour les badges : Signé, Tamponné, Rempli…). */
+function badgesDoc(doc, hist = []) {
+  const e = doc.etat || {}, items = e.items || [], b = [];
+  const tampons = new Map(lireTampons().map(t => [t.id, t.type]));
+  const images = items.filter(i => i.type === 'image').map(i => tampons.get(i.img));
+  if (images.includes('signature')) b.push(['Signé', 'vert']);
+  if (images.includes('tampon') || images.some(t => t === undefined)) b.push(['Tamponné', 'bleu']);
+  if ((e.champs || []).some(l => l.length)) b.push(['Rempli', 'vert']);
+  if (items.some(i => i.masqueLie)) b.push(['Corrigé', 'violet']);
+  else if (items.some(i => i.type === 'masque')) b.push(['Caché', 'violet']);
+  if (items.some(i => i.type === 'texte' && !i.masqueLie) || items.some(i => i.type === 'trait')) b.push(['Annoté', 'orange']);
+  if (items.some(i => i.type === 'note')) b.push(['Commentaires', 'orange']);
+  if (e.structure) b.push(['Pages modifiées', 'gris']);
+  // Modifications pas encore enregistrées ni partagées depuis la dernière version envoyée
+  const dernierEnvoi = Math.max(0, ...hist.filter(h => h.docId === doc.id).map(h => h.date));
+  if (b.length && doc.maj > dernierEnvoi + 2000) b.push(['Non enregistré', 'alerte']);
+  return b;
+}
+/** Historique des actions faites sur un document gardé. */
+function ouvrirJournal(doc) {
+  const fe = feuille({ titre: `Historique : ${nomSansExt(doc.nom)}` });
+  const j = (doc.etat?.journal || []).slice().reverse();
+  fe.feuille.classList.add('atelier');
+  fe.corps.append(j.length
+    ? el('ol', { class: 'journal' }, j.map(x => el('li', {}, el('span', { class: 'quand', text: quand(x.d) }), el('span', { text: x.t + (x.n > 1 ? ` (×${x.n})` : '') }))))
+    : el('p', { class: 'vide', text: 'Aucune action notée pour ce document (l\'historique commence avec cette version de l\'appli).' }));
+  fe.pied.append(bouton('Fermer', { cls: 'btn principal', onclick: () => fe.fermer() }));
 }
 
 /** Écran « Mes documents » : Documents, Historique, Modèles. */
@@ -3837,8 +4042,20 @@ async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
   };
   champRecherche.addEventListener('input', filtrer);
   fe.feuille.classList.add('large', 'atelier', 'mes-docs');
+  // Affichage en liste ou en cartes (mémorisé)
+  const choixVue = el('div', { class: 'choix-vue', role: 'group', 'aria-label': 'Affichage' });
+  const appliquerVue = v => {
+    prefs.vueDocs = v; ecrirePrefs(prefs);
+    zone.classList.toggle('vue-cartes', v === 'cartes');
+    choixVue.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vue === v)));
+  };
+  [['liste', 'vue-liste', 'Afficher en liste'], ['cartes', 'vue-cartes', 'Afficher en cartes']].forEach(([v, ico, label]) => {
+    const b = bouton('', { ico, cls: 'btn-icone', label, onclick: () => appliquerVue(v) });
+    b.dataset.vue = v; choixVue.append(b);
+  });
+  appliquerVue(prefs.vueDocs === 'cartes' ? 'cartes' : 'liste');
   fe.corps.append(el('div', { class: 'barre-recherche-docs' },
-    el('label', { for: 'recherche-docs', class: 'lib-recherche' }, icone('zoom'), 'Rechercher'), champRecherche), barreOnglets, infoRecherche, zone);
+    el('label', { for: 'recherche-docs', class: 'lib-recherche' }, icone('zoom'), 'Rechercher'), champRecherche, choixVue), barreOnglets, infoRecherche, zone);
   const ouvrirPuis = async fn => { await fe.fermer(); fn(); };
   const surDrive = () => { if (!zone.isConnected) document.removeEventListener('drive-etat', surDrive); else if (courant === 'drive' || courant === 'documents') afficher(); };
   document.addEventListener('drive-etat', surDrive);
@@ -3853,9 +4070,10 @@ async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
       const liste = docs.filter(d => !d.modele).sort((a, b) => b.maj - a.maj);
       if (!liste.length) { zone.append(el('p', { class: 'vide', text: 'Les documents que vous modifiez apparaîtront ici automatiquement, pour reprendre plus tard.' })); return; }
       const nbVersions = id => hist.filter(h => h.docId === id).length;
-      liste.forEach(d => zone.append(ligneDoc({ apercu: d.apercu, titre: d.nom, detail: `${quand(d.maj)} · ${d.pages} page${d.pages > 1 ? 's' : ''}`,
+      liste.forEach(d => zone.append(ligneDoc({ apercu: d.apercu, titre: d.nom, detail: `Modifié ${quand(d.maj)} · ${d.pages} page${d.pages > 1 ? 's' : ''}`, badges: badgesDoc(d, hist),
         onclick: () => ouvrirPuis(() => ouvrirSauvegarde(d)),
         actions: [
+          bouton('', { ico: 'info', cls: 'btn-icone', label: `Historique des actions de ${d.nom}`, onclick: () => ouvrirJournal(d) }),
           nbVersions(d.id) ? bouton(String(nbVersions(d.id)), { ico: 'horloge', cls: 'btn-icone avec-nombre', label: `Versions envoyées de ${d.nom}`, onclick: () => { courant = 'historique'; filtreDoc = d.id; fe.corps.querySelector('input[name="mesdocs"][value="historique"]').checked = true; afficher(); } }) : '',
           bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: `Supprimer ${d.nom}`, onclick: async () => {
             if (await confirmer({ titre: `Supprimer « ${d.nom} » ?`, texte: 'Le document, son travail en cours et ses versions seront retirés de cet appareil.', action: 'Supprimer le document' })) { await supprimerSauvegarde(d); afficher(); majReprendre(); toast('Document supprimé'); }
@@ -3944,11 +4162,11 @@ function creerModele() {
 /** Accueil : « Reprendre » liste les derniers documents en cours. */
 async function majReprendre() {
   const zone = $('#reprendre'); if (!zone) return;
-  let docs = [];
-  try { if (prefs.garderDocuments) docs = (await bdAll('documents')).filter(d => !d.modele).sort((a, b) => b.maj - a.maj); } catch {}
+  let docs = [], hist = [];
+  try { if (prefs.garderDocuments) { docs = (await bdAll('documents')).filter(d => !d.modele).sort((a, b) => b.maj - a.maj); hist = await bdAll('historique'); } } catch {}
   zone.hidden = !docs.length;
   if (!docs.length) return;
-  $('#reprendre-liste').replaceChildren(...docs.slice(0, 3).map(d => ligneDoc({ apercu: d.apercu, titre: d.nom, detail: quand(d.maj), onclick: () => ouvrirSauvegarde(d) })));
+  $('#reprendre-liste').replaceChildren(...docs.slice(0, 3).map(d => ligneDoc({ apercu: d.apercu, titre: d.nom, detail: 'Modifié ' + quand(d.maj), badges: badgesDoc(d, hist).slice(0, 3), onclick: () => ouvrirSauvegarde(d) })));
   $('#reprendre-tout').textContent = `Tout voir (${docs.length})`;
 }
 /* =========================================================
