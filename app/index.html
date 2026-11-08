@@ -311,6 +311,7 @@ a{color:var(--accent)}
 .outils-edition,.barre-contexte{gap:2px;padding-left:4px;padding-right:4px}
 .outils-edition .outil,.barre-contexte .outil{flex:1 1 0;min-width:46px;padding:4px 1px;font-size:11px;letter-spacing:-.01em}
 .outils-edition .outil.principal,.barre-contexte .outil.principal{flex-basis:auto;padding:4px 10px;margin-left:2px}
+@media (max-width:420px){.outils-edition{gap:0;padding-left:2px;padding-right:2px}.outils-edition .outil{min-width:0;font-size:10.5px;letter-spacing:-.02em}}
 .pastille-outil{width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
 
 /* Quelle zone est visible ? (onglet Document, Pages ou Outils) */
@@ -857,6 +858,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
     <button class="outil" data-action="texte"><svg class="ico"><use href="#i-texte"/></svg>Texte</button>
     <button class="outil" data-action="signature"><svg class="ico"><use href="#i-signature"/></svg>Signature</button>
     <button class="outil" data-action="tampon"><svg class="ico"><use href="#i-tampon"/></svg>Tampon</button>
+    <button class="outil" data-action="photo" title="Ajouter une photo sur la page"><svg class="ico"><use href="#i-image"/></svg>Photo</button>
     <button class="outil" data-action="dessin" title="Stylo et surligneur"><svg class="ico"><use href="#i-stylo"/></svg>Dessiner</button>
     <button class="outil" data-action="masque"><svg class="ico"><use href="#i-masque"/></svg>Cacher</button>
     <button class="outil" data-action="corriger"><svg class="ico"><use href="#i-corriger"/></svg>Corriger</button>
@@ -882,7 +884,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.13.0';
+const VERSION_APPLI = '1.13.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -2320,6 +2322,7 @@ $('#barre-editer').addEventListener('click', async e => {
   if (D.attente && D.attente.outil === a) { annulerPlacement(); return; }
   annulerPlacement();
   if (a === 'plus') { if (D.panneau) fermerPanneau(); else ouvrirPanneau('plus'); return; }
+  if (a === 'photo') { annulerPlacement(); ajouterPhotoSurPage(D.focus ? D.parId.get(D.focus) : D.pages[pageCourante()]); return; }
   if (a === 'texte') demanderPlacement({ outil: 'texte' }, 'Touchez la page à l\'endroit où écrire.');
   else if (a === 'masque') demanderPlacement({ outil: 'masque' }, 'Touchez la zone à cacher.');
   else if (a === 'corriger') demanderPlacement({ outil: 'corriger' }, 'Touchez le mot à corriger, puis tapez le nouveau texte.');
@@ -3110,7 +3113,6 @@ function ouvrirPanneau(type) {
       o('gauche', 'Retour', fermerPanneau),
       o('numero', 'Numéroter', () => ouvrirPanneau('numeros')),
       o('filigrane', 'Filigrane', () => ouvrirPanneau('filigrane')),
-      o('image', 'Photo', () => { fermerPanneau(); ajouterPhotoSurPage(D.focus ? D.parId.get(D.focus) : D.pages[pageCourante()]); }),
       o('note', 'Commentaire', () => { fermerPanneau(); demanderPlacement({ outil: 'note' }, 'Touchez l\'endroit où ajouter le commentaire.'); }),
       o('recherche', 'Rechercher', () => { fermerPanneau(); ouvrirRecherche(); }),
       o('texte', 'Lire (OCR)', () => { fermerPanneau(); lancerOcr(); }),
