@@ -1642,23 +1642,48 @@ function nomExport() {
   return nomSortie(D.nom, D.items.some(t => t.type === 'image') ? 'signé' : 'modifié');
 }
 
+/** Enregistrer / Partager : on prépare le PDF, puis on demande la taille voulue (compression intégrée au parcours). */
 async function exporter(action) {
   if (!D) return;
   occupe('Préparation du PDF…');
   let octets;
   try { octets = await construirePdf(); }
-  catch (e) { console.error(e); toast('Le PDF n\'a pas pu être créé. Réessayez, ou utilisez « Aplatir en image » dans le menu ⋮.', 6000); return; }
+  catch (e) { console.error(e); toast('Le PDF n\'a pas pu être créé. Réessayez, ou utilisez « Aplatir en image » dans l\'onglet Outils.', 6000); return; }
   finally { libre(); }
   const nom = nomExport();
-  if (action === 'partager') await partager([fichierPdf(octets, nom)]);
-  else if (await enregistrer(octets, nom)) { D.modifie = false; toast('PDF enregistré dans vos téléchargements'); }
+  const partage = action === 'partager';
+  let niveau = prefs.compressionExport in NIVEAUX_COMPRESSION || prefs.compressionExport === 'aucune' ? prefs.compressionExport : 'aucune';
+  const fe = feuille({ titre: partage ? 'Partager le PDF' : 'Enregistrer le PDF' });
+  const note = el('p', { class: 'note' });
+  const majNote = () => { note.textContent = niveau === 'aucune' ? 'Le document reste tel quel : texte sélectionnable, qualité maximale.' : 'Les pages deviennent des images : fichier plus léger, mais le texte ne sera plus sélectionnable.'; };
+  fe.corps.append(
+    el('p', { style: { margin: '0 0 12px' } }, el('strong', { text: nom }), el('br'), el('span', { class: 'note', text: `Taille actuelle : ${tailleLisible(octets.length)}` })),
+    el('div', { class: 'etiquette', text: 'Taille du fichier' }),
+    segments('taille-export', [['aucune', 'Taille d\'origine'], ['legere', 'Légère'], ['moyenne', 'Moyenne'], ['forte', 'Forte']], niveau, v => { niveau = v; majNote(); }),
+    note);
+  majNote();
+  fe.pied.append(bouton(partage ? 'Partager' : 'Enregistrer', { ico: partage ? 'partager' : 'enregistrer', cls: 'btn principal', onclick: async () => {
+    prefs.compressionExport = niveau; ecrirePrefs(prefs);
+    let final = octets, nomFinal = nom;
+    if (niveau !== 'aucune') {
+      occupe('Compression…');
+      try {
+        const c = await compresserOctets(octets, niveau);
+        if (c.length < octets.length) { final = c; nomFinal = nomSortie(nom, 'compressé'); }
+        else toast('Ce PDF est déjà léger : il est gardé tel quel.', 4500);
+      } catch (e) { console.error(e); toast('La compression n\'a pas abouti : le PDF est gardé tel quel.', 5000); }
+      finally { libre(); }
+    }
+    await fe.fermer();
+    if (partage) await partager([fichierPdf(final, nomFinal)]);
+    else if (await enregistrer(final, nomFinal)) { D.modifie = false; toast(`PDF enregistré (${tailleLisible(final.length)})`); }
+  } }));
 }
 
 /* Onglet Outils : toutes les actions du document, visibles d'un coup d'œil */
 const OUTILS_DOC = [
   ['rechercher', 'recherche', 'Rechercher', 'Trouver un mot dans le document'],
   ['ajouter', 'plus', 'Ajouter des fichiers', 'PDF ou photos, à la fin du document'],
-  ['compresser', 'compresser', 'Compresser', 'Alléger pour l\'envoyer par e-mail'],
   ['numeros', 'numero', 'Numéroter', 'Ajouter les numéros de page'],
   ['filigrane', 'filigrane', 'Filigrane', '« COPIE », « CONFIDENTIEL »…'],
   ['images', 'images', 'PDF → images', 'Chaque page en JPG'],
@@ -2070,8 +2095,25 @@ async function chargerPdfLib(octets) {
   return d;
 }
 
+/** Niveaux de compression : [points par pouce, qualité JPEG, description] */
+const NIVEAUX_COMPRESSION = { forte: [96, 0.55, 'Forte : fichier très léger, qualité correcte à l\'écran'], moyenne: [130, 0.68, 'Moyenne : bon compromis (conseillé)'], legere: [170, 0.8, 'Légère : meilleure qualité, gain plus faible'] };
+/** Compresse un PDF : chaque page est réécrite en image JPEG. */
+async function compresserOctets(octets, niveau) {
+  const [dpi, q] = NIVEAUX_COMPRESSION[niveau];
+  const pdf = await chargerPdfjs(octets);
+  try {
+    const out = await PDFDocument.create(); out.setProducer('Atelier PDF');
+    for (let i = 1; i <= pdf.numPages; i++) {
+      majOccupe(`Compression : page ${i} / ${pdf.numPages}…`);
+      const img = await pageEnImage(await pdf.getPage(i), dpi, q);
+      const jpg = await out.embedJpg(img.octets);
+      out.addPage([img.w, img.h]).drawImage(jpg, { x: 0, y: 0, width: img.w, height: img.h });
+    }
+    return await out.save();
+  } finally { pdf.destroy(); }
+}
 function outilCompresser(f) {
-  const niveaux = { forte: [96, 0.55, 'Forte : fichier très léger, qualité correcte à l\'écran'], moyenne: [130, 0.68, 'Moyenne : bon compromis (conseillé)'], legere: [170, 0.8, 'Légère : meilleure qualité, gain plus faible'] };
+  const niveaux = NIVEAUX_COMPRESSION;
   let niveau = prefs.compression in niveaux ? prefs.compression : 'moyenne';
   const fe = feuille({ titre: 'Compresser' });
   fe.corps.append(
@@ -2080,25 +2122,14 @@ function outilCompresser(f) {
     segments('niveau', Object.entries(niveaux).map(([k, v]) => [k, v[2]]), niveau, v => { niveau = v; }),
     el('p', { class: 'note', text: 'Les pages sont transformées en images : le texte ne pourra plus être sélectionné ni recherché, et les champs de formulaire seront figés.' }));
   fe.pied.append(bouton('Compresser', { ico: 'compresser', cls: 'btn principal', onclick: async () => {
-    const [dpi, q] = niveaux[niveau];
     occupe('Compression…');
-    let pdf;
     try {
-      pdf = await chargerPdfjs(f.octets);
-      const out = await PDFDocument.create(); out.setProducer('Atelier PDF');
-      for (let i = 1; i <= pdf.numPages; i++) {
-        majOccupe(`Page ${i} / ${pdf.numPages}…`);
-        const img = await pageEnImage(await pdf.getPage(i), dpi, q);
-        const jpg = await out.embedJpg(img.octets);
-        out.addPage([img.w, img.h]).drawImage(jpg, { x: 0, y: 0, width: img.w, height: img.h });
-      }
-      const octets = await out.save();
+      const octets = await compresserOctets(f.octets, niveau);
       libre(); await fe.fermer();
       const gain = Math.round((1 - octets.length / f.octets.length) * 100);
       if (gain <= 0) toast('Ce PDF était déjà léger : la version compressée n\'est pas plus petite. Gardez l\'original.', 6000);
       feuilleResultat(octets, nomSortie(f.nom, 'compressé'), `${tailleLisible(f.octets.length)} → ${tailleLisible(octets.length)}${gain > 0 ? ` (−${gain} %)` : ''}`);
     } catch (e) { libre(); console.error(e); toast('La compression n\'a pas abouti. Réessayez avec un autre niveau.', 5000); }
-    finally { pdf?.destroy(); }
   } }));
 }
 
