@@ -869,7 +869,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.12.1';
+const VERSION_APPLI = '1.12.2';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -2483,8 +2483,10 @@ async function recadrerPhoto(it) {
   if (!r || !D) return;
   memoriser();
   const idImg = 'photo-' + idUnique(); D.images[idImg] = r.toDataURL('image/jpeg', 0.88);
-  const cy = it.y + it.h / 2;
-  it.img = idImg; it.h = it.w * r.height / r.width; it.y = cy - it.h / 2;
+  // Même échelle qu'avant : la partie gardée reste à sa taille, la photo rétrécit (on voit tout de suite la coupe)
+  const k = it.w / c.width, cx = it.x + it.w / 2, cy = it.y + it.h / 2;
+  it.img = idImg; it.w = Math.max(20, r.width * k); it.h = it.w * r.height / r.width;
+  it.x = cx - it.w / 2; it.y = cy - it.h / 2;
   D.modifie = true; journaliser('Photo recadrée');
   rendreItems(it.page); selectionner(it.id);
   toast('Photo recadrée', { action: 'Annuler', onAction: annulerAction });
