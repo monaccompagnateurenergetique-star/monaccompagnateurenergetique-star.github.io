@@ -51,7 +51,7 @@ Pour tous ceux qui manipulent des PDF au quotidien : artisans, indépendants, pr
 
 - Catégorie : Productivité
 - Tags conseillés : PDF, Productivité, Outils de bureau
-- E-mail de contact : [ADRESSE E-MAIL DE CONTACT]
+- E-mail de contact : monaccompagnateurenergetique@gmail.com
 - Site web : https://<TON-PSEUDO>.github.io/
 - Politique de confidentialité : https://<TON-PSEUDO>.github.io/confidentialite.html
 - Prix : Gratuit

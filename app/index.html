@@ -93,6 +93,33 @@ a{color:var(--accent)}
 .confiance{display:flex;gap:10px;align-items:flex-start;margin-top:24px;padding:14px;border-radius:var(--rayon);background:var(--accent-pale);font-size:14px;color:#244a3c}
 .confiance .ico{color:var(--accent)}
 @media (min-width:640px){.grille-outils{grid-template-columns:repeat(3,1fr)}}
+/* Téléphone : la note de confidentialité va tout en bas (après les outils) */
+@media (max-width:999px){.accueil{display:flex;flex-direction:column}.col-principale{display:contents}.col-principale .confiance{order:2}.col-outils{order:1}}
+/* PC : deux colonnes, tout visible d'un coup d'œil (« Modifier » et « Reprendre » à gauche, outils à droite) */
+@media (min-width:1000px){
+  .barre-accueil{padding:14px 28px 6px;max-width:1240px;width:100%;margin:0 auto}
+  .accueil{max-width:1240px;display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:28px;align-items:start;padding:8px 28px 24px}
+  .col-principale{position:sticky;top:0}
+  .col-principale .confiance{margin-top:16px}
+  .col-outils .duo{grid-template-columns:1fr 1fr;margin-top:0}
+  .col-outils .titre-section{margin:18px 2px 8px}
+  .grille-outils{grid-template-columns:repeat(4,1fr);gap:10px}
+  .carte-mini,.tuile{padding:12px 14px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+  .carte-mini:hover,.tuile:hover{border-color:#b9dccd;box-shadow:var(--ombre)}
+  .carte-ouvrir{cursor:pointer;padding:24px 22px}
+  .carte-ouvrir:hover{background:var(--accent-fort)}
+  .ouvrir-drive{cursor:pointer}
+  .ouvrir-drive:hover{border-color:#b9dccd}
+  #reprendre-liste{max-height:calc(100vh - 360px);overflow:auto}
+}
+@media (min-width:1000px) and (max-height:720px){
+  .barre-accueil{padding-top:8px;padding-bottom:2px}
+  .accueil{padding-top:4px;padding-bottom:8px}
+  .col-outils .titre-section{margin:12px 2px 6px}
+  .carte-mini,.tuile{padding:10px 12px}
+  .carte-mini .ico,.tuile .ico{width:22px;height:22px;margin-bottom:2px}
+}
+@media (min-width:1000px) and (prefers-reduced-motion:reduce){.carte-mini,.tuile{transition:none}}
 
 /* =========================================================
    3. DOCUMENT : barre du haut, onglets, pages
@@ -316,6 +343,19 @@ a{color:var(--accent)}
 .feuille{position:fixed;left:0;right:0;bottom:0;max-height:92dvh;max-width:640px;margin:0 auto;background:var(--carte);border-radius:18px 18px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .22s ease-out;box-shadow:0 -4px 24px rgba(0,0,0,.15)}
 .feuille.ouverte{transform:none}
 .feuille.pleine{top:0;max-height:none;border-radius:0}
+.carte-param{padding:2px 0 8px}
+.carte-param>.titre-section:first-child,.carte-param>div:first-child>.titre-section:first-child{margin-top:16px}
+/* PC : les grandes fenêtres (Paramètres, Mes documents) deviennent une fenêtre centrée, plus large */
+@media (min-width:1000px){
+  .feuille.pleine{top:28px;bottom:28px;border-radius:18px;max-width:760px}
+  .feuille.pleine.large{max-width:1080px}
+  .feuille.large .sommaire-param{display:none}
+  .feuille.large .param-contenu{columns:2;column-gap:20px}
+  .feuille.large .grille-tampons{grid-template-columns:repeat(3,1fr)}
+  .feuille.large .carte-tampon .actions .btn{padding:0 8px}
+  .carte-param{break-inside:avoid;display:inline-block;width:100%;margin:0 0 16px;padding:4px 18px 16px;border:1px solid var(--ligne);border-radius:var(--rayon);background:#fcfbf8}
+  .carte-param>.titre-section:first-child,.carte-param>div:first-child>.titre-section:first-child{margin-top:14px}
+}
 .feuille-tete{display:flex;align-items:center;gap:8px;padding:calc(8px + var(--haut-sur)) 6px 6px 18px;border-bottom:1px solid var(--ligne)}
 .feuille:not(.pleine) .feuille-tete{padding-top:10px}
 .feuille-tete h2{flex:1;margin:0;font-size:17px}
@@ -467,6 +507,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
       <button class="btn principal" id="btn-installer">Installer</button>
       <button class="btn-icone" id="btn-masquer-install" aria-label="Masquer cette proposition" title="Masquer"><svg class="ico"><use href="#i-fermer"/></svg></button>
     </div>
+    <div class="col-principale">
     <button class="carte-ouvrir" id="btn-ouvrir">
       <svg class="ico"><use href="#i-crayon"/></svg>
       <div><strong>Modifier un PDF</strong><span>Ouvrir, ajouter du texte, corriger, réorganiser</span></div>
@@ -476,6 +517,9 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
       <div class="reprendre-tete"><h2 class="titre-section">Reprendre</h2><button class="btn puce" id="reprendre-tout">Tout voir</button></div>
       <div id="reprendre-liste"></div>
     </section>
+    <p class="confiance"><svg class="ico"><use href="#i-cadenas"/></svg><span>Vos documents restent sur cet appareil. Ils n'en sortent que si vous les partagez ou les envoyez vous-même dans votre Google Drive. <a href="../confidentialite.html">Confidentialité</a></span></p>
+    </div>
+    <div class="col-outils">
     <div class="duo">
       <button class="carte-mini" data-outil="fusion"><svg class="ico"><use href="#i-fusion"/></svg><strong>Fusionner</strong><span>Plusieurs PDF et photos en un seul</span></button>
       <button class="carte-mini" id="btn-photos"><svg class="ico"><use href="#i-image"/></svg><strong>JPG → PDF</strong><span>Convertir vos photos et images</span></button>
@@ -497,7 +541,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
       <button class="tuile" id="btn-mesdocs"><svg class="ico"><use href="#i-dossier"/></svg><strong>Mes documents</strong><span>Reprendre, historique des envois</span></button>
       <button class="tuile" id="btn-modeles"><svg class="ico"><use href="#i-copier"/></svg><strong>Modèles</strong><span>Un document prêt, date du jour incluse</span></button>
     </div>
-    <p class="confiance"><svg class="ico"><use href="#i-cadenas"/></svg><span>Vos documents restent sur cet appareil : rien n'est envoyé sur internet. <a href="../confidentialite.html">Politique de confidentialité</a></span></p>
+    </div>
   </main>
 </section>
 
@@ -572,7 +616,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.5.0';
+const VERSION_APPLI = '1.6.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;
@@ -701,6 +745,7 @@ function feuille({ titre, plein = false, pied = true, surFermeture }) {
   const f = el('div', { class: 'feuille' + (plein ? ' pleine' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-label': titre },
     el('div', { class: 'feuille-tete' }, el('h2', { text: titre }), bouton('', { ico: 'fermer', cls: 'btn-icone', label: 'Fermer', onclick: () => api.fermer() })),
     corps, zonePied);
+  api.feuille = f;
   const voile = el('div', { class: 'voile', onclick: () => api.fermer() });
   voile.style.zIndex = ++zFeuille; f.style.zIndex = ++zFeuille;
   document.body.append(voile, f);
@@ -2768,22 +2813,26 @@ function ouvrirParametres() {
   // Sommaire : on saute directement à la rubrique voulue
   const rubriques = [['p-drive', 'Google Drive'], ['p-signatures', 'Signatures et tampons'], ['p-reglages', 'Réglages'], ['p-stockage', 'Stockage'], ['p-apropos', 'À propos']].filter(([id]) => id !== 'p-drive' || driveConfigure());
   const titre = (id, texte) => el('h3', { class: 'titre-section', id, text: texte });
+  // Chaque rubrique est une carte : en colonne sur téléphone, sur deux colonnes sur PC
+  const carte = (...enfants) => el('section', { class: 'carte-param' }, ...enfants);
+  fe.feuille?.classList.add('large');
   fe.corps.append(
     el('div', { class: 'rangee-defil sommaire-param' }, rubriques.map(([id, t]) => bouton(t, { cls: 'btn puce', onclick: () => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }))),
-    ...(driveConfigure() ? [titre('p-drive', 'Google Drive'), blocDrive()] : []),
-    el('div', { id: 'p-signatures' }, sectionTampons),
-    titre('p-reglages', 'Réglages'),
+    el('div', { class: 'param-contenu' },
+    ...(driveConfigure() ? [carte(titre('p-drive', 'Google Drive'), blocDrive())] : []),
+    carte(el('div', { id: 'p-signatures' }, sectionTampons)),
+    carte(titre('p-reglages', 'Réglages'),
     reglage('tailleTexte', 'Taille du texte ajouté', [['9', 'Petite'], ['11', 'Normale'], ['14', 'Grande']]),
     reglage('couleurTexte', 'Couleur du texte ajouté', COULEURS_TEXTE.map(([c, n]) => [c, n, c])),
     reglage('largeurSignature', 'Taille des signatures posées', [['100', 'Petite'], ['140', 'Moyenne'], ['190', 'Grande']]),
     reglage('largeurTampon', 'Taille des tampons posés', [['100', 'Petit'], ['130', 'Moyen'], ['170', 'Grand']]),
     reglage('formatPhotos', 'Photos → PDF : format des pages', [['a4', 'A4'], ['image', 'Taille de la photo']]),
-    reglage('compression', 'Compression par défaut', [['forte', 'Forte'], ['moyenne', 'Moyenne'], ['legere', 'Légère']]),
-    titre('p-stockage', 'Stockage sur cet appareil'),
+    reglage('compression', 'Compression par défaut', [['forte', 'Forte'], ['moyenne', 'Moyenne'], ['legere', 'Légère']])),
+    carte(titre('p-stockage', 'Stockage sur cet appareil'),
     el('div', {}, el('div', { class: 'etiquette', text: 'Garder mes documents et leur historique sur cet appareil' }),
       segments('pref-garder', [['oui', 'Oui (conseillé)'], ['non', 'Non']], prefs.garderDocuments ? 'oui' : 'non', v => { prefs.garderDocuments = v === 'oui'; ecrirePrefs(prefs); })),
-    espace,
-    titre('p-apropos', 'À propos'),
+    espace),
+    carte(titre('p-apropos', 'À propos'),
     el('p', { class: 'note', text: `Atelier PDF ${VERSION_APPLI}. Tout est traité sur cet appareil. Vos documents ne quittent l'appareil que si vous les partagez, ou si vous les envoyez vous-même dans votre Google Drive.` }),
     el('p', {}, el('a', { href: '../confidentialite.html', text: 'Politique de confidentialité' })),
     el('div', { class: 'rangee-btn' }, bouton('Effacer toutes mes données', { ico: 'poubelle', cls: 'btn danger', onclick: async () => {
@@ -2793,7 +2842,7 @@ function ouvrirParametres() {
       try { (await bd()).close(); } catch {}
       bdPromesse = null; indexedDB.deleteDatabase('atelierpdf');
       majReprendre(); toast('Données effacées');
-    } })));
+    } }))))); // (fin de la carte « À propos » et de la zone des cartes)
 }
 
 /* =========================================================
