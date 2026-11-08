@@ -479,6 +479,9 @@ a{color:var(--accent)}
 .feuille.atelier .sommaire-param .btn{background:#fff;border-color:transparent}
 .ligne-champ .etiquette{margin:10px 0 4px;font-size:13px;color:var(--doux)}
 .creation-tampon .zone-apercu{min-height:200px;border:0;border-radius:12px;padding:14px}
+.creation-tampon .zone-apercu.mode-signature{outline:3px dashed #1fae76;outline-offset:-3px;cursor:crosshair;touch-action:none;background-color:#f3fbf6}
+.creation-tampon .zone-apercu.mode-signature canvas{touch-action:none}
+.aide-signature{margin:8px 0 0;padding:8px 12px;border-radius:10px;background:#e3f4ea;color:#0a5540;font-size:14px;font-weight:600}
 .creation-tampon .bloc-blanc .note{margin:0 0 8px}
 @media (min-width:1000px){
   .creation-tampon{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;align-items:start}
@@ -759,7 +762,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.8.0';
+const VERSION_APPLI = '1.8.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;
@@ -2826,23 +2829,32 @@ function tamponTexte() {
   return new Promise(res => {
     let resultat = null, couleur = '#1d3fb3', cadre = 'oui', sigId = '', sigImg = null;
     const fe = feuille({ titre: 'Nouveau tampon', plein: true, surFermeture: () => res(resultat) });
-    // Signature posée sur le tampon (facultatif)
+    // Signature : dessinée DIRECTEMENT sur l'aperçu du tampon (là où on la veut), ou une signature déjà enregistrée
+    let traits = [], enSignature = false, trait = null;
     const zoneSig = el('div');
     const chargerSig = async () => {
       const t = lireTampons().find(x => x.id === sigId);
       if (!t) { sigImg = null; return; }
       sigImg = new Image(); sigImg.src = t.png; await sigImg.decode();
     };
+    const aideSig = el('p', { class: 'aide-signature', hidden: true, text: 'Signez sur le tampon ci-dessus, avec le doigt ou la souris. Vous pouvez faire plusieurs traits.' });
+    const btnSigner = bouton('Signer sur l\'aperçu', { ico: 'signature', cls: 'btn principal', onclick: () => basculerSignature() });
+    const btnEffacer = bouton('Effacer la signature', { ico: 'poubelle', cls: 'btn', onclick: () => { traits = []; sigId = ''; sigImg = null; majSig(); maj(); } });
+    function basculerSignature(etat) {
+      enSignature = etat ?? !enSignature;
+      zone.classList.toggle('mode-signature', enSignature);
+      btnSigner.replaceChildren(icone(enSignature ? 'valider' : 'signature'), enSignature ? 'Terminer la signature' : (traits.length ? 'Reprendre la signature' : 'Signer sur l\'aperçu'));
+      aideSig.hidden = !enSignature;
+      if (enSignature) zone.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
     const majSig = () => {
       const liste = lireTampons().filter(t => t.type === 'signature');
+      btnEffacer.hidden = !traits.length && !sigImg;
       zoneSig.replaceChildren(
-        segments('sig-tampon', [['', 'Sans signature'], ...liste.map(t => [t.id, t.nom])], sigId, async v => { sigId = v; await chargerSig(); maj(); }),
-        el('div', { class: 'rangee-btn' }, bouton('Dessiner une signature', { ico: 'crayon', onclick: async () => {
-          const t = await dessinerTampon('signature');
-          if (t) { sigId = t.id; majSig(); await chargerSig(); maj(); }
-        } })));
-    };
-    // Une case par ligne (plus clair qu'un grand champ de texte) ; les cases vides sont ignorées
+        el('div', { class: 'rangee-btn' }, btnSigner, btnEffacer),
+        ...(liste.length ? [el('div', { class: 'etiquette', text: 'Ou utiliser une signature enregistrée' }),
+          segments('sig-tampon', [['', 'Aucune'], ...liste.map(t => [t.id, t.nom])], sigId, async v => { sigId = v; if (v) { traits = []; basculerSignature(false); } await chargerSig(); majSig(); maj(); })] : []));
+    };    // Une case par ligne (plus clair qu'un grand champ de texte) ; les cases vides sont ignorées
     const CHAMPS = [['societe', 'Société', 'Ex. SARL DUPONT RÉNOVATION'], ['adresse', 'Adresse', 'Ex. 12 rue des Lilas'], ['ville', 'Code postal et ville', 'Ex. 75011 Paris'], ['siret', 'SIRET', 'Ex. 123 456 789 00012'], ['autre', 'Autre ligne (facultatif)', 'Ex. Tél. 06 12 34 56 78']];
     const entrees = {};
     const blocChamps = el('div', { class: 'bloc-blanc' }, el('h3', { class: 'titre-bloc', text: 'Ce qui est écrit' }),
@@ -2859,9 +2871,10 @@ function tamponTexte() {
     const zone = el('div', { class: 'zone-apercu damier' });
     const nom = el('input', { class: 'champ', id: 'nom-tampon', value: 'Tampon société', maxlength: 40 });
     let courant;
+    const canvasTampon = el('canvas');
     const maj = () => {
       const lignes = lignesTampon();
-      const c = el('canvas'), ctx = c.getContext('2d');
+      const c = canvasTampon, ctx = c.getContext('2d');
       const t = 44, inter = 1.25, pad = 26;
       const police = (i) => `${i === 0 ? '700 ' : '500 '}${i === 0 ? t * 1.1 : t}px Helvetica, Arial, sans-serif`;
       let lmax = 0; lignes.forEach((l, i) => { ctx.font = police(i); lmax = Math.max(lmax, ctx.measureText(l).width); });
@@ -2876,12 +2889,33 @@ function tamponTexte() {
         if (h > c.height * 0.85) { h = c.height * 0.85; w = h / ratio; }
         ctx.drawImage(sigImg, (c.width - w) / 2 + c.width * 0.08, c.height - h - 6, w, h);
       }
-      courant = c; zone.replaceChildren(c);
+      if (traits.length) {
+        // Traits dessinés sur l'aperçu (coordonnées relatives : ils suivent si le tampon change de taille)
+        ctx.strokeStyle = '#141a33'; ctx.fillStyle = '#141a33'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        ctx.lineWidth = Math.max(4, c.width * 0.008);
+        for (const tr of traits) {
+          const P = tr.map(([x, y]) => [x * c.width, y * c.height]);
+          if (P.length === 1) { ctx.beginPath(); ctx.arc(P[0][0], P[0][1], ctx.lineWidth / 2, 0, 7); ctx.fill(); continue; }
+          ctx.beginPath(); ctx.moveTo(P[0][0], P[0][1]);
+          for (let k = 1; k < P.length; k++) { const [px, py] = P[k - 1], [x, y] = P[k]; ctx.quadraticCurveTo(px, py, (px + x) / 2, (py + y) / 2); }
+          ctx.lineTo(P[P.length - 1][0], P[P.length - 1][1]); ctx.stroke();
+        }
+      }
+      courant = c; if (c.parentNode !== zone) zone.replaceChildren(c);
     };
-    fe.feuille.classList.add('large', 'atelier');
+    const point = e => { const r = canvasTampon.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; };
+    zone.addEventListener('pointerdown', e => {
+      if (!enSignature) return;
+      e.preventDefault(); zone.setPointerCapture?.(e.pointerId);
+      if (sigImg) { sigImg = null; sigId = ''; majSig(); } // on remplace la signature enregistrée choisie
+      trait = [point(e)]; traits.push(trait); maj();
+    });
+    zone.addEventListener('pointermove', e => { if (!trait) return; e.preventDefault(); trait.push(point(e)); maj(); });
+    const finTrait = () => { if (trait) { trait = null; btnEffacer.hidden = false; } };
+    zone.addEventListener('pointerup', finTrait); zone.addEventListener('pointercancel', finTrait);    fe.feuille.classList.add('large', 'atelier');
     fe.corps.append(el('div', { class: 'creation-tampon' },
       el('div', { class: 'col-apercu' },
-        el('div', { class: 'bloc-blanc' }, el('h3', { class: 'titre-bloc', text: 'Aperçu' }), zone,
+        el('div', { class: 'bloc-blanc' }, el('h3', { class: 'titre-bloc', text: 'Aperçu' }), zone, aideSig,
           el('div', { class: 'etiquette', text: 'Couleur' }),
           segments('couleur-tampon', [['#1d3fb3', 'Bleu', '#1d3fb3'], ['#b91c1c', 'Rouge', '#b91c1c'], ['#111111', 'Noir', '#111']], couleur, v => { couleur = v; maj(); }),
           el('div', { class: 'etiquette', text: 'Cadre' }),
@@ -2889,9 +2923,10 @@ function tamponTexte() {
       el('div', { class: 'col-champs' },
         blocChamps,
         el('div', { class: 'bloc-blanc' }, el('h3', { class: 'titre-bloc', text: 'Signer sur le tampon' }),
-          el('p', { class: 'note', text: 'Votre signature traverse le tampon, comme sur un vrai cachet.' }), zoneSig),
+          el('p', { class: 'note', text: 'Signez directement sur l\'aperçu : la signature sera exactement où vous la tracez, comme sur un vrai cachet.' }), zoneSig),
         el('div', { class: 'bloc-blanc' }, el('label', { class: 'titre-bloc', for: 'nom-tampon', text: 'Nom du tampon' }), nom,
-          el('p', { class: 'note', text: 'Pour le retrouver dans la liste de vos tampons.' })))));    majSig();
+          el('p', { class: 'note', text: 'Pour le retrouver dans la liste de vos tampons.' })))));
+    majSig();
     fe.pied.append(
       bouton('Annuler', { onclick: () => fe.fermer() }),
       bouton('Enregistrer', { ico: 'valider', cls: 'btn principal', onclick: () => {
