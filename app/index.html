@@ -1,0 +1,2068 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#0d6b4f">
+<meta name="description" content="Lire, remplir, signer et transformer vos PDF, directement sur votre téléphone. Rien n'est envoyé sur internet.">
+<title>Atelier PDF</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+/* =========================================================
+   1. STYLES DE BASE
+   ========================================================= */
+:root{
+  --fond:#f3f2ee; --carte:#ffffff; --encre:#1b2130; --doux:#5d6576; --ligne:#e1ded6;
+  --accent:#0d6b4f; --accent-fort:#0a5540; --accent-pale:#e2f0ea; --danger:#b42318;
+  --rayon:14px; --ombre:0 1px 2px rgba(20,24,35,.06),0 4px 14px rgba(20,24,35,.06);
+  --haut-sur:env(safe-area-inset-top,0px); --bas-sur:env(safe-area-inset-bottom,0px);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--encre);background:var(--fond);-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid #2b7cff;outline-offset:2px}
+[hidden]{display:none!important}
+.ico{width:22px;height:22px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ecran{position:fixed;inset:0;display:none;flex-direction:column;background:var(--fond)}
+.ecran.actif{display:flex}
+
+/* Boutons */
+.btn{min-height:44px;padding:0 16px;border-radius:12px;border:1px solid var(--ligne);background:var(--carte);font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;color:var(--encre)}
+.btn:active{background:#f0eee8}
+.btn.principal{background:var(--accent);border-color:transparent;color:#fff}
+.btn.principal:active{background:var(--accent-fort)}
+.btn.danger{color:var(--danger)}
+.btn.large{width:100%}
+.btn:disabled{opacity:.45;cursor:default}
+.btn-icone{width:44px;height:44px;flex:none;display:grid;place-items:center;border:0;background:none;border-radius:12px;padding:0}
+.btn-icone:active{background:rgba(0,0,0,.06)}
+
+/* =========================================================
+   2. ACCUEIL
+   ========================================================= */
+.barre-accueil{display:flex;align-items:center;justify-content:space-between;padding:calc(8px + var(--haut-sur)) 12px 8px 16px}
+.marque{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;letter-spacing:-.01em}
+.marque svg{width:34px;height:34px}
+.accueil{flex:1;overflow:auto;padding:4px 16px calc(24px + var(--bas-sur));max-width:720px;width:100%;margin:0 auto}
+.carte-ouvrir{width:100%;display:flex;align-items:center;gap:16px;padding:20px;border:0;border-radius:18px;background:var(--accent);color:#fff;text-align:left;box-shadow:var(--ombre)}
+.carte-ouvrir:active{background:var(--accent-fort)}
+.carte-ouvrir .ico{width:34px;height:34px}
+.carte-ouvrir strong{display:block;font-size:20px}
+.carte-ouvrir span{opacity:.85;font-size:14px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.carte-mini,.tuile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:14px;border:1px solid var(--ligne);border-radius:var(--rayon);background:var(--carte);text-align:left;min-height:44px}
+.carte-mini:active,.tuile:active{background:#f7f6f2}
+.carte-mini .ico,.tuile .ico{color:var(--accent);width:26px;height:26px;margin-bottom:4px}
+.carte-mini strong,.tuile strong{font-size:15px}
+.carte-mini span,.tuile span{font-size:13px;color:var(--doux);line-height:1.3}
+.titre-section{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--doux);margin:24px 2px 10px}
+.grille-outils{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.confiance{display:flex;gap:10px;align-items:flex-start;margin-top:24px;padding:14px;border-radius:var(--rayon);background:var(--accent-pale);font-size:14px;color:#244a3c}
+.confiance .ico{color:var(--accent)}
+@media (min-width:640px){.grille-outils{grid-template-columns:repeat(3,1fr)}}
+
+/* =========================================================
+   3. LECTEUR / ÉDITEUR
+   ========================================================= */
+.barre-doc{display:flex;align-items:center;gap:2px;padding:calc(6px + var(--haut-sur)) 4px 6px;background:var(--carte);border-bottom:1px solid var(--ligne);z-index:5}
+.barre-doc h1{flex:1;min-width:0;margin:0 4px;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#barre-recherche{display:flex;align-items:center;gap:2px;padding:6px 4px 6px 10px;background:var(--carte);border-bottom:1px solid var(--ligne)}
+#barre-recherche input{flex:1;min-width:0;height:44px;border:1px solid var(--ligne);border-radius:10px;padding:0 12px;background:#faf9f6}
+#q-compte{font-size:13px;color:var(--doux);min-width:48px;text-align:center}
+#aide-placement{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 14px;background:#fff8e1;border-bottom:1px solid #f0e2b0;font-size:14px}
+#aide-placement span{flex:1}
+#defil{flex:1;overflow:auto;position:relative;touch-action:pan-x pan-y;background:#d9d7d0;-webkit-overflow-scrolling:touch}
+#pages{position:relative;padding:8px 8px 96px;transform-origin:0 0;width:max-content;min-width:100%}
+.page{position:relative;margin:0 auto 10px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.page canvas.rendu{position:absolute;inset:0;width:100%;height:100%;display:block}
+.calque-recherche,.calque-items{position:absolute;inset:0;pointer-events:none}
+.calque-items{z-index:3}
+.surligne{position:absolute;background:rgba(255,196,0,.45);border-radius:2px;mix-blend-mode:multiply}
+.surligne.actuel{background:rgba(255,110,0,.55);box-shadow:0 0 0 2px rgba(255,110,0,.6)}
+.indic-page{position:absolute;left:12px;bottom:calc(84px + var(--bas-sur));z-index:4;min-height:36px;padding:0 12px;border-radius:18px;border:0;background:rgba(27,33,48,.78);color:#fff;font-size:14px}
+.barre-bas{display:flex;gap:8px;align-items:center;padding:8px 10px calc(8px + var(--bas-sur));background:var(--carte);border-top:1px solid var(--ligne);z-index:5}
+.barre-bas .btn.principal{flex:1}
+.outil{min-width:64px;height:56px;padding:4px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border:0;background:none;border-radius:12px;font-size:12px;font-weight:600;color:var(--encre)}
+.outil:active,.outil.actif{background:var(--accent-pale);color:var(--accent-fort)}
+.outils-edition{overflow-x:auto;gap:2px;padding-left:4px;padding-right:4px}
+.outils-edition .outil{flex:1 1 0;min-width:46px;padding:4px 1px;font-size:11px;letter-spacing:-.01em}
+.outils-edition .outil.terminer{color:#fff;background:var(--accent);margin-left:2px;flex-basis:auto;padding:4px 8px}
+#ecran-doc.mode-lire #barre-editer,#ecran-doc.mode-editer #barre-lire{display:none}
+
+/* Éléments posés sur les pages */
+.item{position:absolute;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+.mode-lire .item{pointer-events:none}
+.item-texte{white-space:pre;line-height:1.15;font-family:Helvetica,Arial,sans-serif;min-width:8px;min-height:1em}
+.item-image img{width:100%;height:100%;display:block;pointer-events:none;-webkit-user-drag:none}
+.mode-editer .item{outline:1px dashed rgba(13,107,79,.35);outline-offset:1px}
+.item.sel{outline:2px dashed var(--accent)!important;outline-offset:2px}
+.poignee,.suppr{display:none;position:absolute;padding:0;border:3px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.poignee{right:-16px;bottom:-16px;width:28px;height:28px;background:var(--accent);touch-action:none}
+.poignee::before,.suppr::before{content:"";position:absolute;inset:-9px}
+.suppr{top:-20px;right:-20px;width:34px;height:34px;background:var(--danger);color:#fff;display:none;place-items:center}
+.suppr .ico{width:16px;height:16px;stroke-width:3}
+.mode-editer .item.sel .poignee{display:block}
+.mode-editer .item.sel .suppr{display:grid}
+#pages.placement .calque-items{pointer-events:auto;cursor:crosshair}
+#pages.placement .item{pointer-events:none}
+
+/* Couche des champs de formulaire (pdf.js) */
+.annotationLayer{position:absolute;top:0;left:0;pointer-events:none;transform-origin:0 0;z-index:2}
+.annotationLayer[data-main-rotation="90"]{transform:rotate(90deg) translateX(-100%)}
+.annotationLayer[data-main-rotation="180"]{transform:rotate(180deg) translate(-100%,-100%)}
+.annotationLayer[data-main-rotation="270"]{transform:rotate(270deg) translateY(-100%)}
+.annotationLayer section{position:absolute;text-align:initial;pointer-events:auto;box-sizing:border-box;transform-origin:0 0}
+.annotationLayer .linkAnnotation>a{position:absolute;inset:0}
+.annotationLayer :is(.textWidgetAnnotation :is(input,textarea),.choiceWidgetAnnotation select){background:rgba(0,84,255,.10);border:1px solid rgba(0,84,255,.25);border-radius:2px;box-sizing:border-box;font:calc(9px * var(--scale-factor)) Helvetica,Arial,sans-serif;height:100%;width:100%;margin:0;padding:0 2px;vertical-align:top;color:#000}
+.annotationLayer .textWidgetAnnotation textarea{resize:none}
+.annotationLayer :is(.textWidgetAnnotation :is(input,textarea),.choiceWidgetAnnotation select):focus{background:rgba(0,84,255,.04);border-color:#2b7cff;outline:none}
+.annotationLayer .textWidgetAnnotation input.comb{font-family:monospace;padding-left:2px;padding-right:0}
+.annotationLayer .buttonWidgetAnnotation:is(.checkBox,.radioButton) input{appearance:none;-webkit-appearance:none;width:100%;height:100%;margin:0;background:rgba(0,84,255,.10);border:1px solid rgba(0,84,255,.35);display:block}
+.annotationLayer .buttonWidgetAnnotation.radioButton input{border-radius:50%}
+.annotationLayer .buttonWidgetAnnotation:is(.checkBox,.radioButton) input:checked{background:#1b2130 content-box;padding:18%;border-color:#1b2130}
+.annotationLayer .buttonWidgetAnnotation:not(.checkBox):not(.radioButton) input{display:none}
+.annotationLayer .popupAnnotation,.annotationLayer .popupTriggerArea{display:none}
+
+/* =========================================================
+   4. FEUILLES (fenêtres qui montent du bas)
+   ========================================================= */
+.voile{position:fixed;inset:0;background:rgba(15,18,28,.45);opacity:0;transition:opacity .2s}
+.voile.ouvert{opacity:1}
+.feuille{position:fixed;left:0;right:0;bottom:0;max-height:92dvh;max-width:640px;margin:0 auto;background:var(--carte);border-radius:18px 18px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform .22s ease-out;box-shadow:0 -4px 24px rgba(0,0,0,.15)}
+.feuille.ouverte{transform:none}
+.feuille.pleine{top:0;max-height:none;border-radius:0}
+.feuille-tete{display:flex;align-items:center;gap:8px;padding:calc(8px + var(--haut-sur)) 6px 6px 18px;border-bottom:1px solid var(--ligne)}
+.feuille:not(.pleine) .feuille-tete{padding-top:10px}
+.feuille-tete h2{flex:1;margin:0;font-size:17px}
+.feuille-corps{flex:1;overflow:auto;padding:16px 18px}
+.feuille-pied{display:flex;gap:10px;padding:10px 16px calc(10px + var(--bas-sur));border-top:1px solid var(--ligne)}
+.feuille-pied .btn{flex:1}
+@media (prefers-reduced-motion:reduce){.feuille,.voile{transition:none}}
+
+/* Formulaires internes */
+.champ{display:block;width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--ligne);border-radius:10px;background:#faf9f6}
+textarea.champ{resize:vertical}
+.etiquette{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
+.etiquette:first-child{margin-top:0}
+.note{font-size:13px;color:var(--doux);margin:8px 0}
+.segments{display:flex;flex-wrap:wrap;gap:6px}
+.segments label{position:relative}
+.segments input{position:absolute;opacity:0;pointer-events:none}
+.segments span{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border:1px solid var(--ligne);border-radius:22px;background:#fff;font-size:14px;font-weight:600}
+.segments input:checked+span{border-color:var(--accent);background:var(--accent-pale);color:var(--accent-fort)}
+.segments input:focus-visible+span{outline:3px solid #2b7cff}
+.pastille{width:16px;height:16px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.2)}
+input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
+.liste{list-style:none;margin:0;padding:0}
+.ligne{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--ligne)}
+.ligne .texte{flex:1;min-width:0}
+.ligne .texte strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}
+.ligne .texte small{color:var(--doux)}
+.menu-liste button{width:100%;display:flex;align-items:center;gap:14px;min-height:52px;padding:0 6px;border:0;background:none;text-align:left;font-size:16px;border-radius:10px}
+.menu-liste button:active{background:#f3f2ee}
+.menu-liste .ico{color:var(--accent)}
+.damier{background-color:#fff;background-image:linear-gradient(45deg,#eee 25%,transparent 25%),linear-gradient(-45deg,#eee 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#eee 75%),linear-gradient(-45deg,transparent 75%,#eee 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
+.grille-tampons{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.carte-tampon{display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--ligne);border-radius:12px;background:#fff;text-align:left}
+.carte-tampon .apercu{height:80px;border-radius:8px;display:grid;place-items:center;overflow:hidden}
+.carte-tampon img{max-width:100%;max-height:72px}
+.carte-tampon .nom{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.carte-tampon .actions{display:flex;gap:4px}
+.carte-tampon .actions .btn{flex:1;min-height:40px;padding:0 6px;font-size:13px}
+.vide{padding:18px;border:1px dashed var(--ligne);border-radius:12px;text-align:center;color:var(--doux);font-size:14px}
+.rangee-btn{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.rangee-btn .btn{flex:1 1 140px}
+.pad{width:100%;height:240px;border:1px solid var(--ligne);border-radius:12px;touch-action:none;display:block;background:#fff}
+.zone-apercu{display:grid;place-items:center;min-height:160px;border-radius:12px;border:1px solid var(--ligne);overflow:hidden;padding:8px}
+.zone-apercu canvas{max-width:100%;max-height:44dvh}
+.vignettes{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.vignette{position:relative;border:2px solid transparent;border-radius:10px;padding:4px;background:#fff;box-shadow:var(--ombre);text-align:center;min-height:44px}
+.vignette.choisie{border-color:var(--accent);background:var(--accent-pale)}
+.vignette .cadre{height:130px;display:grid;place-items:center;overflow:hidden}
+.vignette canvas,.vignette img{max-width:100%;max-height:126px;box-shadow:0 0 0 1px #ddd;transition:transform .15s}
+.vignette .num{font-size:12px;font-weight:600;color:var(--doux)}
+.vignette .coche{position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:none;place-items:center}
+.vignette.choisie .coche{display:grid}
+.vignette .coche .ico{width:14px;height:14px;stroke-width:3}
+.barre-actions{display:flex;gap:4px;overflow-x:auto;padding:6px 8px;border-top:1px solid var(--ligne);background:#faf9f6}
+.barre-actions .outil{flex:1 0 auto}
+.scan-zone{position:relative;touch-action:none;margin:0 auto;user-select:none}
+.scan-zone canvas{display:block;width:100%;height:100%;border-radius:6px}
+.coin{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;border-radius:50%;background:rgba(13,107,79,.25);border:3px solid var(--accent);touch-action:none}
+.coin::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:var(--accent)}
+
+/* Messages et attente */
+#toast{position:fixed;left:50%;bottom:calc(96px + var(--bas-sur));transform:translate(-50%,20px);max-width:min(92vw,520px);padding:12px 16px;border-radius:12px;background:#1b2130;color:#fff;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:10000;text-align:center}
+#toast.visible{opacity:1;transform:translate(-50%,0)}
+#occupe{position:fixed;inset:0;display:none;place-items:center;background:rgba(243,242,238,.75);z-index:9999}
+#occupe.visible{display:grid}
+#occupe .boite{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 24px;border-radius:16px;background:#fff;box-shadow:var(--ombre);font-weight:600}
+.roue{width:34px;height:34px;border:4px solid var(--accent-pale);border-top-color:var(--accent);border-radius:50%;animation:tourne .8s linear infinite}
+@keyframes tourne{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.roue{animation-duration:2.4s}}
+#depot{position:fixed;inset:0;display:none;place-items:center;background:rgba(13,107,79,.12);border:4px dashed var(--accent);z-index:9998;font-size:20px;font-weight:700;color:var(--accent-fort)}
+#depot.visible{display:grid}
+</style>
+</head>
+<body>
+<!-- Pictogrammes (dessinés pour l'appli) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-retour" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-recherche" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="19" r="1.2"/></symbol>
+  <symbol id="i-crayon" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></symbol>
+  <symbol id="i-partager" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="M8.2 10.8l7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
+  <symbol id="i-enregistrer" viewBox="0 0 24 24"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></symbol>
+  <symbol id="i-texte" viewBox="0 0 24 24"><path d="M5 7V5h14v2"/><path d="M12 5v14"/><path d="M9 19h6"/></symbol>
+  <symbol id="i-signature" viewBox="0 0 24 24"><path d="M3 17c3-1 4-9 6-9s-1 9 1 9 3-5 4-5 1 4 3 4 2-1 4-1"/></symbol>
+  <symbol id="i-tampon" viewBox="0 0 24 24"><path d="M9.5 13V9.5a2.5 2.5 0 1 1 5 0V13"/><rect x="5" y="13" width="14" height="4" rx="1"/><path d="M6 20.5h12"/></symbol>
+  <symbol id="i-masque" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="1.5"/><path d="M9 17l6-10"/></symbol>
+  <symbol id="i-corriger" viewBox="0 0 24 24"><path d="M4 20l1-4 9-9 3 3-9 9-4 1z"/><path d="M14 20h6"/></symbol>
+  <symbol id="i-annuler" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
+  <symbol id="i-valider" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
+  <symbol id="i-fermer" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M20 15l-4.5-4.5L6 20"/></symbol>
+  <symbol id="i-fusion" viewBox="0 0 24 24"><rect x="3" y="3" width="9" height="12" rx="1.5"/><rect x="12" y="9" width="9" height="12" rx="1.5"/></symbol>
+  <symbol id="i-pages" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></symbol>
+  <symbol id="i-compresser" viewBox="0 0 24 24"><path d="M12 3v6M9 6l3 3 3-3"/><path d="M12 21v-6M9 18l3-3 3 3"/><path d="M4 12h16"/></symbol>
+  <symbol id="i-numero" viewBox="0 0 24 24"><path d="M10 4L8 20M16 4l-2 16M5 9h15M4 15h15"/></symbol>
+  <symbol id="i-filigrane" viewBox="0 0 24 24"><path d="M12 3c3 4 6 7.5 6 11a6 6 0 0 1-12 0c0-3.5 3-7 6-11z"/></symbol>
+  <symbol id="i-images" viewBox="0 0 24 24"><rect x="7" y="3" width="14" height="14" rx="2"/><path d="M3 7v12a2 2 0 0 0 2 2h12"/><path d="M21 13l-4-4-6 6"/></symbol>
+  <symbol id="i-reglages" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></symbol>
+  <symbol id="i-haut" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></symbol>
+  <symbol id="i-bas" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+  <symbol id="i-gauche" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+  <symbol id="i-droite" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-poubelle" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+  <symbol id="i-pivoter" viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v6h-6"/></symbol>
+  <symbol id="i-pivoter-g" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.3-5.7"/><path d="M4 4v6h6"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-scanner" viewBox="0 0 24 24"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></symbol>
+  <symbol id="i-cadenas" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
+  <symbol id="i-extraire" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M12 10v7M9 14l3 3 3-3"/></symbol>
+  <symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></symbol>
+</svg>
+
+<!-- ================= ÉCRAN D'ACCUEIL ================= -->
+<section id="ecran-accueil" class="ecran actif" aria-label="Accueil">
+  <header class="barre-accueil">
+    <div class="marque">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0d6b4f"/><path d="M19 12h19l9 9v31H19z" fill="#fff"/><path d="M38 12v9h9" fill="#cfe6dc"/><path d="M24 40c4-1 5-9 8-9s-1 9 2 9 4-4 6-4" fill="none" stroke="#0d6b4f" stroke-width="3" stroke-linecap="round"/></svg>
+      <span>Atelier PDF</span>
+    </div>
+    <button class="btn-icone" id="btn-param" aria-label="Paramètres, signatures et tampons"><svg class="ico"><use href="#i-reglages"/></svg></button>
+  </header>
+  <main class="accueil">
+    <button class="carte-ouvrir" id="btn-ouvrir">
+      <svg class="ico"><use href="#i-doc"/></svg>
+      <div><strong>Ouvrir un PDF</strong><span>Lire, remplir, signer, tamponner</span></div>
+    </button>
+    <div class="duo">
+      <button class="carte-mini" id="btn-scanner"><svg class="ico"><use href="#i-scanner"/></svg><strong>Scanner</strong><span>Un document papier en PDF</span></button>
+      <button class="carte-mini" id="btn-photos"><svg class="ico"><use href="#i-image"/></svg><strong>Photos → PDF</strong><span>Depuis votre galerie</span></button>
+    </div>
+    <h2 class="titre-section">Outils</h2>
+    <div class="grille-outils">
+      <button class="tuile" data-outil="fusion"><svg class="ico"><use href="#i-fusion"/></svg><strong>Fusionner</strong><span>Plusieurs PDF en un seul</span></button>
+      <button class="tuile" data-outil="organiser"><svg class="ico"><use href="#i-pages"/></svg><strong>Organiser</strong><span>Pivoter, trier, supprimer, extraire</span></button>
+      <button class="tuile" data-outil="compresser"><svg class="ico"><use href="#i-compresser"/></svg><strong>Compresser</strong><span>Alléger un PDF trop lourd</span></button>
+      <button class="tuile" data-outil="numeros"><svg class="ico"><use href="#i-numero"/></svg><strong>Numéroter</strong><span>Ajouter les numéros de page</span></button>
+      <button class="tuile" data-outil="filigrane"><svg class="ico"><use href="#i-filigrane"/></svg><strong>Filigrane</strong><span>« COPIE », « CONFIDENTIEL »…</span></button>
+      <button class="tuile" data-outil="images"><svg class="ico"><use href="#i-images"/></svg><strong>PDF → images</strong><span>Chaque page en JPG</span></button>
+    </div>
+    <p class="confiance"><svg class="ico"><use href="#i-cadenas"/></svg><span>Vos documents restent sur cet appareil : rien n'est envoyé sur internet. <a href="../confidentialite.html">Politique de confidentialité</a></span></p>
+  </main>
+</section>
+
+<!-- ================= LECTEUR / ÉDITEUR ================= -->
+<section id="ecran-doc" class="ecran mode-lire" aria-label="Document">
+  <header class="barre-doc">
+    <button class="btn-icone" id="doc-retour" aria-label="Fermer le document"><svg class="ico"><use href="#i-retour"/></svg></button>
+    <h1 id="doc-titre">Document</h1>
+    <button class="btn-icone" id="doc-chercher" aria-label="Rechercher dans le document"><svg class="ico"><use href="#i-recherche"/></svg></button>
+    <button class="btn-icone" id="doc-menu" aria-label="Plus d'actions"><svg class="ico"><use href="#i-menu"/></svg></button>
+  </header>
+  <form id="barre-recherche" hidden>
+    <input id="q" type="search" placeholder="Rechercher un mot" aria-label="Texte à rechercher" enterkeyhint="search" autocomplete="off">
+    <span id="q-compte" aria-live="polite"></span>
+    <button type="button" class="btn-icone" id="q-prec" aria-label="Résultat précédent"><svg class="ico"><use href="#i-haut"/></svg></button>
+    <button type="button" class="btn-icone" id="q-suiv" aria-label="Résultat suivant"><svg class="ico"><use href="#i-bas"/></svg></button>
+    <button type="button" class="btn-icone" id="q-fermer" aria-label="Fermer la recherche"><svg class="ico"><use href="#i-fermer"/></svg></button>
+  </form>
+  <div id="aide-placement" hidden><span id="aide-texte"></span><button class="btn" id="aide-annuler">Annuler</button></div>
+  <div id="defil"><div id="pages"></div></div>
+  <button id="indic-page" class="indic-page" aria-label="Aller à une page">1 / 1</button>
+  <footer id="barre-lire" class="barre-bas">
+    <button class="btn principal" id="btn-editer"><svg class="ico"><use href="#i-crayon"/></svg>Remplir et signer</button>
+    <button class="outil" id="btn-partager"><svg class="ico"><use href="#i-partager"/></svg>Partager</button>
+    <button class="outil" id="btn-enregistrer"><svg class="ico"><use href="#i-enregistrer"/></svg>Enregistrer</button>
+  </footer>
+  <footer id="barre-editer" class="barre-bas outils-edition">
+    <button class="outil" data-action="texte"><svg class="ico"><use href="#i-texte"/></svg>Texte</button>
+    <button class="outil" data-action="signature"><svg class="ico"><use href="#i-signature"/></svg>Signature</button>
+    <button class="outil" data-action="tampon"><svg class="ico"><use href="#i-tampon"/></svg>Tampon</button>
+    <button class="outil" data-action="masque"><svg class="ico"><use href="#i-masque"/></svg>Masquer</button>
+    <button class="outil" data-action="corriger"><svg class="ico"><use href="#i-corriger"/></svg>Corriger</button>
+    <button class="outil" data-action="annuler"><svg class="ico"><use href="#i-annuler"/></svg>Annuler</button>
+    <button class="outil terminer" data-action="terminer"><svg class="ico"><use href="#i-valider"/></svg>Terminer</button>
+  </footer>
+</section>
+
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="occupe" role="alert" aria-live="assertive"><div class="boite"><div class="roue"></div><span id="occupe-texte">Un instant…</span></div></div>
+<div id="depot">Déposez vos fichiers ici</div>
+
+<script src="lib/pdf.min.js"></script>
+<script src="lib/pdf-lib.min.js"></script>
+<script>
+'use strict';
+/* =========================================================
+   0. RÉGLAGES GÉNÉRAUX ET OUTILS
+   ========================================================= */
+const VERSION_APPLI = '1.0.0';
+const pdfjsLib = window.pdfjsLib;
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+const { PDFDocument, StandardFonts, rgb, degrees } = window.PDFLib;
+const MODE_FORMS = pdfjsLib.AnnotationMode.ENABLE_FORMS;
+const MODE_STOCK = pdfjsLib.AnnotationMode.ENABLE_STORAGE;
+const CLE_TAMPONS = 'atelierpdf.stamps.v1';
+const CLE_PREFS = 'atelierpdf.prefs.v1';
+const A4 = [595.28, 841.89];
+
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const NS = 'http://www.w3.org/2000/svg';
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const attendre = ms => new Promise(r => setTimeout(r, ms));
+const idUnique = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+/** Crée un élément HTML : el('button', {class:'btn', onclick: f}, 'Texte') */
+function el(tag, props = {}, ...enfants) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v == null || v === false) continue;
+    if (k === 'class') e.className = v;
+    else if (k === 'text') e.textContent = v;
+    else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+    else if (k === 'dataset') Object.assign(e.dataset, v);
+    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else if (typeof v !== 'string' && k in e) e[k] = v;
+    else e.setAttribute(k, v === true ? '' : v);
+  }
+  for (const c of enfants.flat()) if (c != null && c !== false) e.append(c instanceof Node ? c : document.createTextNode(String(c)));
+  return e;
+}
+function icone(nom) {
+  const s = document.createElementNS(NS, 'svg'); s.setAttribute('class', 'ico'); s.setAttribute('aria-hidden', 'true');
+  const u = document.createElementNS(NS, 'use'); u.setAttribute('href', '#i-' + nom); s.append(u); return s;
+}
+function bouton(texte, { ico, cls = 'btn', onclick, label } = {}) {
+  return el('button', { type: 'button', class: cls, onclick, 'aria-label': label }, ico ? icone(ico) : null, texte);
+}
+
+let minuteurToast;
+function toast(msg, ms = 3400) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('visible');
+  clearTimeout(minuteurToast); minuteurToast = setTimeout(() => t.classList.remove('visible'), ms);
+}
+let niveauOccupe = 0;
+function occupe(msg = 'Un instant…') { niveauOccupe++; $('#occupe-texte').textContent = msg; $('#occupe').classList.add('visible'); }
+function majOccupe(msg) { $('#occupe-texte').textContent = msg; }
+function libre() { niveauOccupe = Math.max(0, niveauOccupe - 1); if (!niveauOccupe) $('#occupe').classList.remove('visible'); }
+
+function tailleLisible(n) {
+  if (n < 1024) return n + ' o';
+  if (n < 1048576) return (n / 1024).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' Ko';
+  return (n / 1048576).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' Mo';
+}
+const nomSansExt = n => String(n || 'document').replace(/\.[a-z0-9]{1,5}$/i, '');
+const nomSortie = (nom, suffixe = 'modifié', ext = 'pdf') => `${nomSansExt(nom)} (${suffixe}).${ext}`;
+const estPdf = f => f && (f.type === 'application/pdf' || /\.pdf$/i.test(f.name || ''));
+const estImage = f => f && (/^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|bmp|heic)$/i.test(f.name || ''));
+async function lireFichier(f) { return { nom: f.name || 'document.pdf', octets: new Uint8Array(await f.arrayBuffer()) }; }
+
+/** Transforme un texte pour qu'il soit écrit avec la police standard du PDF (accents français compris). */
+const WINANSI_EXTRA = '€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ';
+function versWinAnsi(s) {
+  return Array.from(String(s ?? '').normalize('NFC').replace(/\r/g, '').replace(/[     \t]/g, ' '), c => {
+    const k = c.codePointAt(0);
+    if (c === '\n' || (k >= 32 && k <= 126) || (k >= 160 && k <= 255) || WINANSI_EXTRA.includes(c)) return c;
+    const base = c.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    return base.length === 1 && base.charCodeAt(0) < 127 ? base : '?';
+  }).join('');
+}
+function hexVersRgb(h) {
+  const n = parseInt(String(h).replace('#', ''), 16) || 0;
+  return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
+}
+function dataUrlVersOctets(d) {
+  const b = atob(d.split(',')[1]); const u = new Uint8Array(b.length);
+  for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+  return u;
+}
+function canvasVersBlob(c, type = 'image/jpeg', q = 0.85) { return new Promise(r => c.toBlob(r, type, q)); }
+
+/* =========================================================
+   1. DONNÉES ENREGISTRÉES (localStorage uniquement)
+   ========================================================= */
+const PREFS_DEFAUT = { tailleTexte: 11, couleurTexte: '#111111', largeurSignature: 140, largeurTampon: 130, formatPhotos: 'a4', compression: 'moyenne' };
+function lirePrefs() { try { return { ...PREFS_DEFAUT, ...JSON.parse(localStorage.getItem(CLE_PREFS) || '{}') }; } catch { return { ...PREFS_DEFAUT }; } }
+function ecrirePrefs(p) { try { localStorage.setItem(CLE_PREFS, JSON.stringify(p)); } catch { toast('Impossible d\'enregistrer les réglages.'); } }
+let prefs = lirePrefs();
+function lireTampons() { try { const t = JSON.parse(localStorage.getItem(CLE_TAMPONS) || '[]'); return Array.isArray(t) ? t : []; } catch { return []; } }
+function ecrireTampons(liste) {
+  try { localStorage.setItem(CLE_TAMPONS, JSON.stringify(liste)); return true; }
+  catch { toast('Mémoire pleine : supprimez une signature ou un tampon puis réessayez.', 5000); return false; }
+}
+
+/* =========================================================
+   2. NAVIGATION (le bouton « retour » d'Android ferme la dernière fenêtre)
+   ========================================================= */
+const pile = []; const attentesRetour = [];
+function ouvrirCouche(fermer) { pile.push(fermer); history.pushState({ couche: pile.length }, ''); }
+function fermerCouche() { return new Promise(res => { attentesRetour.push(res); history.back(); }); }
+addEventListener('popstate', () => {
+  const f = pile.pop(); if (f) f();
+  const r = attentesRetour.shift(); if (r) r();
+});
+
+let zFeuille = 100;
+/** Ouvre une « feuille » (fenêtre qui monte du bas). Renvoie { corps, pied, fermer }. */
+function feuille({ titre, plein = false, pied = true, surFermeture }) {
+  const corps = el('div', { class: 'feuille-corps' });
+  const zonePied = pied ? el('div', { class: 'feuille-pied' }) : null;
+  let ferme = false;
+  const api = { corps, pied: zonePied, ferme: () => ferme };
+  const f = el('div', { class: 'feuille' + (plein ? ' pleine' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-label': titre },
+    el('div', { class: 'feuille-tete' }, el('h2', { text: titre }), bouton('', { ico: 'fermer', cls: 'btn-icone', label: 'Fermer', onclick: () => api.fermer() })),
+    corps, zonePied);
+  const voile = el('div', { class: 'voile', onclick: () => api.fermer() });
+  voile.style.zIndex = ++zFeuille; f.style.zIndex = ++zFeuille;
+  document.body.append(voile, f);
+  requestAnimationFrame(() => { voile.classList.add('ouvert'); f.classList.add('ouverte'); });
+  function retirer() {
+    if (ferme) return; ferme = true;
+    f.classList.remove('ouverte'); voile.classList.remove('ouvert');
+    setTimeout(() => { f.remove(); voile.remove(); }, 230);
+    if (surFermeture) surFermeture();
+  }
+  ouvrirCouche(retirer);
+  api.fermer = () => ferme ? Promise.resolve() : fermerCouche();
+  return api;
+}
+/** Petite fenêtre de choix : renvoie la valeur choisie, ou null. */
+function demanderChoix(titre, options) {
+  return new Promise(res => {
+    let choix = null;
+    const fe = feuille({ titre, pied: false, surFermeture: () => res(choix) });
+    fe.corps.append(el('div', { class: 'menu-liste' }, options.map(o =>
+      bouton(o.texte, { ico: o.ico, onclick: () => { choix = o.valeur; fe.fermer(); } }))));
+  });
+}
+
+/** Ouvre le sélecteur de fichiers du téléphone. */
+function choisirFichiers({ accept = 'application/pdf,.pdf', multiple = false, capture } = {}) {
+  return new Promise(res => {
+    const i = el('input', { type: 'file', accept, style: { display: 'none' } });
+    i.multiple = multiple;
+    if (capture) i.setAttribute('capture', capture);
+    let fini = false;
+    const finir = v => { if (fini) return; fini = true; i.remove(); res(v); };
+    i.addEventListener('change', () => finir([...i.files]));
+    i.addEventListener('cancel', () => finir([]));
+    document.body.append(i); i.click();
+  });
+}
+
+/* =========================================================
+   3. ENREGISTRER / PARTAGER
+   ========================================================= */
+function telecharger(octets, nom, type = 'application/pdf') {
+  const url = URL.createObjectURL(new Blob([octets], { type }));
+  const a = el('a', { href: url, download: nom, style: { display: 'none' } });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+async function enregistrer(octets, nom, type = 'application/pdf') {
+  const mobile = matchMedia('(pointer: coarse)').matches;
+  if (window.showSaveFilePicker && !mobile) {
+    try {
+      const h = await showSaveFilePicker({ suggestedName: nom, types: [{ description: 'Document', accept: { [type]: ['.' + nom.split('.').pop()] } }] });
+      const w = await h.createWritable(); await w.write(new Blob([octets], { type })); await w.close();
+      return true;
+    } catch (e) { if (e.name === 'AbortError') return false; }
+  }
+  telecharger(octets, nom, type);
+  return true;
+}
+/** Partage via le menu du téléphone. Si le navigateur refuse (délai dépassé), on propose un bouton. */
+async function partager(fichiers) {
+  if (!navigator.canShare || !navigator.canShare({ files: fichiers })) {
+    toast('Le partage n\'est pas disponible ici : le fichier est enregistré à la place.');
+    for (const f of fichiers) { telecharger(new Uint8Array(await f.arrayBuffer()), f.name, f.type); await attendre(300); }
+    return;
+  }
+  try { await navigator.share({ files: fichiers }); }
+  catch (e) {
+    if (e.name === 'AbortError') return;
+    if (e.name === 'NotAllowedError') {
+      const fe = feuille({ titre: 'Fichier prêt' });
+      fe.corps.append(el('p', { text: 'Votre fichier est prêt. Touchez « Partager » pour l\'envoyer.' }));
+      fe.pied.append(bouton('Partager', { ico: 'partager', cls: 'btn principal', onclick: async () => { try { await navigator.share({ files: fichiers }); } catch {} fe.fermer(); } }));
+    } else toast('Partage impossible : ' + e.message);
+  }
+}
+const fichierPdf = (octets, nom) => new File([octets], nom, { type: 'application/pdf' });
+
+/** Fenêtre de résultat commune aux outils : Ouvrir / Partager / Enregistrer. */
+function feuilleResultat(octets, nom, info) {
+  const fe = feuille({ titre: 'C\'est prêt' });
+  fe.corps.append(
+    el('p', {}, el('strong', { text: nom })),
+    el('p', { class: 'note', text: (info ? info + ' · ' : '') + tailleLisible(octets.length) }));
+  fe.pied.append(
+    bouton('Ouvrir', { ico: 'doc', onclick: async () => { await fe.fermer(); ouvrirPdf(octets, nom); } }),
+    bouton('Partager', { ico: 'partager', onclick: () => partager([fichierPdf(octets, nom)]) }),
+    bouton('Enregistrer', { ico: 'enregistrer', cls: 'btn principal', onclick: async () => { if (await enregistrer(octets, nom)) toast('Fichier enregistré'); } }));
+}
+
+/* =========================================================
+   4. OUVERTURE D'UN DOCUMENT
+   ========================================================= */
+let D = null; // document ouvert
+const defil = $('#defil'), pagesEl = $('#pages'), ecranDoc = $('#ecran-doc');
+
+async function chargerPdfjs(octets, { demanderMotDePasse = true } = {}) {
+  const tache = pdfjsLib.getDocument({ data: octets.slice(), isEvalSupported: false, enableXfa: false, useSystemFonts: true });
+  if (demanderMotDePasse) tache.onPassword = (repondre, raison) => {
+    const mdp = prompt(raison === pdfjsLib.PasswordResponses.INCORRECT_PASSWORD ? 'Mot de passe incorrect. Réessayez :' : 'Ce PDF est protégé. Mot de passe :');
+    if (mdp === null) tache.destroy(); else repondre(mdp);
+  };
+  return tache.promise;
+}
+
+async function ouvrirFichier(f) {
+  if (!estPdf(f)) { toast('Ce fichier n\'est pas un PDF.'); return; }
+  const { nom, octets } = await lireFichier(f);
+  return ouvrirPdf(octets, nom);
+}
+
+async function ouvrirPdf(octets, nom) {
+  if (D && D.modifie && !confirm('Le document en cours n\'est pas enregistré. L\'abandonner ?')) return;
+  occupe('Ouverture…');
+  let pdf;
+  try { pdf = await chargerPdfjs(octets); }
+  catch (e) {
+    libre();
+    if (e?.name === 'PasswordException') return;
+    toast('Impossible d\'ouvrir ce fichier : il est peut-être abîmé ou n\'est pas un PDF.', 5000);
+    console.error(e); return;
+  }
+  try {
+    const pages = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const p = await pdf.getPage(i);
+      const vp = p.getViewport({ scale: 1 });
+      pages.push({ p, vp, w: vp.width, h: vp.height });
+    }
+    const champs = (await pdf.getFieldObjects()) || {};
+    const ancien = D;
+    D = {
+      nom, octets, pdf, pages, champs, aDesChamps: Object.keys(champs).length > 0,
+      items: [], images: {}, historique: [], modifie: false, mode: 'lire', zoom: 1, s: 1,
+      selection: null, attente: null, textes: [], resultats: [], resIndex: -1, vues: []
+    };
+    if (ancien) ancien.pdf.destroy();
+    $('#doc-titre').textContent = nom;
+    if (!ancien) { afficherEcran('doc'); ouvrirCouche(fermerDocument); }
+    fermerRecherche(true);
+    changerMode(D.aDesChamps ? 'editer' : 'lire', true);
+    construireVue();
+    defil.scrollTo(0, 0);
+    if (D.aDesChamps) toast('Formulaire détecté : touchez les cases bleues pour les remplir.');
+  } catch (e) { console.error(e); toast('Erreur à l\'ouverture : ' + e.message); }
+  finally { libre(); }
+}
+
+function fermerDocument() {
+  if (D && D.modifie && !confirm('Quitter sans enregistrer vos modifications ?')) {
+    ouvrirCouche(fermerDocument); return;
+  }
+  if (D) { D.pdf.destroy(); D = null; }
+  observateur?.disconnect();
+  pagesEl.innerHTML = '';
+  afficherEcran('accueil');
+}
+function afficherEcran(nom) {
+  $$('.ecran').forEach(e => e.classList.toggle('actif', e.id === 'ecran-' + nom));
+}
+
+/* =========================================================
+   5. LECTEUR : affichage des pages, zoom, page courante
+   ========================================================= */
+let observateur = null;
+const serviceLiens = {
+  externalLinkEnabled: true, externalLinkTarget: 2, externalLinkRel: 'noopener noreferrer nofollow',
+  pagesCount: 0, page: 1, rotation: 0, isInPresentationMode: false,
+  addLinkAttributes(a, url) { a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer nofollow'; },
+  getDestinationHash() { return '#'; }, getAnchorUrl() { return '#'; },
+  goToDestination() {}, goToPage() {}, setHash() {}, executeNamedAction() {}, executeSetOCGState() {},
+  cachePageRef() {}, isPageVisible() { return true; }, isPageCached() { return true; }
+};
+
+function construireVue() {
+  pagesEl.innerHTML = '';
+  observateur?.disconnect();
+  D.vues = D.pages.map((pg, i) => {
+    const page = el('div', { class: 'page', dataset: { i } });
+    const v = { page, canvas: el('canvas', { class: 'rendu' }), recherche: el('div', { class: 'calque-recherche' }),
+      formulaire: el('div', { class: 'annotationLayer' }), items: el('div', { class: 'calque-items' }),
+      cle: null, formCle: null, tache: null, visible: false };
+    page.append(v.canvas, v.recherche, v.formulaire, v.items);
+    pagesEl.append(page);
+    return v;
+  });
+  observateur = new IntersectionObserver(entrees => {
+    if (!D) return;
+    for (const e of entrees) {
+      const i = +e.target.dataset.i, v = D.vues[i]; if (!v) continue;
+      v.visible = e.isIntersecting;
+      if (v.visible) rendrePage(i); else liberer(i);
+    }
+  }, { root: defil, rootMargin: '120% 0px' });
+  mettreEnPage();
+  D.vues.forEach(v => observateur.observe(v.page));
+  majIndicateur();
+}
+
+function echelleAjustee() {
+  const largeurMax = Math.max(...D.pages.map(p => p.w));
+  const dispo = Math.max(200, Math.min(defil.clientWidth - 16, 1000));
+  return D.zoom * dispo / largeurMax;
+}
+function mettreEnPage() {
+  const s = echelleAjustee(); D.s = s;
+  D.vues.forEach((v, i) => {
+    const p = D.pages[i];
+    v.page.style.width = Math.round(p.w * s) + 'px';
+    v.page.style.height = Math.round(p.h * s) + 'px';
+    v.page.style.setProperty('--scale-factor', s);
+    rendreItems(i); dessinerSurlignages(i);
+    if (v.visible) rendrePage(i);
+  });
+}
+
+async function rendrePage(i) {
+  const v = D.vues[i], pg = D.pages[i], s = D.s, mode = D.mode;
+  const cle = s + '|' + mode;
+  if (v.cle === cle) return;
+  v.cle = cle;
+  if (v.tache) { v.tache.cancel(); v.tache = null; }
+  const vp = pg.p.getViewport({ scale: s });
+  let dpr = Math.min(window.devicePixelRatio || 1, 3);
+  const maxPix = 10e6;
+  if (vp.width * vp.height * dpr * dpr > maxPix) dpr = Math.sqrt(maxPix / (vp.width * vp.height));
+  const c = el('canvas', { class: 'rendu' });
+  c.width = Math.floor(vp.width * dpr); c.height = Math.floor(vp.height * dpr);
+  const tache = pg.p.render({ canvasContext: c.getContext('2d'), viewport: vp, transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null,
+    annotationMode: mode === 'editer' ? MODE_FORMS : MODE_STOCK });
+  v.tache = tache;
+  try { await tache.promise; }
+  catch (e) { if (e?.name !== 'RenderingCancelledException') { console.error(e); v.cle = null; } return; }
+  if (!D || D.vues[i] !== v || v.tache !== tache) return;
+  v.tache = null;
+  v.canvas.replaceWith(c); v.canvas = c;
+  if (mode === 'editer' && D.aDesChamps) await rendreFormulaire(i, vp);
+}
+function liberer(i) {
+  const v = D.vues[i];
+  if (v.tache) { v.tache.cancel(); v.tache = null; }
+  if (v.cle) { v.canvas.width = 0; v.canvas.height = 0; v.cle = null; }
+}
+async function rendreFormulaire(i, vp) {
+  const v = D.vues[i], pg = D.pages[i];
+  if (v.formCle === D.s) return;
+  if (!pg.annotations) pg.annotations = await pg.p.getAnnotations({ intent: 'display' });
+  if (!pg.annotations.some(a => a.annotationType === 20 || a.fieldType)) { v.formCle = D.s; return; }
+  v.formulaire.replaceChildren();
+  const vue = vp.clone({ dontFlip: true });
+  const couche = new pdfjsLib.AnnotationLayer({ div: v.formulaire, accessibilityManager: null, annotationCanvasMap: null, l10n: null, page: pg.p, viewport: vue });
+  await couche.render({ annotations: pg.annotations, viewport: vue, linkService: serviceLiens, downloadManager: null,
+    annotationStorage: D.pdf.annotationStorage, renderForms: true, enableScripting: false, hasJSActions: false,
+    fieldObjects: D.champs, imageResourcesPath: '' });
+  v.formCle = D.s;
+}
+
+function changerMode(mode, sansRendu) {
+  if (!D) return;
+  if (document.activeElement && pagesEl.contains(document.activeElement)) document.activeElement.blur();
+  D.mode = mode;
+  ecranDoc.classList.toggle('mode-lire', mode === 'lire');
+  ecranDoc.classList.toggle('mode-editer', mode === 'editer');
+  annulerPlacement();
+  D.selection = null;
+  if (sansRendu) return;
+  D.vues.forEach((v, i) => {
+    if (mode === 'lire') { v.formulaire.replaceChildren(); v.formCle = null; }
+    rendreItems(i);
+    if (v.visible) rendrePage(i);
+  });
+}
+
+/* Zoom au pincement (deux doigts) et Ctrl + molette sur ordinateur */
+let pince = null;
+function appliquerZoom(z, cx, cy) {
+  z = clamp(z, 0.5, 5);
+  if (!D || Math.abs(z - D.zoom) < 0.01) return;
+  const r = defil.getBoundingClientRect();
+  const ox = defil.scrollLeft + (cx - r.left), oy = defil.scrollTop + (cy - r.top);
+  const ancienne = D.s;
+  D.zoom = z; mettreEnPage();
+  const k = D.s / ancienne;
+  defil.scrollLeft = ox * k - (cx - r.left);
+  defil.scrollTop = oy * k - (cy - r.top);
+}
+defil.addEventListener('touchstart', e => {
+  if (!D || e.touches.length !== 2) return;
+  const [a, b] = e.touches;
+  pince = { d0: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), cx: (a.clientX + b.clientX) / 2, cy: (a.clientY + b.clientY) / 2, f: 1 };
+  const r = defil.getBoundingClientRect();
+  pagesEl.style.transformOrigin = `${defil.scrollLeft + pince.cx - r.left}px ${defil.scrollTop + pince.cy - r.top}px`;
+}, { passive: true });
+defil.addEventListener('touchmove', e => {
+  if (!pince || e.touches.length !== 2) return;
+  e.preventDefault();
+  const [a, b] = e.touches;
+  pince.f = clamp(Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / pince.d0, 0.5 / D.zoom, 5 / D.zoom);
+  pagesEl.style.transform = `scale(${pince.f})`;
+}, { passive: false });
+function finPince(e) {
+  if (!pince || e.touches.length >= 2) return;
+  const p = pince; pince = null;
+  pagesEl.style.transform = '';
+  appliquerZoom(D.zoom * p.f, p.cx, p.cy);
+}
+defil.addEventListener('touchend', finPince);
+defil.addEventListener('touchcancel', finPince);
+defil.addEventListener('wheel', e => {
+  if (!D || !e.ctrlKey) return;
+  e.preventDefault();
+  appliquerZoom(D.zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12), e.clientX, e.clientY);
+}, { passive: false });
+
+/* Indicateur « page 3 / 12 » */
+let rafIndic = 0;
+defil.addEventListener('scroll', () => { if (!rafIndic) rafIndic = requestAnimationFrame(() => { rafIndic = 0; majIndicateur(); }); }, { passive: true });
+function pageCourante() {
+  if (!D) return 0;
+  const milieu = defil.getBoundingClientRect().top + defil.clientHeight / 2;
+  for (let i = 0; i < D.vues.length; i++) {
+    const r = D.vues[i].page.getBoundingClientRect();
+    if (r.bottom + 10 >= milieu) return i;
+  }
+  return D.vues.length - 1;
+}
+function majIndicateur() { if (D) $('#indic-page').textContent = `${pageCourante() + 1} / ${D.pages.length}`; }
+function allerPage(i, decalage = 0) {
+  const v = D.vues[clamp(i, 0, D.vues.length - 1)];
+  const r = v.page.getBoundingClientRect(), rd = defil.getBoundingClientRect();
+  defil.scrollTo({ top: defil.scrollTop + r.top - rd.top - 8 + decalage, behavior: 'auto' });
+}
+$('#indic-page').addEventListener('click', () => {
+  if (!D) return;
+  const n = prompt(`Aller à la page (1 à ${D.pages.length}) :`, pageCourante() + 1);
+  const k = parseInt(n, 10);
+  if (k >= 1 && k <= D.pages.length) allerPage(k - 1);
+});
+
+let largeurPrecedente = innerWidth;
+addEventListener('resize', () => {
+  // On ne recalcule que si la largeur change (le clavier change seulement la hauteur).
+  if (Math.abs(innerWidth - largeurPrecedente) < 2) return;
+  largeurPrecedente = innerWidth;
+  clearTimeout(window.__resize); window.__resize = setTimeout(() => { if (D) mettreEnPage(); }, 200);
+});
+
+/* =========================================================
+   6. RECHERCHE DANS LE TEXTE
+   ========================================================= */
+const normCar = c => (c.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()[0]) || c;
+const normaliser = s => Array.from(s, normCar).join('');
+async function texteDePage(i) {
+  if (!D.textes[i]) D.textes[i] = await D.pages[i].p.getTextContent();
+  return D.textes[i];
+}
+/** Rectangle (en points, origine en haut à gauche) d'un morceau de texte. */
+function rectTexte(i, it, debut = 0, long = null) {
+  const vp = D.pages[i].vp;
+  const len = Math.max(1, it.str.length); if (long == null) long = len - debut;
+  const tx = pdfjsLib.Util.transform(vp.transform, it.transform);
+  const h = Math.hypot(tx[2], tx[3]) || 10;
+  const a = Math.atan2(tx[1], tx[0]), ux = Math.cos(a), uy = Math.sin(a), hx = Math.sin(a), hy = -Math.cos(a);
+  const L = it.width;
+  const p0 = [tx[4] + ux * L * debut / len, tx[5] + uy * L * debut / len];
+  const p1 = [tx[4] + ux * L * (debut + long) / len, tx[5] + uy * L * (debut + long) / len];
+  const pts = [p0, p1].flatMap(p => [[p[0] + hx * h * 0.9, p[1] + hy * h * 0.9], [p[0] - hx * h * 0.22, p[1] - hy * h * 0.22]]);
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+  const x = Math.min(...xs), y = Math.min(...ys);
+  return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y, taille: h, base: tx[5], angle: a };
+}
+async function lancerRecherche(q) {
+  if (!D) return;
+  const nq = normaliser(q.trim());
+  D.resultats = []; D.resIndex = -1;
+  if (nq.length < 1) { D.vues.forEach((_, i) => dessinerSurlignages(i)); $('#q-compte').textContent = ''; return; }
+  $('#q-compte').textContent = '…';
+  for (let i = 0; i < D.pages.length; i++) {
+    const tc = await texteDePage(i);
+    tc.items.forEach(it => {
+      if (!it.str) return;
+      const s = normaliser(it.str);
+      let pos = s.indexOf(nq);
+      while (pos >= 0) { D.resultats.push({ page: i, rect: rectTexte(i, it, pos, nq.length) }); pos = s.indexOf(nq, pos + 1); }
+    });
+  }
+  D.vues.forEach((_, i) => dessinerSurlignages(i));
+  if (!D.resultats.length) { $('#q-compte').textContent = '0'; toast('Aucun résultat'); return; }
+  allerResultat(0);
+}
+function allerResultat(k) {
+  const n = D.resultats.length; if (!n) return;
+  D.resIndex = (k + n) % n;
+  const r = D.resultats[D.resIndex];
+  $('#q-compte').textContent = `${D.resIndex + 1} / ${n}`;
+  D.vues.forEach((_, i) => dessinerSurlignages(i));
+  const v = D.vues[r.page];
+  const rp = v.page.getBoundingClientRect(), rd = defil.getBoundingClientRect();
+  defil.scrollTo({ top: defil.scrollTop + rp.top - rd.top + r.rect.y * D.s - defil.clientHeight / 3,
+    left: defil.scrollLeft + rp.left - rd.left + r.rect.x * D.s - defil.clientWidth / 3 });
+}
+function dessinerSurlignages(i) {
+  const v = D.vues[i]; if (!v) return;
+  v.recherche.replaceChildren();
+  D.resultats.forEach((r, k) => {
+    if (r.page !== i) return;
+    v.recherche.append(el('div', { class: 'surligne' + (k === D.resIndex ? ' actuel' : ''),
+      style: { left: r.rect.x * D.s + 'px', top: r.rect.y * D.s + 'px', width: r.rect.w * D.s + 'px', height: r.rect.h * D.s + 'px' } }));
+  });
+}
+function ouvrirRecherche() {
+  const b = $('#barre-recherche');
+  if (!b.hidden) { $('#q').focus(); return; }
+  b.hidden = false; $('#q').focus();
+  ouvrirCouche(() => fermerRecherche(true));
+}
+function fermerRecherche(direct) {
+  const b = $('#barre-recherche');
+  if (b.hidden) return;
+  if (!direct) { fermerCouche(); return; }
+  b.hidden = true; $('#q').value = ''; $('#q-compte').textContent = '';
+  if (D) { D.resultats = []; D.vues.forEach((_, i) => dessinerSurlignages(i)); }
+}
+let minuteurRecherche;
+$('#barre-recherche').addEventListener('submit', e => { e.preventDefault(); clearTimeout(minuteurRecherche); $('#q').blur(); lancerRecherche($('#q').value); });
+$('#q').addEventListener('input', () => { clearTimeout(minuteurRecherche); minuteurRecherche = setTimeout(() => lancerRecherche($('#q').value), 450); });
+$('#q-suiv').addEventListener('click', () => allerResultat(D.resIndex + 1));
+$('#q-prec').addEventListener('click', () => allerResultat(D.resIndex - 1));
+$('#q-fermer').addEventListener('click', () => fermerRecherche(false));
+
+/* =========================================================
+   7. ÉLÉMENTS POSÉS : texte, signature, tampon, masque
+   Coordonnées en points PDF, origine en haut à gauche de la page affichée.
+   ========================================================= */
+function memoriser() { D.historique.push(JSON.stringify(D.items)); if (D.historique.length > 60) D.historique.shift(); }
+function annulerAction() {
+  const h = D.historique.pop();
+  if (!h) { toast('Rien à annuler'); return; }
+  D.items = JSON.parse(h); D.selection = null; D.modifie = true;
+  D.vues.forEach((_, i) => rendreItems(i));
+}
+function rendreItems(i) {
+  const v = D.vues[i]; if (!v) return;
+  v.items.replaceChildren(...D.items.filter(t => t.page === i).map(elementItem));
+}
+function majStyleItem(e, it) {
+  const s = D.s;
+  e.style.left = it.x * s + 'px'; e.style.top = it.y * s + 'px';
+  if (it.type === 'texte') { e.style.fontSize = it.taille * s + 'px'; e.style.color = it.couleur; e.firstChild.textContent = it.texte || ' '; }
+  else { e.style.width = it.w * s + 'px'; e.style.height = it.h * s + 'px'; if (it.type === 'masque') e.style.background = it.couleur; }
+}
+function elementItem(it) {
+  const e = el('div', { class: 'item item-' + it.type + (D.selection === it.id ? ' sel' : ''), dataset: { id: it.id } });
+  if (it.type === 'texte') e.append(document.createTextNode(''));
+  if (it.type === 'image') e.append(el('img', { src: D.images[it.img], alt: '', draggable: 'false' }));
+  majStyleItem(e, it);
+  if (D.mode === 'editer') {
+    e.append(el('span', { class: 'poignee', 'aria-hidden': 'true' }),
+      el('button', { type: 'button', class: 'suppr', 'aria-label': 'Supprimer cet élément', onclick: ev => { ev.stopPropagation(); supprimerItem(it.id); } }, icone('fermer')));
+    attacherGestes(e, it);
+  }
+  return e;
+}
+function selectionner(id) {
+  D.selection = id;
+  $$('.item', pagesEl).forEach(e => e.classList.toggle('sel', e.dataset.id === id));
+}
+function supprimerItem(id, sansMemo) {
+  const it = D.items.find(t => t.id === id); if (!it) return;
+  if (!sansMemo) memoriser();
+  D.items = D.items.filter(t => t.id !== id && !(it.masqueLie && t.id === it.masqueLie));
+  D.modifie = true; D.selection = null;
+  rendreItems(it.page);
+}
+function attacherGestes(e, it) {
+  e.addEventListener('pointerdown', ev => {
+    if (ev.target.closest('.suppr') || D.attente) return;
+    ev.preventDefault(); ev.stopPropagation();
+    const redim = ev.target.classList.contains('poignee');
+    const dejaSel = D.selection === it.id;
+    selectionner(it.id);
+    e.setPointerCapture(ev.pointerId);
+    const s = D.s, x0 = ev.clientX, y0 = ev.clientY, orig = { ...it }, largeur0 = e.offsetWidth / s;
+    const pg = D.pages[it.page];
+    let bouge = false;
+    const mv = m => {
+      if (!bouge && Math.hypot(m.clientX - x0, m.clientY - y0) < 6) return;
+      if (!bouge) { bouge = true; D.historique.push(JSON.stringify(D.items.map(t => t.id === it.id ? orig : t))); }
+      const dx = (m.clientX - x0) / s, dy = (m.clientY - y0) / s;
+      if (redim) {
+        if (it.type === 'image') { it.w = clamp(orig.w + dx, 10, pg.w * 1.5); it.h = it.w * orig.h / orig.w; }
+        else if (it.type === 'masque') { it.w = Math.max(4, orig.w + dx); it.h = Math.max(4, orig.h + dy); }
+        else it.taille = clamp(orig.taille * (largeur0 + dx) / largeur0, 4, 120);
+      } else {
+        it.x = clamp(orig.x + dx, -largeur0 * 0.6, pg.w - 8);
+        it.y = clamp(orig.y + dy, -10, pg.h - 8);
+      }
+      majStyleItem(e, it);
+    };
+    const fin = () => {
+      e.removeEventListener('pointermove', mv); e.removeEventListener('pointerup', fin); e.removeEventListener('pointercancel', fin);
+      if (bouge) D.modifie = true;
+      else if (dejaSel && it.type !== 'image') editerItem(it);
+    };
+    e.addEventListener('pointermove', mv); e.addEventListener('pointerup', fin); e.addEventListener('pointercancel', fin);
+  });
+}
+pagesEl.addEventListener('pointerdown', e => {
+  if (D && D.mode === 'editer' && !D.attente && !e.target.closest('.item')) selectionner(null);
+});
+pagesEl.addEventListener('input', () => { if (D) D.modifie = true; });
+pagesEl.addEventListener('change', () => { if (D) D.modifie = true; });
+
+/* Placement : on choisit l'outil, puis on touche la page */
+function demanderPlacement(attente, message) {
+  D.attente = attente;
+  pagesEl.classList.add('placement');
+  $('#aide-texte').textContent = message;
+  $('#aide-placement').hidden = false;
+  $$('#barre-editer .outil').forEach(b => b.classList.toggle('actif', b.dataset.action === attente.outil));
+}
+function annulerPlacement() {
+  if (D) D.attente = null;
+  pagesEl.classList.remove('placement');
+  $('#aide-placement').hidden = true;
+  $$('#barre-editer .outil').forEach(b => b.classList.remove('actif'));
+}
+$('#aide-annuler').addEventListener('click', annulerPlacement);
+pagesEl.addEventListener('click', async e => {
+  if (!D || !D.attente) return;
+  const pageEl = e.target.closest('.page'); if (!pageEl) return;
+  const i = +pageEl.dataset.i, r = pageEl.getBoundingClientRect();
+  const x = (e.clientX - r.left) / D.s, y = (e.clientY - r.top) / D.s;
+  const a = D.attente;
+  if (a.outil === 'corriger') { await corrigerTexte(i, x, y); return; }
+  annulerPlacement();
+  memoriser();
+  let it;
+  if (a.outil === 'texte') {
+    it = { id: idUnique(), type: 'texte', page: i, x, y: y - prefs.tailleTexte * 0.6, texte: '', taille: prefs.tailleTexte, couleur: prefs.couleurTexte };
+  } else if (a.outil === 'masque') {
+    it = { id: idUnique(), type: 'masque', page: i, x: x - 60, y: y - 12, w: 120, h: 24, couleur: '#ffffff' };
+  } else {
+    D.images[a.tampon.id] = a.tampon.png;
+    const w = a.largeur, h = w * a.tampon.h / a.tampon.l;
+    it = { id: idUnique(), type: 'image', page: i, x: x - w / 2, y: y - h / 2, w, h, img: a.tampon.id };
+  }
+  D.items.push(it); D.modifie = true;
+  rendreItems(i); selectionner(it.id);
+  if (it.type === 'texte') editerItem(it, true);
+});
+
+function editerItem(it, nouveau) {
+  if (it.type === 'texte') return feuilleTexte(it, nouveau);
+  if (it.type === 'masque') return feuilleMasque(it);
+}
+function rafraichirItem(it) {
+  const e = $(`.item[data-id="${it.id}"]`, pagesEl);
+  if (e) majStyleItem(e, it); else rendreItems(it.page);
+}
+const COULEURS_TEXTE = [['#111111', 'Noir'], ['#1d3fb3', 'Bleu'], ['#b91c1c', 'Rouge']];
+function segments(nom, options, valeur, onchange) {
+  return el('div', { class: 'segments', role: 'radiogroup' }, options.map(([v, texte, pastille]) =>
+    el('label', {}, el('input', { type: 'radio', name: nom, value: v, checked: v === valeur, onchange: () => onchange(v) }),
+      el('span', {}, pastille ? el('i', { class: 'pastille', style: { background: pastille } }) : null, texte))));
+}
+function feuilleTexte(it, nouveau) {
+  const avant = JSON.stringify(D.items);
+  const fe = feuille({ titre: nouveau ? 'Ajouter du texte' : 'Modifier le texte', surFermeture: () => {
+    if (!it.texte.trim()) supprimerItem(it.id, true);
+    else if (!nouveau && JSON.stringify(D.items) !== avant) { D.historique.push(avant); D.modifie = true; }
+  } });
+  const ta = el('textarea', { class: 'champ', rows: 3, id: 'texte-item', placeholder: 'Votre texte' });
+  ta.value = it.texte;
+  ta.addEventListener('input', () => { it.texte = ta.value; rafraichirItem(it); });
+  const affTaille = el('span', { text: it.taille.toFixed(0) + ' pt' });
+  const curseur = el('input', { type: 'range', min: 6, max: 40, step: 1, value: String(Math.round(it.taille)), 'aria-label': 'Taille du texte',
+    oninput: e => { it.taille = +e.target.value; affTaille.textContent = it.taille + ' pt'; rafraichirItem(it); } });
+  fe.corps.append(
+    el('label', { class: 'etiquette', for: 'texte-item', text: 'Texte' }), ta,
+    el('div', { class: 'etiquette' }, 'Taille : ', affTaille), curseur,
+    el('div', { class: 'etiquette', text: 'Couleur' }),
+    segments('couleur-texte', COULEURS_TEXTE.map(([c, n]) => [c, n, c]), it.couleur, c => { it.couleur = c; rafraichirItem(it); }));
+  fe.pied.append(
+    bouton('Supprimer', { ico: 'poubelle', cls: 'btn danger', onclick: () => { it.texte = ''; fe.fermer(); } }),
+    bouton('Valider', { ico: 'valider', cls: 'btn principal', onclick: () => fe.fermer() }));
+  setTimeout(() => ta.focus(), 250);
+}
+function feuilleMasque(it) {
+  const avant = JSON.stringify(D.items);
+  const fe = feuille({ titre: 'Zone masquée', surFermeture: () => { if (JSON.stringify(D.items) !== avant) { D.historique.push(avant); D.modifie = true; } } });
+  fe.corps.append(
+    el('div', { class: 'etiquette', text: 'Couleur' }),
+    segments('couleur-masque', [['#ffffff', 'Blanc', '#ffffff'], ['#000000', 'Noir', '#000000']], it.couleur, c => { it.couleur = c; rafraichirItem(it); }),
+    el('p', { class: 'note', text: 'Le masque cache la zone à l\'écran et à l\'impression. Le texte d\'origine reste caché dessous dans le fichier : pour l\'effacer vraiment, utilisez ensuite « Aplatir en image » dans le menu ⋮.' }));
+  fe.pied.append(
+    bouton('Supprimer', { ico: 'poubelle', cls: 'btn danger', onclick: () => { supprimerItem(it.id); fe.fermer(); } }),
+    bouton('Valider', { ico: 'valider', cls: 'btn principal', onclick: () => fe.fermer() }));
+}
+
+/* Corriger un texte existant : on le recouvre d'un masque blanc et on réécrit par-dessus */
+async function corrigerTexte(i, x, y) {
+  const tc = await texteDePage(i);
+  let meilleur = null;
+  for (const it of tc.items) {
+    if (!it.str || !it.str.trim()) continue;
+    const r = rectTexte(i, it);
+    if (x >= r.x - 2 && x <= r.x + r.w + 2 && y >= r.y - 2 && y <= r.y + r.h + 2) {
+      const aire = r.w * r.h;
+      if (!meilleur || aire < meilleur.aire) meilleur = { it, r, aire };
+    }
+  }
+  if (!meilleur) { toast('Aucun texte à cet endroit. Touchez directement un mot.'); return; }
+  annulerPlacement();
+  memoriser();
+  const { it: t, r } = meilleur;
+  const masque = { id: idUnique(), type: 'masque', page: i, x: r.x - 1, y: r.y - 1, w: r.w + 2, h: r.h + 2, couleur: '#ffffff' };
+  const taille = Math.round(r.taille * 10) / 10;
+  const texte = { id: idUnique(), type: 'texte', page: i, x: r.x, y: r.base - taille * 0.92, texte: t.str, taille, couleur: '#111111', masqueLie: masque.id };
+  if (Math.abs(r.angle) > 0.05) { texte.y = r.y; }
+  D.items.push(masque, texte); D.modifie = true;
+  rendreItems(i); selectionner(texte.id);
+  editerItem(texte);
+}
+
+/* Barre d'outils d'édition */
+$('#barre-editer').addEventListener('click', async e => {
+  const b = e.target.closest('[data-action]'); if (!b || !D) return;
+  const a = b.dataset.action;
+  if (D.attente && D.attente.outil === a) { annulerPlacement(); return; }
+  annulerPlacement();
+  if (a === 'texte') demanderPlacement({ outil: 'texte' }, 'Touchez la page à l\'endroit où écrire.');
+  else if (a === 'masque') demanderPlacement({ outil: 'masque' }, 'Touchez la zone à masquer.');
+  else if (a === 'corriger') demanderPlacement({ outil: 'corriger' }, 'Touchez le mot ou la ligne à corriger.');
+  else if (a === 'annuler') annulerAction();
+  else if (a === 'terminer') changerMode('lire');
+  else if (a === 'signature' || a === 'tampon') {
+    const t = await choisirTampon(a);
+    if (!t || !D) return;
+    demanderPlacement({ outil: a, tampon: t, largeur: a === 'signature' ? prefs.largeurSignature : prefs.largeurTampon },
+      a === 'signature' ? 'Touchez l\'endroit où placer la signature.' : 'Touchez l\'endroit où placer le tampon.');
+  }
+});
+
+/* =========================================================
+   8. EXPORT DU PDF (buildPdf)
+   Ordre : remplissage des champs → flatten → écriture (flush) → embedPage → éléments posés.
+   ========================================================= */
+/** Convertit un point « vu à l'écran » (origine en haut à gauche) en point PDF, selon la rotation de la page. */
+function versUtilisateur(cb, R, vx, vy) {
+  switch (R) {
+    case 90: return [cb.x + vy, cb.y + vx];
+    case 180: return [cb.x + cb.width - vx, cb.y + vy];
+    case 270: return [cb.x + cb.width - vy, cb.y + cb.height - vx];
+    default: return [cb.x + vx, cb.y + cb.height - vy];
+  }
+}
+const angleDe = page => (((page.getRotation().angle || 0) % 360) + 360) % 360;
+
+async function remplirChamps(doc) {
+  const stock = D.pdf.annotationStorage;
+  if (!stock.size) return 0;
+  const form = doc.getForm();
+  let n = 0;
+  for (const [nom, objets] of Object.entries(D.champs)) {
+    const valeurs = objets.map(o => ({ o, v: o.id ? stock.getValue(o.id, {}) : {} })).filter(x => 'value' in x.v);
+    if (!valeurs.length) continue;
+    let champ; try { champ = form.getField(nom); } catch { continue; }
+    const type = objets[0].type;
+    try {
+      if (type === 'text') {
+        let t = versWinAnsi(valeurs[valeurs.length - 1].v.value ?? '');
+        const max = champ.getMaxLength?.(); if (max) t = t.slice(0, max);
+        champ.setText(t);
+      } else if (type === 'checkbox') {
+        valeurs.some(x => x.v.value === true || (typeof x.v.value === 'string' && x.v.value !== 'Off')) ? champ.check() : champ.uncheck();
+      } else if (type === 'radiobutton') {
+        const choisi = valeurs.find(x => x.v.value === true);
+        if (choisi) {
+          const options = champ.getOptions();
+          const ev = choisi.o.exportValues;
+          const opt = options.includes(ev) ? ev : options[objets.indexOf(choisi.o)];
+          if (opt != null) champ.select(opt);
+        }
+      } else if (type === 'combobox' || type === 'listbox') {
+        const v = valeurs[valeurs.length - 1].v.value;
+        const liste = (Array.isArray(v) ? v : [v]).filter(x => x != null && x !== '').map(versWinAnsi);
+        if (liste.length) champ.select(type === 'listbox' ? liste : liste[0]); else champ.clear?.();
+      } else continue;
+      n++;
+    } catch (e) { console.warn('Champ non rempli :', nom, e); }
+  }
+  return n;
+}
+
+async function dessinerItems(out, np, items, versPdf, R, ressources) {
+  for (const it of items) {
+    const rot = degrees(R);
+    if (it.type === 'masque') {
+      const [x, y] = versPdf(it.x, it.y + it.h);
+      np.drawRectangle({ x, y, width: it.w, height: it.h, color: hexVersRgb(it.couleur), rotate: rot, borderWidth: 0 });
+    } else if (it.type === 'image') {
+      let img = ressources.images.get(it.img);
+      if (!img) {
+        const src = D.images[it.img];
+        img = src.startsWith('data:image/png') ? await out.embedPng(dataUrlVersOctets(src)) : await out.embedJpg(dataUrlVersOctets(src));
+        ressources.images.set(it.img, img);
+      }
+      const [x, y] = versPdf(it.x, it.y + it.h);
+      np.drawImage(img, { x, y, width: it.w, height: it.h, rotate: rot });
+    } else if (it.type === 'texte') {
+      if (!ressources.police) ressources.police = await out.embedFont(StandardFonts.Helvetica);
+      versWinAnsi(it.texte).split('\n').forEach((ligne, k) => {
+        if (!ligne) return;
+        const [x, y] = versPdf(it.x, it.y + it.taille * (0.92 + 1.15 * k));
+        np.drawText(ligne, { x, y, size: it.taille, font: ressources.police, color: hexVersRgb(it.couleur), rotate: rot });
+      });
+    }
+  }
+}
+
+async function construirePdf() {
+  if (document.activeElement && pagesEl.contains(document.activeElement)) document.activeElement.blur();
+  await attendre(30);
+  let src;
+  try { src = await PDFDocument.load(D.octets, { ignoreEncryption: true, updateMetadata: false }); }
+  catch (e) { console.warn('pdf-lib ne lit pas ce fichier, export en images', e); return construirePdfImage(); }
+  if (src.isEncrypted) { toast('PDF protégé : il sera enregistré sous forme d\'images.', 4500); return construirePdfImage(); }
+
+  // 1. Remplissage des champs du formulaire, puis « flatten » (les champs deviennent du texte fixe)
+  await remplirChamps(src);
+  const form = src.getForm();
+  if (form.getFields().length) {
+    try { form.flatten({ updateFieldAppearances: true }); }
+    catch (e) { console.warn('flatten avec apparences impossible, nouvel essai', e); try { form.flatten({ updateFieldAppearances: false }); } catch (e2) { console.warn(e2); } }
+  }
+  // 2. « flush » : on écrit le document pour figer les apparences, puis on le relit
+  src = await PDFDocument.load(await src.save({ updateFieldAppearances: false, useObjectStreams: false }), { ignoreEncryption: true, updateMetadata: false });
+
+  // 3. Nouveau document : chaque page est intégrée (embedPage), puis on dessine les éléments posés
+  const out = await PDFDocument.create();
+  out.setProducer('Atelier PDF'); out.setCreator('Atelier PDF'); out.setTitle(nomSansExt(D.nom));
+  const ressources = { images: new Map(), police: null };
+  const pagesSrc = src.getPages();
+  for (let i = 0; i < pagesSrc.length; i++) {
+    const sp = pagesSrc[i], mb = sp.getMediaBox(), cb = sp.getCropBox(), R = angleDe(sp);
+    const np = out.addPage([mb.width, mb.height]);
+    np.setMediaBox(mb.x, mb.y, mb.width, mb.height);
+    np.setCropBox(cb.x, cb.y, cb.width, cb.height);
+    try {
+      const emb = await out.embedPage(sp, { left: mb.x, bottom: mb.y, right: mb.x + mb.width, top: mb.y + mb.height });
+      np.drawPage(emb, { x: mb.x, y: mb.y });
+    } catch (e) { console.warn('Page vide ou illisible', i + 1, e); }
+    np.setRotation(degrees(R));
+    await dessinerItems(out, np, D.items.filter(t => t.page === i), (x, y) => versUtilisateur(cb, R, x, y), R, ressources);
+  }
+  return out.save();
+}
+
+/** Rend une page en image JPEG (sert à la compression, aux images, à l'aplatissement). */
+async function pageEnImage(page, dpi = 150, qualite = 0.8, type = 'image/jpeg') {
+  let s = dpi / 72;
+  const vp1 = page.getViewport({ scale: 1 });
+  const maxPix = 16e6; if (vp1.width * vp1.height * s * s > maxPix) s = Math.sqrt(maxPix / (vp1.width * vp1.height));
+  const vp = page.getViewport({ scale: s });
+  const c = el('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+  const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+  await page.render({ canvasContext: ctx, viewport: vp, annotationMode: MODE_STOCK }).promise;
+  const blob = await canvasVersBlob(c, type, qualite);
+  c.width = c.height = 0;
+  return { octets: new Uint8Array(await blob.arrayBuffer()), w: vp1.width, h: vp1.height };
+}
+/** Export « aplati » : chaque page devient une image, puis on dessine les éléments posés. */
+async function construirePdfImage(dpi = 150) {
+  const out = await PDFDocument.create(); out.setProducer('Atelier PDF');
+  const ressources = { images: new Map(), police: null };
+  for (let i = 0; i < D.pages.length; i++) {
+    majOccupe(`Page ${i + 1} / ${D.pages.length}…`);
+    const img = await pageEnImage(D.pages[i].p, dpi, 0.82);
+    const jpg = await out.embedJpg(img.octets);
+    const np = out.addPage([img.w, img.h]);
+    np.drawImage(jpg, { x: 0, y: 0, width: img.w, height: img.h });
+    await dessinerItems(out, np, D.items.filter(t => t.page === i), (x, y) => [x, img.h - y], 0, ressources);
+  }
+  return out.save();
+}
+const documentModifie = () => D.items.length > 0 || D.pdf.annotationStorage.size > 0;
+async function octetsCourants() { return documentModifie() ? construirePdf() : D.octets; }
+
+async function exporter(action) {
+  if (!D) return;
+  occupe('Préparation du PDF…');
+  let octets;
+  try { octets = await construirePdf(); }
+  catch (e) { console.error(e); toast('Impossible de créer le PDF : ' + e.message, 5000); return; }
+  finally { libre(); }
+  const nom = documentModifie() ? nomSortie(D.nom, 'signé') : D.nom;
+  if (action === 'partager') await partager([fichierPdf(octets, nom)]);
+  else if (await enregistrer(octets, nom)) { D.modifie = false; toast('PDF enregistré dans vos téléchargements'); }
+}
+
+/* Menu ⋮ du document */
+async function menuDocument() {
+  const choix = await demanderChoix('Document', [
+    { texte: 'Partager', ico: 'partager', valeur: 'partager' },
+    { texte: 'Enregistrer', ico: 'enregistrer', valeur: 'enregistrer' },
+    { texte: D.mode === 'lire' ? 'Remplir et signer' : 'Revenir en lecture', ico: 'crayon', valeur: 'mode' },
+    { texte: 'Organiser les pages', ico: 'pages', valeur: 'organiser' },
+    { texte: 'Compresser', ico: 'compresser', valeur: 'compresser' },
+    { texte: 'Numéroter les pages', ico: 'numero', valeur: 'numeros' },
+    { texte: 'Ajouter un filigrane', ico: 'filigrane', valeur: 'filigrane' },
+    { texte: 'Convertir en images', ico: 'images', valeur: 'images' },
+    { texte: 'Aplatir en image (sécurité)', ico: 'masque', valeur: 'aplatir' },
+    { texte: 'Taille d\'affichage normale', ico: 'zoom', valeur: 'zoom' },
+    { texte: 'Informations', ico: 'info', valeur: 'info' }
+  ]);
+  if (!choix || !D) return;
+  if (choix === 'partager' || choix === 'enregistrer') return exporter(choix);
+  if (choix === 'mode') return changerMode(D.mode === 'lire' ? 'editer' : 'lire');
+  if (choix === 'zoom') { D.zoom = 1; mettreEnPage(); return; }
+  if (choix === 'info') {
+    const fe = feuille({ titre: 'Informations', pied: false });
+    fe.corps.append(el('ul', { class: 'liste' },
+      el('li', { class: 'ligne' }, el('span', { class: 'texte' }, el('strong', { text: D.nom }), el('small', { text: tailleLisible(D.octets.length) }))),
+      el('li', { class: 'ligne' }, el('span', { class: 'texte', text: `${D.pages.length} page${D.pages.length > 1 ? 's' : ''}` })),
+      el('li', { class: 'ligne' }, el('span', { class: 'texte', text: D.aDesChamps ? `Formulaire : ${Object.keys(D.champs).length} champs` : 'Pas de champ de formulaire' }))));
+    return;
+  }
+  occupe('Préparation…');
+  let octets;
+  try { octets = choix === 'aplatir' ? await construirePdfImage(200) : await octetsCourants(); }
+  catch (e) { console.error(e); toast('Erreur : ' + e.message); return; }
+  finally { libre(); }
+  if (choix === 'aplatir') return feuilleResultat(octets, nomSortie(D.nom, 'aplati'), 'Pages converties en images, texte caché effacé');
+  lancerOutil(choix, [{ nom: D.nom, octets }]);
+}
+
+/* =========================================================
+   9. SIGNATURES ET TAMPONS (dessin, photo détourée, tampon texte)
+   ========================================================= */
+function rogner(c, marge = 6) {
+  const ctx = c.getContext('2d'), { width: w, height: h } = c;
+  const d = ctx.getImageData(0, 0, w, h).data;
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (d[(y * w + x) * 4 + 3] > 12) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  }
+  if (x1 < 0) return null;
+  x0 = Math.max(0, x0 - marge); y0 = Math.max(0, y0 - marge); x1 = Math.min(w - 1, x1 + marge); y1 = Math.min(h - 1, y1 + marge);
+  const r = el('canvas'); r.width = x1 - x0 + 1; r.height = y1 - y0 + 1;
+  r.getContext('2d').drawImage(c, x0, y0, r.width, r.height, 0, 0, r.width, r.height);
+  return r;
+}
+function reduire(c, max = 1000) {
+  const k = Math.min(1, max / Math.max(c.width, c.height));
+  if (k === 1) return c;
+  const r = el('canvas'); r.width = Math.round(c.width * k); r.height = Math.round(c.height * k);
+  const ctx = r.getContext('2d'); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(c, 0, 0, r.width, r.height);
+  return r;
+}
+function sauverTampon(c, type, nom) {
+  const r = reduire(c, 1000);
+  const t = { id: idUnique(), nom: nom || (type === 'signature' ? 'Signature' : 'Tampon'), type, png: r.toDataURL('image/png'), l: r.width, h: r.height, cree: Date.now() };
+  const liste = lireTampons(); liste.push(t);
+  return ecrireTampons(liste) ? t : null;
+}
+const libelleType = type => type === 'signature' ? 'signature' : 'tampon';
+
+/** Choisir une signature ou un tampon (et en créer un au besoin). */
+function choisirTampon(type) {
+  return new Promise(res => {
+    let choix = null;
+    const fe = feuille({ titre: type === 'signature' ? 'Choisir une signature' : 'Choisir un tampon', surFermeture: () => res(choix) });
+    const liste = lireTampons().filter(t => t.type === type);
+    if (liste.length) {
+      fe.corps.append(el('div', { class: 'grille-tampons' }, liste.map(t =>
+        el('button', { type: 'button', class: 'carte-tampon', onclick: () => { choix = t; fe.fermer(); } },
+          el('div', { class: 'apercu damier' }, el('img', { src: t.png, alt: t.nom })), el('span', { class: 'nom', text: t.nom })))));
+    } else fe.corps.append(el('p', { class: 'vide', text: type === 'signature' ? 'Aucune signature enregistrée. Créez-en une ci-dessous : elle sera gardée sur ce téléphone.' : 'Aucun tampon enregistré. Créez-en un ci-dessous : il sera gardé sur ce téléphone.' }));
+    const creer = async fabrique => { const t = await fabrique(); if (t) { choix = t; fe.fermer(); } };
+    fe.corps.append(el('div', { class: 'rangee-btn' },
+      bouton('Dessiner', { ico: 'crayon', onclick: () => creer(() => dessinerTampon(type)) }),
+      bouton('Photo', { ico: 'camera', onclick: () => creer(() => importerTampon(type)) }),
+      type === 'tampon' ? bouton('Tampon texte', { ico: 'texte', onclick: () => creer(() => tamponTexte()) }) : null));
+    fe.pied.remove();
+  });
+}
+
+/** Dessiner au doigt */
+function dessinerTampon(type) {
+  return new Promise(res => {
+    let resultat = null;
+    const fe = feuille({ titre: type === 'signature' ? 'Dessiner une signature' : 'Dessiner un tampon', plein: true, surFermeture: () => res(resultat) });
+    let couleur = '#111111', epaisseur = 3;
+    const pad = el('canvas', { class: 'pad', 'aria-label': 'Zone de dessin' });
+    const nom = el('input', { class: 'champ', id: 'nom-dessin', value: type === 'signature' ? 'Ma signature' : 'Mon tampon', maxlength: 40 });
+    fe.corps.append(
+      el('p', { class: 'note', text: 'Signez dans le cadre avec le doigt. Tournez le téléphone en paysage pour plus de place.' }), pad,
+      el('div', { class: 'etiquette', text: 'Couleur de l\'encre' }),
+      segments('encre', [['#111111', 'Noir', '#111111'], ['#1d3fb3', 'Bleu', '#1d3fb3']], couleur, c => { couleur = c; }),
+      el('div', { class: 'etiquette', text: 'Épaisseur' }),
+      segments('epaisseur', [['2', 'Fine'], ['3', 'Moyenne'], ['5', 'Épaisse']], '3', v => { epaisseur = +v; }),
+      el('label', { class: 'etiquette', for: 'nom-dessin', text: 'Nom' }), nom);
+    let traits = [], courant = null, k = 1;
+    const ctx = pad.getContext('2d');
+    const dimensionner = () => {
+      k = Math.min(devicePixelRatio || 1, 3);
+      pad.width = pad.clientWidth * k; pad.height = pad.clientHeight * k;
+      redessiner();
+    };
+    function tracer(t) {
+      ctx.strokeStyle = t.c; ctx.lineWidth = t.e * k; ctx.lineCap = ctx.lineJoin = 'round';
+      const p = t.pts; if (!p.length) return;
+      ctx.beginPath(); ctx.moveTo(p[0][0] * k, p[0][1] * k);
+      if (p.length === 1) ctx.lineTo(p[0][0] * k + 0.1, p[0][1] * k);
+      for (let i = 1; i < p.length - 1; i++) {
+        const mx = (p[i][0] + p[i + 1][0]) / 2, my = (p[i][1] + p[i + 1][1]) / 2;
+        ctx.quadraticCurveTo(p[i][0] * k, p[i][1] * k, mx * k, my * k);
+      }
+      if (p.length > 1) ctx.lineTo(p[p.length - 1][0] * k, p[p.length - 1][1] * k);
+      ctx.stroke();
+    }
+    function redessiner() { ctx.clearRect(0, 0, pad.width, pad.height); traits.forEach(tracer); }
+    const pos = e => { const r = pad.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+    pad.addEventListener('pointerdown', e => { e.preventDefault(); pad.setPointerCapture(e.pointerId); courant = { c: couleur, e: epaisseur, pts: [pos(e)] }; traits.push(courant); redessiner(); });
+    pad.addEventListener('pointermove', e => { if (!courant) return; const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e]; evs.forEach(x => courant.pts.push(pos(x))); redessiner(); });
+    const fin = () => { courant = null; };
+    pad.addEventListener('pointerup', fin); pad.addEventListener('pointercancel', fin);
+    fe.pied.append(
+      bouton('Effacer', { ico: 'poubelle', onclick: () => { traits = []; redessiner(); } }),
+      bouton('Enregistrer', { ico: 'valider', cls: 'btn principal', onclick: () => {
+        if (!traits.length) { toast('Dessinez d\'abord dans le cadre.'); return; }
+        const r = rogner(pad, 4 * k);
+        if (!r) { toast('Le dessin est vide.'); return; }
+        resultat = sauverTampon(r, type, nom.value.trim());
+        if (resultat) { toast('Enregistré'); fe.fermer(); }
+      } }));
+    requestAnimationFrame(() => requestAnimationFrame(dimensionner));
+    const surRot = () => setTimeout(dimensionner, 250);
+    addEventListener('resize', surRot);
+    const retirer = setInterval(() => { if (fe.ferme()) { removeEventListener('resize', surRot); clearInterval(retirer); } }, 1000);
+  });
+}
+
+/** Chargement d'une photo dans un canvas (taille limitée pour la mémoire du téléphone). */
+async function chargerImage(fichier, max = 2400) {
+  const url = URL.createObjectURL(fichier);
+  try {
+    const img = new Image(); img.src = url; await img.decode();
+    const k = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = el('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    const ctx = c.getContext('2d'); ctx.imageSmoothingQuality = 'high'; ctx.drawImage(img, 0, 0, c.width, c.height);
+    return c;
+  } finally { URL.revokeObjectURL(url); }
+}
+/** Seuil automatique (méthode d'Otsu) pour séparer l'encre du papier. */
+function seuilAuto(lum) {
+  const hist = new Array(256).fill(0); lum.forEach(v => hist[v]++);
+  const total = lum.length; let somme = 0; for (let i = 0; i < 256; i++) somme += i * hist[i];
+  let sB = 0, wB = 0, max = 0, seuil = 160;
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t]; if (!wB) continue; const wF = total - wB; if (!wF) break;
+    sB += t * hist[t]; const mB = sB / wB, mF = (somme - sB) / wF, v = wB * wF * (mB - mF) ** 2;
+    if (v > max) { max = v; seuil = t; }
+  }
+  return seuil;
+}
+function luminances(c) {
+  const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+  const l = new Uint8Array(c.width * c.height);
+  for (let i = 0, j = 0; i < d.length; i += 4, j++) l[j] = (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000;
+  return l;
+}
+/** Retire le fond clair d'une photo de signature / tampon. */
+function detourer(src, seuil, encre) {
+  const c = el('canvas'); c.width = src.width; c.height = src.height;
+  const ctx = c.getContext('2d'); ctx.drawImage(src, 0, 0);
+  const im = ctx.getImageData(0, 0, c.width, c.height), d = im.data;
+  const fixe = encre === 'noir' ? [17, 17, 17] : encre === 'bleu' ? [29, 63, 179] : null;
+  for (let i = 0; i < d.length; i += 4) {
+    const L = (d[i] * 299 + d[i + 1] * 587 + d[i + 2] * 114) / 1000;
+    const a = clamp((seuil - L) / 34 + 0.5, 0, 1);
+    if (fixe) { d[i] = fixe[0]; d[i + 1] = fixe[1]; d[i + 2] = fixe[2]; }
+    else { const k = 0.85; d[i] *= k; d[i + 1] *= k; d[i + 2] *= k; }
+    d[i + 3] = Math.round(a * 255);
+  }
+  ctx.putImageData(im, 0, 0);
+  return rogner(c, 4);
+}
+async function importerTampon(type) {
+  const [f] = await choisirFichiers({ accept: 'image/*' });
+  if (!f) return null;
+  let src;
+  try { src = reduire(await chargerImage(f, 1400), 1400); } catch { toast('Image illisible (format non pris en charge).'); return null; }
+  const seuil0 = clamp(seuilAuto(luminances(src)) + 8, 60, 235);
+  return new Promise(res => {
+    let resultat = null, seuil = seuil0, encre = type === 'signature' ? 'origine' : 'origine', courant = null;
+    const fe = feuille({ titre: 'Importer une photo', plein: true, surFermeture: () => res(resultat) });
+    const zone = el('div', { class: 'zone-apercu damier' });
+    const nom = el('input', { class: 'champ', id: 'nom-import', value: type === 'signature' ? 'Ma signature' : 'Mon tampon', maxlength: 40 });
+    const maj = () => { courant = detourer(src, seuil, encre); zone.replaceChildren(courant || el('span', { class: 'note', text: 'Rien de détecté : augmentez le réglage.' })); };
+    let attente;
+    fe.corps.append(
+      el('p', { class: 'note', text: 'Le fond clair est retiré automatiquement. Ajustez le réglage si besoin.' }), zone,
+      el('label', { class: 'etiquette', for: 'seuil', text: 'Détourage (gauche : moins de fond, droite : plus d\'encre)' }),
+      el('input', { type: 'range', id: 'seuil', min: 40, max: 245, value: String(seuil), oninput: e => { seuil = +e.target.value; clearTimeout(attente); attente = setTimeout(maj, 60); } }),
+      el('div', { class: 'etiquette', text: 'Couleur' }),
+      segments('encre-import', [['origine', 'D\'origine'], ['noir', 'Noir', '#111'], ['bleu', 'Bleu', '#1d3fb3']], encre, v => { encre = v; maj(); }),
+      el('label', { class: 'etiquette', for: 'nom-import', text: 'Nom' }), nom);
+    fe.pied.append(
+      bouton('Annuler', { onclick: () => fe.fermer() }),
+      bouton('Enregistrer', { ico: 'valider', cls: 'btn principal', onclick: () => {
+        if (!courant) { toast('Rien à enregistrer.'); return; }
+        resultat = sauverTampon(courant, type, nom.value.trim());
+        if (resultat) { toast('Enregistré'); fe.fermer(); }
+      } }));
+    maj();
+  });
+}
+/** Tampon à partir de lignes de texte (nom de société, adresse, SIRET…) */
+function tamponTexte() {
+  return new Promise(res => {
+    let resultat = null, couleur = '#1d3fb3', cadre = 'oui';
+    const fe = feuille({ titre: 'Créer un tampon texte', plein: true, surFermeture: () => res(resultat) });
+    const ta = el('textarea', { class: 'champ', id: 'lignes-tampon', rows: 4 });
+    ta.value = 'NOM DE L\'ENTREPRISE\nAdresse\nCode postal Ville\nSIRET : ';
+    const zone = el('div', { class: 'zone-apercu damier' });
+    const nom = el('input', { class: 'champ', id: 'nom-tampon', value: 'Tampon société', maxlength: 40 });
+    let courant;
+    const maj = () => {
+      const lignes = ta.value.split('\n').map(l => l.trimEnd()).filter((l, i, a) => l || i < a.length - 1);
+      const c = el('canvas'), ctx = c.getContext('2d');
+      const t = 44, inter = 1.25, pad = 26;
+      const police = (i) => `${i === 0 ? '700 ' : '500 '}${i === 0 ? t * 1.1 : t}px Helvetica, Arial, sans-serif`;
+      let lmax = 0; lignes.forEach((l, i) => { ctx.font = police(i); lmax = Math.max(lmax, ctx.measureText(l).width); });
+      c.width = Math.ceil(lmax + pad * 2); c.height = Math.ceil(lignes.length * t * inter + pad * 2 - t * (inter - 1));
+      ctx.fillStyle = couleur; ctx.strokeStyle = couleur; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+      lignes.forEach((l, i) => { ctx.font = police(i); ctx.fillText(l, c.width / 2, pad + i * t * inter); });
+      if (cadre === 'oui') { ctx.lineWidth = 6; const r = 14; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(3, 3, c.width - 6, c.height - 6, r) : ctx.rect(3, 3, c.width - 6, c.height - 6); ctx.stroke(); }
+      courant = c; zone.replaceChildren(c);
+    };
+    ta.addEventListener('input', maj);
+    fe.corps.append(
+      el('label', { class: 'etiquette', for: 'lignes-tampon', text: 'Lignes du tampon' }), ta,
+      el('div', { class: 'etiquette', text: 'Aperçu' }), zone,
+      el('div', { class: 'etiquette', text: 'Couleur' }),
+      segments('couleur-tampon', [['#1d3fb3', 'Bleu', '#1d3fb3'], ['#b91c1c', 'Rouge', '#b91c1c'], ['#111111', 'Noir', '#111']], couleur, v => { couleur = v; maj(); }),
+      el('div', { class: 'etiquette', text: 'Cadre' }),
+      segments('cadre-tampon', [['oui', 'Avec cadre'], ['non', 'Sans cadre']], cadre, v => { cadre = v; maj(); }),
+      el('label', { class: 'etiquette', for: 'nom-tampon', text: 'Nom' }), nom);
+    fe.pied.append(
+      bouton('Annuler', { onclick: () => fe.fermer() }),
+      bouton('Enregistrer', { ico: 'valider', cls: 'btn principal', onclick: () => {
+        if (!ta.value.trim()) { toast('Écrivez au moins une ligne.'); return; }
+        resultat = sauverTampon(courant, 'tampon', nom.value.trim());
+        if (resultat) { toast('Tampon enregistré'); fe.fermer(); }
+      } }));
+    maj();
+  });
+}
+
+/* =========================================================
+   10. PARAMÈTRES
+   ========================================================= */
+function ouvrirParametres() {
+  const fe = feuille({ titre: 'Paramètres', plein: true, pied: false });
+  const sectionTampons = el('div');
+  const majListe = () => {
+    const liste = lireTampons();
+    sectionTampons.replaceChildren();
+    for (const type of ['signature', 'tampon']) {
+      const items = liste.filter(t => t.type === type);
+      sectionTampons.append(el('h3', { class: 'titre-section', text: type === 'signature' ? 'Mes signatures' : 'Mes tampons' }));
+      sectionTampons.append(items.length ? el('div', { class: 'grille-tampons' }, items.map(t => el('div', { class: 'carte-tampon' },
+        el('div', { class: 'apercu damier' }, el('img', { src: t.png, alt: t.nom })),
+        el('span', { class: 'nom', text: t.nom }),
+        el('div', { class: 'actions' },
+          bouton('Renommer', { onclick: () => { const n = prompt('Nouveau nom :', t.nom); if (n && n.trim()) { const l = lireTampons(); const x = l.find(y => y.id === t.id); if (x) { x.nom = n.trim().slice(0, 40); ecrireTampons(l); majListe(); } } } }),
+          bouton('', { ico: 'poubelle', cls: 'btn danger', label: 'Supprimer ' + t.nom, onclick: () => { if (confirm(`Supprimer « ${t.nom} » ?`)) { ecrireTampons(lireTampons().filter(y => y.id !== t.id)); majListe(); } } })))))
+        : el('p', { class: 'vide', text: type === 'signature' ? 'Aucune signature pour l\'instant.' : 'Aucun tampon pour l\'instant.' }));
+      sectionTampons.append(el('div', { class: 'rangee-btn' },
+        bouton('Dessiner', { ico: 'crayon', onclick: async () => { await dessinerTampon(type); majListe(); } }),
+        bouton('Photo', { ico: 'camera', onclick: async () => { await importerTampon(type); majListe(); } }),
+        type === 'tampon' ? bouton('Tampon texte', { ico: 'texte', onclick: async () => { await tamponTexte(); majListe(); } }) : null));
+    }
+  };
+  majListe();
+  const reglage = (cle, titre, options) => el('div', {}, el('div', { class: 'etiquette', text: titre }),
+    segments('pref-' + cle, options, String(prefs[cle]), v => { prefs[cle] = isNaN(+v) ? v : +v; ecrirePrefs(prefs); }));
+  fe.corps.append(
+    sectionTampons,
+    el('h3', { class: 'titre-section', text: 'Réglages' }),
+    reglage('tailleTexte', 'Taille du texte ajouté', [['9', 'Petite'], ['11', 'Normale'], ['14', 'Grande']]),
+    reglage('couleurTexte', 'Couleur du texte ajouté', COULEURS_TEXTE.map(([c, n]) => [c, n, c])),
+    reglage('largeurSignature', 'Taille des signatures posées', [['100', 'Petite'], ['140', 'Moyenne'], ['190', 'Grande']]),
+    reglage('largeurTampon', 'Taille des tampons posés', [['100', 'Petit'], ['130', 'Moyen'], ['170', 'Grand']]),
+    reglage('formatPhotos', 'Photos → PDF : format des pages', [['a4', 'A4'], ['image', 'Taille de la photo']]),
+    reglage('compression', 'Compression par défaut', [['forte', 'Forte'], ['moyenne', 'Moyenne'], ['legere', 'Légère']]),
+    el('h3', { class: 'titre-section', text: 'À propos' }),
+    el('p', { class: 'note', text: `Atelier PDF ${VERSION_APPLI}. Tout est traité sur cet appareil : vos documents ne sont jamais envoyés.` }),
+    el('p', {}, el('a', { href: '../confidentialite.html', text: 'Politique de confidentialité' })),
+    el('div', { class: 'rangee-btn' }, bouton('Effacer toutes mes données', { ico: 'poubelle', cls: 'btn danger', onclick: () => {
+      if (!confirm('Effacer toutes les signatures, tampons et réglages de cet appareil ? Action définitive.')) return;
+      localStorage.removeItem(CLE_TAMPONS); localStorage.removeItem(CLE_PREFS); prefs = lirePrefs(); majListe(); toast('Données effacées');
+    } })));
+}
+
+/* =========================================================
+   11. OUTILS : fusion, organisation, compression, numéros, filigrane, images
+   ========================================================= */
+async function lancerOutil(outil, fichiers) {
+  if (!fichiers) {
+    const choisis = await choisirFichiers({ multiple: outil === 'fusion' });
+    if (!choisis.length) return;
+    const pdfs = choisis.filter(estPdf);
+    if (!pdfs.length) { toast('Choisissez un fichier PDF.'); return; }
+    fichiers = await Promise.all(pdfs.map(lireFichier));
+  }
+  const f = fichiers[0];
+  try {
+    if (outil === 'fusion') return outilFusion(fichiers);
+    if (outil === 'organiser') return await outilOrganiser(f);
+    if (outil === 'compresser') return outilCompresser(f);
+    if (outil === 'numeros') return outilNumeros(f);
+    if (outil === 'filigrane') return outilFiligrane(f);
+    if (outil === 'images') return await outilImages(f);
+  } catch (e) { console.error(e); toast('Erreur : ' + e.message, 5000); }
+}
+async function chargerPdfLib(octets) {
+  const d = await PDFDocument.load(octets, { ignoreEncryption: true });
+  if (d.isEncrypted) throw new Error('ce PDF est protégé par un mot de passe et ne peut pas être modifié');
+  return d;
+}
+
+function outilFusion(liste) {
+  const fe = feuille({ titre: 'Fusionner des PDF', plein: true });
+  const ul = el('ul', { class: 'liste' });
+  const majListe = () => {
+    ul.replaceChildren(...liste.map((f, i) => el('li', { class: 'ligne' },
+      el('span', { class: 'texte' }, el('strong', { text: `${i + 1}. ${f.nom}` }), el('small', { text: tailleLisible(f.octets.length) })),
+      bouton('', { ico: 'haut', cls: 'btn-icone', label: 'Monter', onclick: () => { if (i) { [liste[i - 1], liste[i]] = [liste[i], liste[i - 1]]; majListe(); } } }),
+      bouton('', { ico: 'bas', cls: 'btn-icone', label: 'Descendre', onclick: () => { if (i < liste.length - 1) { [liste[i + 1], liste[i]] = [liste[i], liste[i + 1]]; majListe(); } } }),
+      bouton('', { ico: 'fermer', cls: 'btn-icone', label: 'Retirer', onclick: () => { liste.splice(i, 1); majListe(); } }))));
+    btnFusion.disabled = liste.length < 2;
+    btnFusion.lastChild.textContent = `Fusionner (${liste.length})`;
+  };
+  const btnFusion = bouton('Fusionner', { ico: 'fusion', cls: 'btn principal', onclick: async () => {
+    occupe('Fusion…');
+    try {
+      const out = await PDFDocument.create(); out.setProducer('Atelier PDF');
+      for (const f of liste) {
+        const d = await chargerPdfLib(f.octets).catch(e => { throw new Error(`« ${f.nom} » : ${e.message}`); });
+        (await out.copyPages(d, d.getPageIndices())).forEach(p => out.addPage(p));
+      }
+      const octets = await out.save();
+      libre(); await fe.fermer();
+      feuilleResultat(octets, nomSortie(liste[0].nom, 'fusion'), `${out.getPageCount()} pages`);
+    } catch (e) { libre(); console.error(e); toast('Fusion impossible : ' + e.message, 5000); }
+  } });
+  fe.corps.append(el('p', { class: 'note', text: 'Les fichiers seront assemblés dans cet ordre.' }), ul,
+    el('div', { class: 'rangee-btn' }, bouton('Ajouter des PDF', { ico: 'plus', onclick: async () => {
+      const fs = (await choisirFichiers({ multiple: true })).filter(estPdf);
+      liste.push(...await Promise.all(fs.map(lireFichier))); majListe();
+    } })));
+  fe.pied.append(btnFusion);
+  majListe();
+}
+
+async function outilOrganiser(f) {
+  occupe('Lecture des pages…');
+  let pdf;
+  try { pdf = await chargerPdfjs(f.octets); } finally { libre(); }
+  const etat = Array.from({ length: pdf.numPages }, (_, i) => ({ src: i, rot: 0, choisie: false }));
+  const fe = feuille({ titre: 'Organiser les pages', plein: true, surFermeture: () => pdf.destroy() });
+  const grille = el('div', { class: 'vignettes' });
+  const vignettes = new Map();
+  const obs = new IntersectionObserver(es => es.forEach(async e => {
+    if (!e.isIntersecting) return; obs.unobserve(e.target);
+    const k = +e.target.dataset.src, page = await pdf.getPage(k + 1);
+    const vp1 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: 220 / Math.max(vp1.width, vp1.height) });
+    const c = e.target.querySelector('canvas'); c.width = vp.width; c.height = vp.height;
+    page.render({ canvasContext: c.getContext('2d'), viewport: vp, annotationMode: MODE_STOCK });
+  }), { root: fe.corps, rootMargin: '200px' });
+  const majGrille = () => {
+    grille.replaceChildren(...etat.map((p, i) => {
+      let v = vignettes.get(p.src);
+      if (!v) { v = el('button', { type: 'button', class: 'vignette', dataset: { src: p.src } }, el('div', { class: 'cadre' }, el('canvas')), el('span', { class: 'num' }), el('span', { class: 'coche' }, icone('valider'))); vignettes.set(p.src, v); obs.observe(v); v.onclick = () => { const q = etat.find(x => x.src === p.src); q.choisie = !q.choisie; majGrille(); }; }
+      v.classList.toggle('choisie', p.choisie);
+      v.querySelector('canvas').style.transform = `rotate(${p.rot}deg)`;
+      v.querySelector('.num').textContent = `Page ${i + 1}`;
+      v.setAttribute('aria-pressed', p.choisie ? 'true' : 'false');
+      return v;
+    }));
+    const n = etat.filter(p => p.choisie).length;
+    compte.textContent = n ? `${n} page${n > 1 ? 's' : ''} sélectionnée${n > 1 ? 's' : ''}` : 'Touchez des pages pour les sélectionner.';
+  };
+  const choisies = () => { const c = etat.filter(p => p.choisie); if (!c.length) toast('Sélectionnez d\'abord une ou plusieurs pages.'); return c; };
+  const deplacer = sens => {
+    const idx = etat.map((p, i) => p.choisie ? i : -1).filter(i => i >= 0);
+    if (!idx.length) return choisies();
+    if (sens < 0 ? idx[0] === 0 : idx[idx.length - 1] === etat.length - 1) return;
+    (sens < 0 ? idx : idx.reverse()).forEach(i => { [etat[i], etat[i + sens]] = [etat[i + sens], etat[i]]; });
+    majGrille();
+  };
+  const compte = el('p', { class: 'note' });
+  const construire = async (pages, suffixe) => {
+    occupe('Création du PDF…');
+    try {
+      const src = await chargerPdfLib(f.octets), out = await PDFDocument.create(); out.setProducer('Atelier PDF');
+      const copies = await out.copyPages(src, pages.map(p => p.src));
+      copies.forEach((pg, k) => { pg.setRotation(degrees((angleDe(pg) + pages[k].rot) % 360)); out.addPage(pg); });
+      const octets = await out.save();
+      libre(); await fe.fermer();
+      feuilleResultat(octets, nomSortie(f.nom, suffixe), `${pages.length} page${pages.length > 1 ? 's' : ''}`);
+    } catch (e) { libre(); toast('Erreur : ' + e.message, 5000); }
+  };
+  fe.corps.append(compte, grille);
+  const actions = el('div', { class: 'barre-actions' },
+    bouton('Tout', { ico: 'pages', cls: 'outil', onclick: () => { const tout = etat.every(p => p.choisie); etat.forEach(p => p.choisie = !tout); majGrille(); } }),
+    bouton('Pivoter', { ico: 'pivoter', cls: 'outil', onclick: () => { choisies().forEach(p => p.rot = (p.rot + 90) % 360); majGrille(); } }),
+    bouton('Avant', { ico: 'gauche', cls: 'outil', onclick: () => deplacer(-1) }),
+    bouton('Après', { ico: 'droite', cls: 'outil', onclick: () => deplacer(1) }),
+    bouton('Supprimer', { ico: 'poubelle', cls: 'outil', onclick: () => {
+      const c = choisies(); if (!c.length) return;
+      if (c.length === etat.length) { toast('Impossible de supprimer toutes les pages.'); return; }
+      c.forEach(p => etat.splice(etat.indexOf(p), 1)); majGrille();
+    } }),
+    bouton('Extraire', { ico: 'extraire', cls: 'outil', onclick: () => { const c = choisies(); if (c.length) construire(c, 'extrait'); } }));
+  fe.pied.before(actions);
+  fe.pied.append(bouton('Enregistrer le PDF', { ico: 'valider', cls: 'btn principal', onclick: () => construire(etat, 'organisé') }));
+  majGrille();
+}
+
+function outilCompresser(f) {
+  const niveaux = { forte: [96, 0.55, 'Forte : fichier très léger, qualité correcte à l\'écran'], moyenne: [130, 0.68, 'Moyenne : bon compromis (conseillé)'], legere: [170, 0.8, 'Légère : meilleure qualité, gain plus faible'] };
+  let niveau = prefs.compression in niveaux ? prefs.compression : 'moyenne';
+  const fe = feuille({ titre: 'Compresser' });
+  fe.corps.append(
+    el('p', {}, el('strong', { text: f.nom }), ' · ' + tailleLisible(f.octets.length)),
+    el('div', { class: 'etiquette', text: 'Niveau' }),
+    el('div', { class: 'menu-liste' }, segments('niveau', Object.entries(niveaux).map(([k, v]) => [k, v[2]]), niveau, v => { niveau = v; })),
+    el('p', { class: 'note', text: 'Les pages sont transformées en images : le texte ne pourra plus être sélectionné ni recherché, et les champs de formulaire seront figés.' }));
+  fe.pied.append(bouton('Compresser', { ico: 'compresser', cls: 'btn principal', onclick: async () => {
+    const [dpi, q] = niveaux[niveau];
+    occupe('Compression…');
+    let pdf;
+    try {
+      pdf = await chargerPdfjs(f.octets);
+      const out = await PDFDocument.create(); out.setProducer('Atelier PDF');
+      for (let i = 1; i <= pdf.numPages; i++) {
+        majOccupe(`Page ${i} / ${pdf.numPages}…`);
+        const img = await pageEnImage(await pdf.getPage(i), dpi, q);
+        const jpg = await out.embedJpg(img.octets);
+        out.addPage([img.w, img.h]).drawImage(jpg, { x: 0, y: 0, width: img.w, height: img.h });
+      }
+      const octets = await out.save();
+      libre(); await fe.fermer();
+      const gain = Math.round((1 - octets.length / f.octets.length) * 100);
+      if (gain <= 0) toast('Ce PDF était déjà léger : la version compressée n\'est pas plus petite.', 5000);
+      feuilleResultat(octets, nomSortie(f.nom, 'compressé'), `${tailleLisible(f.octets.length)} → ${tailleLisible(octets.length)}${gain > 0 ? ` (−${gain} %)` : ''}`);
+    } catch (e) { libre(); toast('Compression impossible : ' + e.message, 5000); }
+    finally { pdf?.destroy(); }
+  } }));
+}
+
+function outilNumeros(f) {
+  let position = 'bas-centre', format = 'n-sur-total', debut = 1, taille = 10;
+  const fe = feuille({ titre: 'Numéroter les pages' });
+  fe.corps.append(
+    el('div', { class: 'etiquette', text: 'Position' }),
+    segments('pos', [['bas-centre', 'En bas au centre'], ['bas-droite', 'En bas à droite'], ['haut-droite', 'En haut à droite']], position, v => { position = v; }),
+    el('div', { class: 'etiquette', text: 'Format' }),
+    segments('fmt', [['n', '1'], ['n-sur-total', '1 / 5'], ['page-n-sur', 'Page 1 sur 5']], format, v => { format = v; }),
+    el('label', { class: 'etiquette', for: 'num-debut', text: 'Premier numéro' }),
+    el('input', { class: 'champ', id: 'num-debut', type: 'number', min: 0, value: '1', inputmode: 'numeric', oninput: e => { debut = parseInt(e.target.value, 10) || 1; } }));
+  fe.pied.append(bouton('Numéroter', { ico: 'numero', cls: 'btn principal', onclick: async () => {
+    occupe('Numérotation…');
+    try {
+      const doc = await chargerPdfLib(f.octets), police = await doc.embedFont(StandardFonts.Helvetica), pages = doc.getPages(), total = pages.length + debut - 1;
+      pages.forEach((p, k) => {
+        const n = k + debut, txt = format === 'n' ? `${n}` : format === 'n-sur-total' ? `${n} / ${total}` : `Page ${n} sur ${total}`;
+        const cb = p.getCropBox(), R = angleDe(p), W = R % 180 ? cb.height : cb.width, H = R % 180 ? cb.width : cb.height;
+        const tw = police.widthOfTextAtSize(txt, taille), marge = 24;
+        const vx = position === 'bas-centre' ? (W - tw) / 2 : W - marge - tw;
+        const vy = position.startsWith('bas') ? H - marge + taille * 0.3 : marge + taille;
+        const [x, y] = versUtilisateur(cb, R, vx, vy);
+        p.drawText(txt, { x, y, size: taille, font: police, color: rgb(0.2, 0.2, 0.2), rotate: degrees(R) });
+      });
+      const octets = await doc.save();
+      libre(); await fe.fermer();
+      feuilleResultat(octets, nomSortie(f.nom, 'numéroté'), `${pages.length} pages numérotées`);
+    } catch (e) { libre(); toast('Erreur : ' + e.message, 5000); }
+  } }));
+}
+
+function outilFiligrane(f) {
+  let texte = 'COPIE', couleur = '#9ca3af', opacite = 0.25;
+  const fe = feuille({ titre: 'Ajouter un filigrane' });
+  const champ = el('input', { class: 'champ', id: 'fil-texte', value: texte, maxlength: 40, oninput: e => { texte = e.target.value; } });
+  fe.corps.append(
+    el('label', { class: 'etiquette', for: 'fil-texte', text: 'Texte' }), champ,
+    el('div', { class: 'rangee-btn' }, ['COPIE', 'CONFIDENTIEL', 'BROUILLON', 'PAYÉ'].map(t => bouton(t, { onclick: () => { champ.value = texte = t; } }))),
+    el('div', { class: 'etiquette', text: 'Couleur' }),
+    segments('fil-couleur', [['#9ca3af', 'Gris', '#9ca3af'], ['#b91c1c', 'Rouge', '#b91c1c'], ['#1d3fb3', 'Bleu', '#1d3fb3']], couleur, v => { couleur = v; }),
+    el('div', { class: 'etiquette', text: 'Intensité' }),
+    segments('fil-op', [['0.15', 'Discrète'], ['0.25', 'Moyenne'], ['0.4', 'Marquée']], '0.25', v => { opacite = +v; }));
+  fe.pied.append(bouton('Appliquer', { ico: 'filigrane', cls: 'btn principal', onclick: async () => {
+    const t = versWinAnsi(texte.trim()); if (!t) { toast('Écrivez un texte.'); return; }
+    occupe('Filigrane…');
+    try {
+      const doc = await chargerPdfLib(f.octets), police = await doc.embedFont(StandardFonts.HelveticaBold);
+      doc.getPages().forEach(p => {
+        const cb = p.getCropBox(), R = angleDe(p), W = R % 180 ? cb.height : cb.width, H = R % 180 ? cb.width : cb.height;
+        const a = Math.atan2(H, W), taille = Math.min(110, (Math.hypot(W, H) * 0.7) / Math.max(1, police.widthOfTextAtSize(t, 1)));
+        const tw = police.widthOfTextAtSize(t, taille), c = Math.cos(a), s = Math.sin(a);
+        const vx = W / 2 - c * tw / 2 + s * taille * 0.35, vy = H / 2 + s * tw / 2 + c * taille * 0.35;
+        const [x, y] = versUtilisateur(cb, R, vx, vy);
+        p.drawText(t, { x, y, size: taille, font: police, color: hexVersRgb(couleur), opacity: opacite, rotate: degrees(R + a * 180 / Math.PI) });
+      });
+      const octets = await doc.save();
+      libre(); await fe.fermer();
+      feuilleResultat(octets, nomSortie(f.nom, 'filigrane'));
+    } catch (e) { libre(); toast('Erreur : ' + e.message, 5000); }
+  } }));
+}
+
+async function outilImages(f) {
+  occupe('Conversion en images…');
+  let pdf; const fichiers = [];
+  try {
+    pdf = await chargerPdfjs(f.octets);
+    for (let i = 1; i <= pdf.numPages; i++) {
+      majOccupe(`Page ${i} / ${pdf.numPages}…`);
+      const img = await pageEnImage(await pdf.getPage(i), 150, 0.88);
+      fichiers.push(new File([img.octets], `${nomSansExt(f.nom)} - page ${i}.jpg`, { type: 'image/jpeg' }));
+    }
+  } catch (e) { toast('Conversion impossible : ' + e.message, 5000); return; }
+  finally { libre(); pdf?.destroy(); }
+  const fe = feuille({ titre: 'Pages en images' });
+  const urls = fichiers.map(x => URL.createObjectURL(x));
+  fe.corps.append(el('p', { class: 'note', text: `${fichiers.length} image${fichiers.length > 1 ? 's' : ''} JPG prête${fichiers.length > 1 ? 's' : ''}. Touchez une image pour l'enregistrer seule.` }),
+    el('div', { class: 'vignettes' }, fichiers.map((x, i) => el('button', { type: 'button', class: 'vignette', onclick: async () => telecharger(new Uint8Array(await x.arrayBuffer()), x.name, x.type) },
+      el('div', { class: 'cadre' }, el('img', { src: urls[i], alt: x.name })), el('span', { class: 'num', text: `Page ${i + 1}` })))));
+  fe.pied.append(
+    bouton('Partager', { ico: 'partager', onclick: () => partager(fichiers) }),
+    bouton('Tout enregistrer', { ico: 'enregistrer', cls: 'btn principal', onclick: async () => {
+      for (const x of fichiers) { telecharger(new Uint8Array(await x.arrayBuffer()), x.name, x.type); await attendre(400); }
+      toast('Images enregistrées');
+    } }));
+  const nettoyer = setInterval(() => { if (fe.ferme()) { urls.forEach(URL.revokeObjectURL); clearInterval(nettoyer); } }, 2000);
+}
+
+/* =========================================================
+   12. PHOTOS → PDF ET EFFET SCANNER
+   ========================================================= */
+/** Transformation perspective : du carré unité vers un quadrilatère (méthode de Heckbert). */
+function carreVersQuad(q) {
+  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = q;
+  const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3, dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3;
+  let a, b, c, d, e, f, g, h;
+  if (Math.abs(dx3) < 1e-9 && Math.abs(dy3) < 1e-9) { a = x1 - x0; b = x3 - x0; c = x0; d = y1 - y0; e = y3 - y0; f = y0; g = 0; h = 0; }
+  else {
+    const den = dx1 * dy2 - dx2 * dy1;
+    g = (dx3 * dy2 - dx2 * dy3) / den; h = (dx1 * dy3 - dx3 * dy1) / den;
+    a = x1 - x0 + g * x1; b = x3 - x0 + h * x3; c = x0; d = y1 - y0 + g * y1; e = y3 - y0 + h * y3; f = y0;
+  }
+  return (u, v) => { const w = g * u + h * v + 1; return [(a * u + b * v + c) / w, (d * u + e * v + f) / w]; };
+}
+/** Redresse la zone choisie (4 coins) en un rectangle bien droit. */
+function redresser(src, coins) {
+  const dist = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+  let W = Math.max(dist(coins[0], coins[1]), dist(coins[3], coins[2])), H = Math.max(dist(coins[0], coins[3]), dist(coins[1], coins[2]));
+  const k = Math.min(1, 2200 / Math.max(W, H)); W = Math.round(W * k); H = Math.round(H * k);
+  const sd = src.getContext('2d').getImageData(0, 0, src.width, src.height).data, sw = src.width, sh = src.height;
+  const out = el('canvas'); out.width = W; out.height = H;
+  const octx = out.getContext('2d'), im = octx.createImageData(W, H), d = im.data;
+  const m = carreVersQuad(coins);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    let [sx, sy] = m((x + 0.5) / W, (y + 0.5) / H);
+    sx = clamp(sx - 0.5, 0, sw - 1.001); sy = clamp(sy - 0.5, 0, sh - 1.001);
+    const ix = sx | 0, iy = sy | 0, fx = sx - ix, fy = sy - iy, o = (y * W + x) * 4;
+    const p00 = (iy * sw + ix) * 4, p10 = p00 + 4, p01 = p00 + sw * 4, p11 = p01 + 4;
+    for (let c = 0; c < 3; c++) d[o + c] = (sd[p00 + c] * (1 - fx) + sd[p10 + c] * fx) * (1 - fy) + (sd[p01 + c] * (1 - fx) + sd[p11 + c] * fx) * fy;
+    d[o + 3] = 255;
+  }
+  octx.putImageData(im, 0, 0);
+  return out;
+}
+/** Retire les ombres et blanchit le papier ; filtre : couleur, gris ou noir et blanc. */
+function ameliorer(c, filtre) {
+  if (filtre === 'original') return c;
+  const W = c.width, H = c.height, ctx = c.getContext('2d'), im = ctx.getImageData(0, 0, W, H), d = im.data;
+  // 1. Estimation du fond (le papier) : maximum local sur une petite grille, puis lissage
+  const bloc = Math.max(8, Math.round(Math.max(W, H) / 60)), gw = Math.ceil(W / bloc), gh = Math.ceil(H / bloc);
+  let g = new Float32Array(gw * gh);
+  for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) {
+    const o = (y * W + x) * 4, L = (d[o] * 299 + d[o + 1] * 587 + d[o + 2] * 114) / 1000, k = ((y / bloc) | 0) * gw + ((x / bloc) | 0);
+    if (L > g[k]) g[k] = L;
+  }
+  for (let passe = 0; passe < 3; passe++) {
+    const n = new Float32Array(gw * gh);
+    for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+      let s = 0, c2 = 0;
+      for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) { const xx = x + i, yy = y + j; if (xx >= 0 && yy >= 0 && xx < gw && yy < gh) { s += g[yy * gw + xx]; c2++; } }
+      n[y * gw + x] = s / c2;
+    }
+    g = n;
+  }
+  const fond = (x, y) => {
+    const gx = clamp(x / bloc - 0.5, 0, gw - 1), gy = clamp(y / bloc - 0.5, 0, gh - 1), ix = Math.min(gx | 0, gw - 2 < 0 ? 0 : gw - 2), iy = Math.min(gy | 0, gh - 2 < 0 ? 0 : gh - 2);
+    const fx = gw > 1 ? gx - ix : 0, fy = gh > 1 ? gy - iy : 0, a = g[iy * gw + ix], b = g[iy * gw + Math.min(ix + 1, gw - 1)], cc = g[Math.min(iy + 1, gh - 1) * gw + ix], dd = g[Math.min(iy + 1, gh - 1) * gw + Math.min(ix + 1, gw - 1)];
+    return Math.max(40, (a * (1 - fx) + b * fx) * (1 - fy) + (cc * (1 - fx) + dd * fx) * fy);
+  };
+  // 2. Division par le fond : le papier devient blanc, les ombres disparaissent
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const o = (y * W + x) * 4, k = 255 / fond(x, y);
+    let r = d[o] * k, v = d[o + 1] * k, b = d[o + 2] * k;
+    if (filtre === 'couleur') {
+      const f2 = t => clamp((t - 30) * 255 / 215, 0, 255);
+      d[o] = f2(r); d[o + 1] = f2(v); d[o + 2] = f2(b);
+    } else {
+      const L = (r * 299 + v * 587 + b * 114) / 1000;
+      const out = filtre === 'nb' ? clamp((L - 150) * 4 + 128, 0, 255) : clamp((L - 35) * 255 / 210, 0, 255);
+      d[o] = d[o + 1] = d[o + 2] = out;
+    }
+  }
+  ctx.putImageData(im, 0, 0);
+  return c;
+}
+function pivoterCanvas(c, sens = 1) {
+  const r = el('canvas'); r.width = c.height; r.height = c.width;
+  const ctx = r.getContext('2d'); ctx.translate(r.width / 2, r.height / 2); ctx.rotate(sens * Math.PI / 2); ctx.drawImage(c, -c.width / 2, -c.height / 2);
+  return r;
+}
+
+/** Éditeur « scanner » : 4 coins à placer, puis redressement et nettoyage. */
+function editeurScanner(source) {
+  return new Promise(res => {
+    let resultat = null, src = source, filtre = 'couleur';
+    let coins = [[0, 0], [src.width, 0], [src.width, src.height], [0, src.height]];
+    const fe = feuille({ titre: 'Recadrer et nettoyer', plein: true, surFermeture: () => res(resultat) });
+    const zone = el('div', { class: 'scan-zone' }), apercu = el('canvas');
+    zone.append(apercu);
+    const poignees = [0, 1, 2, 3].map(k => { const p = el('div', { class: 'coin', role: 'slider', 'aria-label': ['Coin haut gauche', 'Coin haut droit', 'Coin bas droit', 'Coin bas gauche'][k] }); zone.append(p); return p; });
+    let ech = 1;
+    const dessiner = () => {
+      const max = Math.min(fe.corps.clientWidth - 36, 900), maxH = innerHeight * 0.55;
+      ech = Math.min(max / src.width, maxH / src.height);
+      const w = Math.round(src.width * ech), h = Math.round(src.height * ech);
+      zone.style.width = w + 'px'; zone.style.height = h + 'px';
+      apercu.width = w; apercu.height = h;
+      const ctx = apercu.getContext('2d'); ctx.drawImage(src, 0, 0, w, h);
+      ctx.fillStyle = 'rgba(13,107,79,.18)'; ctx.strokeStyle = '#0d6b4f'; ctx.lineWidth = 2;
+      ctx.beginPath(); coins.forEach(([x, y], i) => i ? ctx.lineTo(x * ech, y * ech) : ctx.moveTo(x * ech, y * ech)); ctx.closePath(); ctx.fill(); ctx.stroke();
+      poignees.forEach((p, k) => { p.style.left = coins[k][0] * ech + 'px'; p.style.top = coins[k][1] * ech + 'px'; });
+    };
+    poignees.forEach((p, k) => {
+      p.addEventListener('pointerdown', e => {
+        e.preventDefault(); p.setPointerCapture(e.pointerId);
+        const mv = m => { const r = zone.getBoundingClientRect(); coins[k] = [clamp((m.clientX - r.left) / ech, 0, src.width), clamp((m.clientY - r.top) / ech, 0, src.height)]; dessiner(); };
+        const fin = () => { p.removeEventListener('pointermove', mv); p.removeEventListener('pointerup', fin); p.removeEventListener('pointercancel', fin); };
+        p.addEventListener('pointermove', mv); p.addEventListener('pointerup', fin); p.addEventListener('pointercancel', fin);
+      });
+    });
+    const tourner = sens => {
+      src = pivoterCanvas(src, sens);
+      const W = src.width, H = src.height;
+      coins = coins.map(([x, y]) => sens > 0 ? [H - y, x] : [y, W - x]);
+      coins = sens > 0 ? [coins[3], coins[0], coins[1], coins[2]] : [coins[1], coins[2], coins[3], coins[0]];
+      dessiner();
+    };
+    fe.corps.append(
+      el('p', { class: 'note', text: 'Faites glisser les 4 ronds sur les coins de la feuille.' }), zone,
+      el('div', { class: 'rangee-btn' },
+        bouton('Gauche', { ico: 'pivoter-g', onclick: () => tourner(-1) }),
+        bouton('Droite', { ico: 'pivoter', onclick: () => tourner(1) }),
+        bouton('Tout', { ico: 'scanner', onclick: () => { coins = [[0, 0], [src.width, 0], [src.width, src.height], [0, src.height]]; dessiner(); } })),
+      el('div', { class: 'etiquette', text: 'Rendu' }),
+      segments('filtre', [['couleur', 'Couleur nette'], ['gris', 'Gris'], ['nb', 'Noir et blanc'], ['original', 'Photo d\'origine']], filtre, v => { filtre = v; }));
+    fe.pied.append(
+      bouton('Annuler', { onclick: () => fe.fermer() }),
+      bouton('Valider', { ico: 'valider', cls: 'btn principal', onclick: async () => {
+        occupe('Traitement de la photo…'); await attendre(30);
+        try {
+          const plein = coins.every(([x, y], k) => Math.abs(x - [0, src.width, src.width, 0][k]) < 2 && Math.abs(y - [0, 0, src.height, src.height][k]) < 2);
+          let c = plein ? (() => { const r = el('canvas'); r.width = src.width; r.height = src.height; r.getContext('2d').drawImage(src, 0, 0); return r; })() : redresser(src, coins);
+          resultat = ameliorer(c, filtre);
+        } catch (e) { console.error(e); toast('Traitement impossible : ' + e.message); }
+        finally { libre(); }
+        fe.fermer();
+      } }));
+    requestAnimationFrame(() => requestAnimationFrame(dessiner));
+  });
+}
+
+/** Photos → PDF (et Scanner : même écran, en partant de l'appareil photo). */
+async function outilPhotos({ camera = false, fichiers = [] } = {}) {
+  const lot = [];
+  const fe = feuille({ titre: camera ? 'Scanner un document' : 'Photos → PDF', plein: true });
+  const grille = el('div', { class: 'vignettes' });
+  const majGrille = () => {
+    grille.replaceChildren(...lot.map((p, i) => el('div', { class: 'vignette' },
+      el('div', { class: 'cadre' }, el('img', { src: p.apercu, alt: `Page ${i + 1}` })),
+      el('span', { class: 'num', text: `Page ${i + 1}` }),
+      el('div', { class: 'rangee-btn', style: { marginTop: '4px', gap: '2px' } },
+        bouton('', { ico: 'scanner', cls: 'btn-icone', label: 'Recadrer et nettoyer', onclick: async () => { const r = await editeurScanner(p.c); if (r) { p.c = r; p.apercu = apercuDe(r); majGrille(); } } }),
+        bouton('', { ico: 'gauche', cls: 'btn-icone', label: 'Avancer', onclick: () => { if (i) { [lot[i - 1], lot[i]] = [lot[i], lot[i - 1]]; majGrille(); } } }),
+        bouton('', { ico: 'poubelle', cls: 'btn-icone', label: 'Retirer', onclick: () => { lot.splice(i, 1); majGrille(); } })))));
+    vide.hidden = lot.length > 0;
+    btnCreer.disabled = !lot.length;
+    btnCreer.lastChild.textContent = lot.length ? `Créer le PDF (${lot.length} page${lot.length > 1 ? 's' : ''})` : 'Créer le PDF';
+  };
+  const apercuDe = c => reduire(c, 260).toDataURL('image/jpeg', 0.7);
+  const ajouter = async (fs, scanner) => {
+    for (const f of fs) {
+      if (!estImage(f)) continue;
+      occupe('Chargement de la photo…');
+      let c;
+      try { c = await chargerImage(f); } catch { toast(`« ${f.name} » : format d'image non pris en charge.`); continue; } finally { libre(); }
+      if (scanner) { const r = await editeurScanner(c); if (!r) continue; c = r; }
+      lot.push({ c, apercu: apercuDe(c) });
+    }
+    majGrille();
+  };
+  const vide = el('p', { class: 'vide', text: 'Ajoutez des photos : chaque photo deviendra une page du PDF.' });
+  const btnCreer = bouton('Créer le PDF', { ico: 'doc', cls: 'btn principal', onclick: async () => {
+    occupe('Création du PDF…');
+    try {
+      const out = await PDFDocument.create(); out.setProducer('Atelier PDF');
+      for (const [i, p] of lot.entries()) {
+        majOccupe(`Page ${i + 1} / ${lot.length}…`);
+        const blob = await canvasVersBlob(p.c, 'image/jpeg', 0.85);
+        const jpg = await out.embedJpg(new Uint8Array(await blob.arrayBuffer()));
+        const paysage = p.c.width > p.c.height;
+        let [W, H] = prefs.formatPhotos === 'a4' ? (paysage ? [A4[1], A4[0]] : A4) : [A4[0], A4[0] * p.c.height / p.c.width];
+        if (prefs.formatPhotos !== 'a4' && paysage) [W, H] = [A4[1], A4[1] * p.c.height / p.c.width];
+        const k = Math.min(W / p.c.width, H / p.c.height), w = p.c.width * k, h = p.c.height * k;
+        out.addPage([W, H]).drawImage(jpg, { x: (W - w) / 2, y: (H - h) / 2, width: w, height: h });
+      }
+      const octets = await out.save();
+      const d = new Date(), nom = `${camera ? 'Scan' : 'Photos'} ${d.toLocaleDateString('fr-FR').replace(/\//g, '-')} ${String(d.getHours()).padStart(2, '0')}h${String(d.getMinutes()).padStart(2, '0')}.pdf`;
+      libre(); await fe.fermer();
+      feuilleResultat(octets, nom, `${lot.length} page${lot.length > 1 ? 's' : ''}`);
+    } catch (e) { libre(); console.error(e); toast('Création impossible : ' + e.message, 5000); }
+  } });
+  fe.corps.append(vide, grille, el('div', { class: 'rangee-btn' },
+    bouton('Prendre une photo', { ico: 'camera', onclick: async () => ajouter(await choisirFichiers({ accept: 'image/*', capture: 'environment' }), true) }),
+    bouton('Depuis la galerie', { ico: 'image', onclick: async () => ajouter(await choisirFichiers({ accept: 'image/*', multiple: true }), false) })));
+  fe.pied.append(btnCreer);
+  majGrille();
+  if (fichiers.length) await ajouter(fichiers, false);
+  else if (camera) await ajouter(await choisirFichiers({ accept: 'image/*', capture: 'environment' }), true);
+}
+
+/* =========================================================
+   13. FICHIERS REÇUS (menu Partager d'Android, « Ouvrir avec », glisser-déposer)
+   ========================================================= */
+async function traiterFichiers(fichiers) {
+  fichiers = fichiers.filter(Boolean);
+  if (!fichiers.length) return;
+  const pdfs = fichiers.filter(estPdf), imgs = fichiers.filter(estImage);
+  if (pdfs.length === 1 && !imgs.length) return ouvrirFichier(pdfs[0]);
+  if (pdfs.length > 1 && !imgs.length) return outilFusion(await Promise.all(pdfs.map(lireFichier)));
+  if (imgs.length && !pdfs.length) return outilPhotos({ fichiers: imgs });
+  if (pdfs.length) return ouvrirFichier(pdfs[0]);
+  toast('Ces fichiers ne sont pas pris en charge (PDF ou images uniquement).');
+}
+async function recupererPartage() {
+  try {
+    const cache = await caches.open('atelier-partage');
+    const fichiers = [];
+    for (const req of await cache.keys()) {
+      const rep = await cache.match(req);
+      const blob = await rep.blob();
+      fichiers.push(new File([blob], decodeURIComponent(rep.headers.get('X-Nom') || 'document'), { type: blob.type }));
+      await cache.delete(req);
+    }
+    history.replaceState(null, '', location.pathname);
+    await traiterFichiers(fichiers);
+  } catch (e) { console.error(e); toast('Impossible de récupérer le fichier partagé.'); }
+}
+
+/* =========================================================
+   14. DÉMARRAGE
+   ========================================================= */
+$('#btn-ouvrir').addEventListener('click', async () => { const [f] = await choisirFichiers(); if (f) ouvrirFichier(f); });
+$('#btn-scanner').addEventListener('click', () => outilPhotos({ camera: true }));
+$('#btn-photos').addEventListener('click', async () => { const fs = await choisirFichiers({ accept: 'image/*', multiple: true }); if (fs.length) outilPhotos({ fichiers: fs }); });
+$('#btn-param').addEventListener('click', ouvrirParametres);
+$$('[data-outil]').forEach(b => b.addEventListener('click', () => lancerOutil(b.dataset.outil)));
+$('#doc-retour').addEventListener('click', () => fermerCouche());
+$('#doc-chercher').addEventListener('click', ouvrirRecherche);
+$('#doc-menu').addEventListener('click', menuDocument);
+$('#btn-editer').addEventListener('click', () => changerMode('editer'));
+$('#btn-partager').addEventListener('click', () => exporter('partager'));
+$('#btn-enregistrer').addEventListener('click', () => exporter('enregistrer'));
+addEventListener('beforeunload', e => { if (D && D.modifie) { e.preventDefault(); e.returnValue = ''; } });
+
+// Glisser-déposer (ordinateur)
+let profondeurDepot = 0;
+addEventListener('dragenter', e => { if (e.dataTransfer?.types?.includes('Files')) { profondeurDepot++; $('#depot').classList.add('visible'); } });
+addEventListener('dragleave', () => { if (--profondeurDepot <= 0) { profondeurDepot = 0; $('#depot').classList.remove('visible'); } });
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); profondeurDepot = 0; $('#depot').classList.remove('visible'); traiterFichiers([...(e.dataTransfer?.files || [])]); });
+
+// « Ouvrir avec Atelier PDF » (appli installée sur ordinateur)
+if ('launchQueue' in window) launchQueue.setConsumer(async p => { if (p.files?.length) traiterFichiers(await Promise.all(p.files.map(h => h.getFile()))); });
+if (new URLSearchParams(location.search).has('partage')) recupererPartage();
+
+// Fonctionnement hors ligne
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('sw.js').catch(e => console.warn('Service worker non installé', e));
+  let dejaControle = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (dejaControle) toast('Nouvelle version installée : elle sera active à la prochaine ouverture.', 5000);
+    dejaControle = true;
+  });
+}
+</script>
+</body>
+</html>

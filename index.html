@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d6b4f">
+<title>Atelier PDF</title>
+<meta name="description" content="Lisez, remplissez, signez et tamponnez vos PDF depuis votre téléphone. Gratuit, sans compte, et vos documents ne quittent jamais votre appareil.">
+<link rel="icon" href="assets/icone.png">
+<link rel="apple-touch-icon" href="assets/icone.png">
+<style>
+:root{--fond:#f3f2ee;--carte:#fff;--encre:#1b2130;--doux:#5d6576;--ligne:#e1ded6;--accent:#0d6b4f;--accent-fort:#0a5540;--accent-pale:#e2f0ea;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;font:17px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--encre);background:var(--fond)}
+a{color:var(--accent)}
+.page{max-width:1040px;margin:0 auto;padding:0 16px}
+header{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+.marque{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;color:var(--encre);text-decoration:none}
+.marque img{width:36px;height:36px;border-radius:9px}
+.bouton{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 22px;border-radius:12px;font-weight:700;text-decoration:none;background:var(--accent);color:#fff}
+.bouton:hover{background:var(--accent-fort)}
+.bouton.second{background:var(--carte);color:var(--encre);border:1px solid var(--ligne)}
+.heros{display:grid;gap:32px;align-items:center;padding:24px 0 48px}
+.heros h1{font-size:clamp(32px,7vw,52px);line-height:1.08;letter-spacing:-.02em;margin:0 0 16px}
+.heros p.intro{font-size:19px;color:var(--doux);margin:0 0 24px;max-width:34em}
+.actions{display:flex;flex-wrap:wrap;gap:12px}
+.apercu{background:var(--carte);border:1px solid var(--ligne);border-radius:18px;padding:12px;box-shadow:0 8px 30px rgba(20,24,35,.08)}
+.apercu img{display:block;width:100%;height:auto;border-radius:8px}
+.apercu figcaption{font-size:14px;color:var(--doux);padding:10px 4px 2px}
+h2{font-size:26px;letter-spacing:-.01em;margin:0 0 20px}
+.grille{display:grid;gap:14px;grid-template-columns:1fr}
+.carte{background:var(--carte);border:1px solid var(--ligne);border-radius:14px;padding:18px}
+.carte h3{margin:0 0 6px;font-size:17px}
+.carte p{margin:0;color:var(--doux);font-size:15px}
+section{padding:24px 0 40px}
+.confiance{background:var(--accent-pale);border-radius:18px;padding:24px;color:#244a3c}
+.confiance h2{color:var(--accent-fort)}
+.confiance ul{margin:0;padding-left:20px}
+.confiance li{margin:6px 0}
+ol.etapes{padding-left:22px;margin:0}
+ol.etapes li{margin:8px 0}
+footer{border-top:1px solid var(--ligne);padding:24px 0 40px;color:var(--doux);font-size:14px;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between}
+@media (min-width:760px){.heros{grid-template-columns:1.1fr .9fr;padding:48px 0 64px}.grille{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header>
+    <a class="marque" href="./"><img src="assets/icone.png" alt="">Atelier PDF</a>
+    <a class="bouton second" href="app/">Ouvrir l'appli</a>
+  </header>
+
+  <main>
+    <div class="heros">
+      <div>
+        <h1>Vos PDF, remplis et signés depuis votre téléphone.</h1>
+        <p class="intro">Lisez un document, remplissez un formulaire Cerfa, ajoutez votre signature et votre tampon, puis envoyez-le. Gratuit, sans compte, et vos fichiers ne quittent jamais votre appareil.</p>
+        <div class="actions">
+          <a class="bouton" href="app/">Commencer maintenant</a>
+          <a class="bouton second" href="#installer">L'installer sur mon téléphone</a>
+        </div>
+      </div>
+      <figure class="apercu">
+        <img src="assets/mandat-signe.jpg" alt="Bas d'un mandat MaPrimeRénov' rempli et signé avec Atelier PDF" width="1190" height="455">
+        <figcaption>Un mandat MaPrimeRénov' rempli et signé en quelques minutes (exemple fictif).</figcaption>
+      </figure>
+    </div>
+
+    <section>
+      <h2>Tout ce qu'il faut, au même endroit</h2>
+      <div class="grille">
+        <div class="carte"><h3>Lire</h3><p>Défilement fluide, zoom avec deux doigts et recherche d'un mot dans tout le document.</p></div>
+        <div class="carte"><h3>Remplir les formulaires</h3><p>Les cases des PDF remplissables (Cerfa, mandats…) se complètent directement au doigt.</p></div>
+        <div class="carte"><h3>Signer et tamponner</h3><p>Signez au doigt ou à partir d'une photo, le fond est retiré automatiquement. Vos signatures et tampons restent enregistrés.</p></div>
+        <div class="carte"><h3>Corriger et masquer</h3><p>Ajoutez du texte, corrigez une faute ou cachez une information avant d'envoyer.</p></div>
+        <div class="carte"><h3>Scanner</h3><p>Photographiez une feuille : elle est redressée, les ombres sont retirées et elle devient un PDF.</p></div>
+        <div class="carte"><h3>Transformer</h3><p>Fusionner, organiser les pages, compresser, numéroter, ajouter un filigrane, convertir en images.</p></div>
+      </div>
+    </section>
+
+    <section>
+      <div class="confiance">
+        <h2>Vos documents restent chez vous</h2>
+        <ul>
+          <li>Tous les traitements se font sur votre appareil : aucun fichier n'est envoyé sur internet.</li>
+          <li>Pas de compte, pas de publicité, pas de suivi.</li>
+          <li>Une fois ouverte, l'appli fonctionne même sans connexion.</li>
+        </ul>
+        <p><a href="confidentialite.html">Lire la politique de confidentialité</a></p>
+      </div>
+    </section>
+
+    <section id="installer">
+      <h2>L'installer sur votre téléphone</h2>
+      <ol class="etapes">
+        <li><strong>Android (Chrome)</strong> : ouvrez <a href="app/">l'appli</a>, touchez le menu ⋮ puis « Installer l'application » (ou « Ajouter à l'écran d'accueil »).</li>
+        <li><strong>iPhone (Safari)</strong> : ouvrez <a href="app/">l'appli</a>, touchez le bouton Partager puis « Sur l'écran d'accueil ».</li>
+        <li>Une fois installée sur Android, Atelier PDF apparaît dans le menu « Partager » : envoyez-y un PDF reçu par e-mail pour l'ouvrir directement.</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer>
+    <span>© 2026 Atelier PDF</span>
+    <span><a href="confidentialite.html">Confidentialité</a> · <a href="app/">Ouvrir l'appli</a></span>
+  </footer>
+</div>
+</body>
+</html>

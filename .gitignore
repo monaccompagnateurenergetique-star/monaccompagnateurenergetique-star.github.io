@@ -1,0 +1,7 @@
+# Fichiers gardés sur l'ordinateur mais non publiés sur le site
+outils/
+test/
+# Fichiers système
+Thumbs.db
+desktop.ini
+.DS_Store
