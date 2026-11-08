@@ -158,7 +158,13 @@ a{color:var(--accent)}
 .tuile-ajout small{font-weight:400}
 
 /* Éléments posés sur les pages */
-.item{position:absolute;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none}
+.item{position:absolute;pointer-events:auto;touch-action:none;user-select:none;-webkit-user-select:none;transform-origin:center center}
+/* Poignée de rotation : au-dessus de l'élément sélectionné */
+.poignee-rot{display:none;position:absolute;left:50%;top:-46px;width:30px;height:30px;margin-left:-15px;border-radius:50%;background:#fff;border:2px solid var(--accent);color:var(--accent);touch-action:none;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:grab}
+.poignee-rot::before{content:"";position:absolute;inset:-7px}
+.poignee-rot::after{content:"";position:absolute;left:50%;top:100%;width:2px;height:14px;margin-left:-1px;background:var(--accent)}
+.poignee-rot .ico{width:16px;height:16px;stroke-width:2.5;pointer-events:none}
+.mode-editer .item.sel:not(.edition) .poignee-rot{display:grid}
 .mode-lire .item{pointer-events:none}
 .item-texte .contenu{display:block;white-space:pre;line-height:1.15;font-family:Helvetica,Arial,sans-serif;min-width:1ch;min-height:1.15em;outline:none}
 .item-texte .contenu:empty::before{content:"Écrivez ici";color:rgba(0,0,0,.35)}
@@ -1107,6 +1113,7 @@ function rendreItems(id) {
 function majStyleItem(e, it) {
   const s = D.s;
   e.style.left = it.x * s + 'px'; e.style.top = it.y * s + 'px';
+  e.style.transform = it.rot ? `rotate(${it.rot}deg)` : '';
   if (it.type === 'texte') {
     e.style.fontSize = it.taille * s + 'px'; e.style.color = it.couleur;
     if (D.edition !== it.id) e.querySelector('.contenu').textContent = it.texte;
@@ -1124,6 +1131,7 @@ function elementItem(it) {
   majStyleItem(e, it);
   if (D.mode === 'editer') {
     e.append(el('span', { class: 'poignee', 'aria-hidden': 'true' }),
+      el('span', { class: 'poignee-rot', title: 'Faire tourner', 'aria-hidden': 'true' }, icone('pivoter')),
       el('button', { type: 'button', class: 'suppr', 'aria-label': 'Supprimer cet élément', title: 'Supprimer', onclick: ev => { ev.stopPropagation(); supprimerItem(it.id); } }, icone('fermer')));
     attacherGestes(e, it);
   }
@@ -1198,19 +1206,31 @@ function attacherGestes(e, it) {
     ev.preventDefault(); ev.stopPropagation();
     if (D.edition && D.edition !== it.id) terminerEdition();
     const redim = ev.target.classList.contains('poignee');
+    const tourne = ev.target.classList.contains('poignee-rot');
     selectionner(it.id);
     e.setPointerCapture(ev.pointerId);
     const s = D.s, x0 = ev.clientX, y0 = ev.clientY, orig = { ...it }, largeur0 = e.offsetWidth / s;
     const pg = D.parId.get(it.page);
+    // Pour tourner : angle du doigt autour du centre de l'élément
+    const rc = e.getBoundingClientRect(), cxE = rc.left + rc.width / 2, cyE = rc.top + rc.height / 2;
+    const a0 = Math.atan2(y0 - cyE, x0 - cxE);
+    const th = (orig.rot || 0) * Math.PI / 180, cs = Math.cos(th), sn = Math.sin(th);
     let bouge = false;
     const mv = m => {
       if (!bouge && Math.hypot(m.clientX - x0, m.clientY - y0) < 6) return;
       if (!bouge) { bouge = true; memoriser(instantane(D.items.map(t => t.id === it.id ? orig : t))); }
       const dx = (m.clientX - x0) / s, dy = (m.clientY - y0) / s;
-      if (redim) {
-        if (it.type === 'image') { it.w = clamp(orig.w + dx, 10, pg.w * 1.5); it.h = it.w * orig.h / orig.w; }
-        else if (it.type === 'masque') { it.w = Math.max(4, orig.w + dx); it.h = Math.max(4, orig.h + dy); }
-        else it.taille = clamp(orig.taille * (largeur0 + dx) / largeur0, 4, 120);
+      if (tourne) {
+        let r = (orig.rot || 0) + (Math.atan2(m.clientY - cyE, m.clientX - cxE) - a0) * 180 / Math.PI;
+        r = ((r % 360) + 360) % 360;
+        for (const k of [0, 90, 180, 270, 360]) if (Math.abs(r - k) < 5) r = k % 360; // aimantation sur les angles droits
+        it.rot = Math.round(r * 10) / 10;
+      } else if (redim) {
+        // déplacement du doigt exprimé dans le repère (éventuellement tourné) de l'élément
+        const lx = dx * cs + dy * sn, ly = -dx * sn + dy * cs;
+        if (it.type === 'image') { it.w = clamp(orig.w + lx, 10, pg.w * 1.5); it.h = it.w * orig.h / orig.w; }
+        else if (it.type === 'masque') { it.w = Math.max(4, orig.w + lx); it.h = Math.max(4, orig.h + ly); }
+        else it.taille = clamp(orig.taille * (largeur0 + lx) / largeur0, 4, 120);
       } else {
         it.x = clamp(orig.x + dx, -largeur0 * 0.6, pg.w - 8);
         it.y = clamp(orig.y + dy, -10, pg.h - 8);
@@ -1220,7 +1240,7 @@ function attacherGestes(e, it) {
     const fin = () => {
       e.removeEventListener('pointermove', mv); e.removeEventListener('pointerup', fin); e.removeEventListener('pointercancel', fin);
       if (bouge) D.modifie = true;
-      else if (!redim && it.type === 'texte' && D.edition !== it.id) commencerEdition(it); // un simple toucher = écrire
+      else if (!redim && !tourne && it.type === 'texte' && D.edition !== it.id) commencerEdition(it); // un simple toucher = écrire
     };
     e.addEventListener('pointermove', mv); e.addEventListener('pointerup', fin); e.addEventListener('pointercancel', fin);
   });
@@ -1248,6 +1268,7 @@ function majBarreContexte() {
   if (!it || D.mode !== 'editer') return;
   const outil = (texte, ico, fn, cls = 'outil') => bouton(texte, { ico, cls, onclick: fn });
   const fini = outil('Terminer', 'valider', () => { terminerEdition(); selectionner(null); }, 'outil principal');
+  const pivoter = outil('Pivoter', 'pivoter', () => modifierItem(it, () => { it.rot = (Math.round(((it.rot || 0) + 90) / 90) * 90) % 360; }));
   if (it.type === 'texte') {
     const iCouleur = COULEURS_TEXTE.findIndex(([c]) => c === it.couleur);
     const suivante = COULEURS_TEXTE[(iCouleur + 1) % COULEURS_TEXTE.length];
@@ -1257,14 +1278,14 @@ function majBarreContexte() {
     barreContexte.append(
       outil('Réduire', 'texte-moins', () => modifierItem(it, () => { it.taille = Math.max(5, Math.round(it.taille - 1)); })),
       outil('Agrandir', 'texte-plus', () => modifierItem(it, () => { it.taille = Math.min(72, Math.round(it.taille + 1)); })),
-      bCouleur,
+      bCouleur, pivoter,
       outil('Supprimer', 'poubelle', () => supprimerItem(it.id), 'outil danger'), fini);
   } else if (it.type === 'masque') {
     const noir = it.couleur === '#000000';
     const b = bouton(noir ? 'Noir' : 'Blanc', { cls: 'outil', label: noir ? 'Zone noire. Toucher pour la passer en blanc' : 'Zone blanche. Toucher pour la passer en noir',
       onclick: () => { modifierItem(it, () => { it.couleur = noir ? '#ffffff' : '#000000'; }); majBarreContexte(); } });
     b.prepend(el('span', { class: 'pastille-outil', style: { background: it.couleur } }));
-    barreContexte.append(b, outil('Supprimer', 'poubelle', () => supprimerItem(it.id), 'outil danger'), fini);
+    barreContexte.append(b, pivoter, outil('Supprimer', 'poubelle', () => supprimerItem(it.id), 'outil danger'), fini);
   } else {
     barreContexte.append(
       outil('Dupliquer', 'copier', () => {
@@ -1272,6 +1293,7 @@ function majBarreContexte() {
         const copie = { ...it, id: idUnique(), x: it.x + 12, y: it.y + 12 };
         D.items.push(copie); D.modifie = true; rendreItems(it.page); selectionner(copie.id);
       }),
+      pivoter,
       outil('Supprimer', 'poubelle', () => supprimerItem(it.id), 'outil danger'), fini);
   }
 }
@@ -1431,12 +1453,13 @@ function deplacerPage(i, sens) {
 function pivoterPage(pg) {
   memoriser();
   const H = pg.h;
-  // Les éléments posés suivent la page : leur centre tourne avec elle, ils restent à l'endroit.
+  // Les éléments posés tournent avec la page, comme s'ils étaient collés dessus.
   for (const it of D.items.filter(t => t.page === pg.id)) {
     const w = it.type === 'texte' ? it.taille * 0.55 * Math.max(1, ...it.texte.split('\n').map(l => l.length)) : it.w;
     const h = it.type === 'texte' ? it.taille * 1.15 * it.texte.split('\n').length : it.h;
     const cx = it.x + w / 2, cy = it.y + h / 2, ncx = H - cy, ncy = cx;
     it.x = ncx - w / 2; it.y = ncy - h / 2;
+    it.rot = Math.round((((it.rot || 0) + 90) % 360) * 10) / 10;
   }
   pg.rot = (pg.rot + 90) % 360; majDims(pg);
   apresStructure();
@@ -1579,10 +1602,21 @@ async function remplirChamps(doc, src) {
 }
 
 async function dessinerItems(out, np, items, versPdf, R, ressources) {
+  if (!ressources.police) ressources.police = await out.embedFont(StandardFonts.Helvetica);
   for (const it of items) {
-    const rot = degrees(R);
+    // Rotation de l'élément autour de son centre (sens des aiguilles d'une montre, comme à l'écran)
+    const a = (it.rot || 0) * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+    let w = it.w, h = it.h, lignes = null;
+    if (it.type === 'texte') {
+      lignes = versWinAnsi(it.texte).split('\n');
+      w = Math.max(1, ...lignes.map(l => ressources.police.widthOfTextAtSize(l, it.taille)));
+      h = it.taille * 1.15 * lignes.length;
+    }
+    const cx = it.x + w / 2, cy = it.y + h / 2;
+    const point = (vx, vy) => { const ox = vx - cx, oy = vy - cy; return versPdf(cx + ox * c - oy * s, cy + ox * s + oy * c); };
+    const rot = degrees(R - (it.rot || 0));
     if (it.type === 'masque') {
-      const [x, y] = versPdf(it.x, it.y + it.h);
+      const [x, y] = point(it.x, it.y + it.h);
       np.drawRectangle({ x, y, width: it.w, height: it.h, color: hexVersRgb(it.couleur), rotate: rot, borderWidth: 0 });
     } else if (it.type === 'image') {
       let img = ressources.images.get(it.img);
@@ -1591,13 +1625,12 @@ async function dessinerItems(out, np, items, versPdf, R, ressources) {
         img = src.startsWith('data:image/png') ? await out.embedPng(dataUrlVersOctets(src)) : await out.embedJpg(dataUrlVersOctets(src));
         ressources.images.set(it.img, img);
       }
-      const [x, y] = versPdf(it.x, it.y + it.h);
+      const [x, y] = point(it.x, it.y + it.h);
       np.drawImage(img, { x, y, width: it.w, height: it.h, rotate: rot });
     } else if (it.type === 'texte') {
-      if (!ressources.police) ressources.police = await out.embedFont(StandardFonts.Helvetica);
-      versWinAnsi(it.texte).split('\n').forEach((ligne, k) => {
+      lignes.forEach((ligne, k) => {
         if (!ligne) return;
-        const [x, y] = versPdf(it.x, it.y + it.taille * (0.92 + 1.15 * k));
+        const [x, y] = point(it.x, it.y + it.taille * (0.92 + 1.15 * k));
         np.drawText(ligne, { x, y, size: it.taille, font: ressources.police, color: hexVersRgb(it.couleur), rotate: rot });
       });
     }
