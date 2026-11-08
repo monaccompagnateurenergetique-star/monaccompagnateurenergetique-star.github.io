@@ -314,6 +314,9 @@ textarea.champ{resize:vertical}
 .segments span{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 14px;border:1px solid var(--ligne);border-radius:22px;background:#fff;font-size:14px;font-weight:600}
 .segments input:checked+span{border-color:var(--accent);background:var(--accent-pale);color:var(--accent-fort)}
 .segments input:focus-visible+span{outline:3px solid var(--edition)}
+/* Onglets de Mes documents : toujours sur une seule ligne, largeur partagée */
+.segments.onglets{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px}
+.segments.onglets span{justify-content:center;padding:0 6px;font-size:13.5px;width:100%;box-sizing:border-box}
 .pastille{width:16px;height:16px;border-radius:50%;display:inline-block;border:1px solid rgba(0,0,0,.2)}
 input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 .liste{list-style:none;margin:0;padding:0}
@@ -534,7 +537,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.1.0';
+const VERSION_APPLI = '1.2.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString } = window.PDFLib;
@@ -2085,6 +2088,7 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
     if (fe.ferme()) return;
     for (const [k] of CHOIX) tailles[k].textContent = libelleTaille(k);
     zoneTaille.hidden = format === 'jpg';
+    if (caseDrive) caseDrive.hidden = format === 'jpg';
     const r = resultats[niveau];
     const verbe = partage ? 'Partager' : 'Enregistrer';
     btnGo.replaceChildren(icone(partage ? 'partager' : 'enregistrer'),
@@ -2110,11 +2114,17 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
     } }),
     el('span', { class: 'texte' }, el('strong', { text: 'Effacer vraiment le texte caché' }),
       el('small', { text: 'Sans cette option, le texte sous les zones cachées reste présent dans le fichier. Avec, les pages deviennent des images.' }))) : null;
+  // Google Drive : proposé seulement si l'utilisateur s'est déjà connecté une fois (Paramètres)
+  let versDrive = driveConfigure() && prefs.driveConnecte && !!prefs.driveAuto;
+  const caseDrive = driveConfigure() && prefs.driveConnecte ? el('label', { class: 'case-option' },
+    el('input', { type: 'checkbox', checked: versDrive, onchange: e => { versDrive = e.target.checked; } }),
+    el('span', { class: 'texte' }, el('strong', { text: 'Aussi enregistrer dans Google Drive' }), el('small', { text: 'Dans le dossier « Atelier PDF » de votre Drive.' }))) : null;
+  if (caseDrive) preparerGoogle();
   fe.corps.append(
     el('p', { style: { margin: '0 0 4px' } }, el('strong', { text: nom })),
     el('div', { class: 'etiquette', text: 'Format' }),
     segments('format-export', [['pdf', 'PDF'], ['jpg', 'Images JPG (une par page)']], format, v => { format = v; majAffichage(); }),
-    ...[ligneAplatir, zoneTaille].filter(Boolean)); // (sans zone cachée, pas de case « effacer » : on ne passe pas de vide)
+    ...[caseDrive, ligneAplatir, zoneTaille].filter(Boolean)); // (sans zone cachée, pas de case « effacer » : on ne passe pas de vide)
   fe.pied.append(btnGo);
   function relancerCalcul() {
     const g = ++generation; resultats = { aucune: base }; majAffichage();
@@ -2129,6 +2139,8 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
   }
   relancerCalcul();
   async function valider() {
+    // La connexion Google doit être demandée tout de suite, pendant le toucher (sinon le navigateur bloque la fenêtre)
+    const driveOk = versDrive && format === 'pdf' ? connecterDrive().then(() => true, e => { toast('Google Drive : ' + e.message, 5000); return false; }) : null;
     if (format === 'jpg') {
       occupe('Création des images…');
       let fichiers;
@@ -2152,8 +2164,9 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
     const final = compresse ? r : base;
     const nomFinal = compresse ? nomSortie(nom, 'compressé') : aplatir ? nomSortie(nom, 'aplati') : nom;
     await fe.fermer();
+    if (driveOk && await driveOk) await envoyerVersDrive(final, nomFinal);
     if (partage) { if (await partager([fichierPdf(final, nomFinal)])) noterHistorique(D, 'partagé', final, nomFinal); }
-    else if (await enregistrer(final, nomFinal)) { noterHistorique(D, 'enregistré', final, nomFinal); D.modifie = false; toast(`PDF enregistré (${tailleLisible(final.length)})`); }
+    else if (await enregistrer(final, nomFinal)) { noterHistorique(D, 'enregistré', final, nomFinal); D.modifie = false; if (!driveOk) toast(`PDF enregistré (${tailleLisible(final.length)})`); }
   }
 }
 /** Chaque page d'un PDF en image JPG. */
@@ -2688,8 +2701,10 @@ function ouvrirParametres() {
     el('div', {}, el('div', { class: 'etiquette', text: 'Garder mes documents et leur historique sur cet appareil' }),
       segments('pref-garder', [['oui', 'Oui (conseillé)'], ['non', 'Non']], prefs.garderDocuments ? 'oui' : 'non', v => { prefs.garderDocuments = v === 'oui'; ecrirePrefs(prefs); })),
     espace,
+    el('h3', { class: 'titre-section', text: 'Google Drive' }),
+    blocDrive(),
     el('h3', { class: 'titre-section', text: 'À propos' }),
-    el('p', { class: 'note', text: `Atelier PDF ${VERSION_APPLI}. Tout est traité sur cet appareil : vos documents ne sont jamais envoyés.` }),
+    el('p', { class: 'note', text: `Atelier PDF ${VERSION_APPLI}. Tout est traité sur cet appareil. Vos documents ne quittent l'appareil que si vous les partagez, ou si vous les envoyez vous-même dans votre Google Drive.` }),
     el('p', {}, el('a', { href: '../confidentialite.html', text: 'Politique de confidentialité' })),
     el('div', { class: 'rangee-btn' }, bouton('Effacer toutes mes données', { ico: 'poubelle', cls: 'btn danger', onclick: async () => {
       const ok = await confirmer({ titre: 'Effacer toutes vos données ?', texte: 'Signatures, tampons, réglages, documents gardés, historique et modèles seront supprimés de cet appareil. Cette action est définitive.', action: 'Tout effacer' });
@@ -3265,13 +3280,16 @@ async function sauvegarder(d, { force = false, modele = false, nom } = {}) {
   const etat = etatDe(d), sig = JSON.stringify(etat);
   if (!force && !modele && sig === d.sigSauvee) return d.docId;
   const id = modele ? idUnique() : d.docId;
+  // le lien avec la copie Google Drive (synchronisation) est conservé
+  let lienDrive = {};
+  if (!modele) try { const a = await bdGet('documents', id); if (a?.driveId) lienDrive = { driveId: a.driveId, driveMaj: a.driveMaj }; } catch {}
   const images = {}; for (const it of etat.items) if (it.img && d.images[it.img]) images[it.img] = d.images[it.img];
   const sources = d.sources.map(s => s.octets), deja = modele ? 0 : (d.sauvees || 0);
   if (!modele) d.sigSauvee = sig;
   try {
     for (let k = deja; k < sources.length; k++) await bdPut('fichiers', sources[k], `${id}:s${k}`);
     await bdPut('documents', { id, nom: nom || d.nom, cree: modele ? Date.now() : d.cree, maj: Date.now(), pages: d.pages.length,
-      nbSources: sources.length, apercu: d.apercu || null, etat, images, modele });
+      nbSources: sources.length, apercu: d.apercu || null, etat, images, modele, ...lienDrive });
     if (!modele) d.sauvees = sources.length;
     demanderPersistance();
     return id;
@@ -3356,6 +3374,8 @@ async function supprimerSauvegarde(doc) {
   for (let k = 0; k < (doc.nbSources || 0); k++) await bdDel('fichiers', `${doc.id}:s${k}`);
   for (const h of await bdParDoc(doc.id)) { await bdDel('historique', h.id); await bdDel('fichiers', 'h' + h.id); }
   await bdDel('documents', doc.id);
+  // supprimé aussi de Google Drive à la prochaine synchronisation
+  if (doc.driveId) { prefs.driveSupprimes = [...(prefs.driveSupprimes || []), doc.driveId]; ecrirePrefs(prefs); }
 }
 
 const quand = t => {
@@ -3384,9 +3404,16 @@ async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
   const fe = feuille({ titre: 'Mes documents', plein: true, pied: false });
   const zone = el('div', { class: 'liste-docs' });
   let courant = onglet;
-  fe.corps.append(segments('mesdocs', [['documents', 'Documents'], ['historique', 'Historique'], ['modeles', 'Modèles']], courant, v => { courant = v; filtreDoc = null; afficher(); }), zone);
+  const onglets = [['documents', 'Documents'], ['historique', 'Historique'], ['modeles', 'Modèles']];
+  if (driveConfigure()) onglets.push(['drive', 'Drive']);
+  const barreOnglets = segments('mesdocs', onglets, courant, v => { courant = v; filtreDoc = null; afficher(); });
+  barreOnglets.classList.add('onglets');
+  fe.corps.append(barreOnglets, zone);
   const ouvrirPuis = async fn => { await fe.fermer(); fn(); };
+  const surDrive = () => { if (!zone.isConnected) document.removeEventListener('drive-etat', surDrive); else if (courant === 'drive' || courant === 'documents') afficher(); };
+  document.addEventListener('drive-etat', surDrive);
   async function afficher() {
+    if (courant === 'drive') { zone.replaceChildren(); return listeDrive(zone, ouvrirPuis); }
     let docs = [], hist = [];
     try { docs = await bdAll('documents'); hist = await bdAll('historique'); } catch (e) { console.error(e); }
     zone.replaceChildren();
@@ -3471,6 +3498,223 @@ async function majReprendre() {
   $('#reprendre-liste').replaceChildren(...docs.slice(0, 3).map(d => ligneDoc({ apercu: d.apercu, titre: d.nom, detail: quand(d.maj), onclick: () => ouvrirSauvegarde(d) })));
   $('#reprendre-tout').textContent = `Tout voir (${docs.length})`;
 }
+/* =========================================================
+   14 quater. GOOGLE DRIVE (facultatif)
+   - autorisation « drive.file » : l'appli ne voit QUE les fichiers qu'elle a créés (dossier « Atelier PDF ») ;
+   - aucun serveur à nous : le navigateur parle directement à Google, avec un jeton valable 1 heure.
+   ========================================================= */
+const GOOGLE_CLIENT_ID = ''; // ← identifiant OAuth « Application Web » (…apps.googleusercontent.com), à renseigner
+const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+const API_DRIVE = 'https://www.googleapis.com/drive/v3', API_ENVOI = 'https://www.googleapis.com/upload/drive/v3';
+const driveConfigure = () => !!GOOGLE_CLIENT_ID;
+let jetonDrive = null, expirationJeton = 0, clientJeton = null, attenteJeton = null;
+const driveConnecte = () => !!jetonDrive && Date.now() < expirationJeton - 60000;
+
+/** Le script de Google est chargé à l'avance (la fenêtre de connexion doit s'ouvrir directement au toucher). */
+function preparerGoogle() {
+  if (!driveConfigure()) return Promise.resolve(false);
+  return chargerScript('https://accounts.google.com/gsi/client').then(() => {
+    if (!clientJeton) clientJeton = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID, scope: DRIVE_SCOPE,
+      callback: r => {
+        const a = attenteJeton; attenteJeton = null;
+        if (r.error) { a?.rej(new Error(r.error)); return; }
+        jetonDrive = r.access_token; expirationJeton = Date.now() + (r.expires_in || 3600) * 1000;
+        prefs.driveConnecte = true; ecrirePrefs(prefs);
+        a?.res(jetonDrive); majEtatDrive();
+        if (prefs.garderDocuments) setTimeout(() => synchroniserDrive({ discret: true }), 500);
+      },
+      error_callback: e => { const a = attenteJeton; attenteJeton = null; a?.rej(new Error(e?.type || 'connexion annulée')); }
+    });
+    return true;
+  }).catch(() => false);
+}
+/** Demande un jeton. À appeler depuis un toucher (sinon le navigateur bloque la fenêtre de connexion). */
+function connecterDrive() {
+  if (driveConnecte()) return Promise.resolve(jetonDrive);
+  if (!clientJeton) return Promise.reject(new Error('Google n\'est pas encore prêt, réessayez dans un instant.'));
+  return new Promise((res, rej) => {
+    attenteJeton = { res, rej };
+    clientJeton.requestAccessToken({ prompt: prefs.driveConnecte ? '' : 'consent' });
+  });
+}
+function deconnecterDrive() {
+  try { if (jetonDrive) google.accounts.oauth2.revoke(jetonDrive, () => {}); } catch {}
+  jetonDrive = null; expirationJeton = 0; prefs.driveConnecte = false; prefs.driveAuto = false; delete prefs.driveDossiers; ecrirePrefs(prefs);
+  majEtatDrive();
+}
+async function driveFetch(url, opts = {}) {
+  const j = await connecterDrive();
+  const r = await fetch(url, { ...opts, headers: { ...(opts.headers || {}), Authorization: 'Bearer ' + j } });
+  if (r.status === 401) { jetonDrive = null; throw new Error('Session Google expirée : reconnectez-vous.'); }
+  if (!r.ok) throw new Error(`Google Drive a répondu ${r.status}`);
+  return r;
+}
+const echapperQ = s => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+/** Dossier « Atelier PDF » (et sous-dossier de synchronisation), créé au premier usage. */
+async function dossierDrive(nom, parent) {
+  const cle = (parent || 'racine') + '/' + nom;
+  prefs.driveDossiers ||= {};
+  if (prefs.driveDossiers[cle]) return prefs.driveDossiers[cle];
+  const q = `name='${echapperQ(nom)}' and mimeType='application/vnd.google-apps.folder' and trashed=false` + (parent ? ` and '${parent}' in parents` : '');
+  const trouve = (await (await driveFetch(`${API_DRIVE}/files?q=${encodeURIComponent(q)}&fields=files(id)&spaces=drive`)).json()).files?.[0];
+  const id = trouve ? trouve.id : (await (await driveFetch(`${API_DRIVE}/files?fields=id`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name: nom, mimeType: 'application/vnd.google-apps.folder', ...(parent ? { parents: [parent] } : {}) })
+  })).json()).id;
+  prefs.driveDossiers[cle] = id; ecrirePrefs(prefs);
+  return id;
+}
+const dossierPrincipal = () => dossierDrive('Atelier PDF');
+const dossierSynchro = async () => dossierDrive('Synchronisation (ne pas modifier)', await dossierPrincipal());
+/** Envoie un fichier (création, ou mise à jour si fichierId est donné). */
+async function envoyerFichierDrive(contenu, { nom, mime = 'application/pdf', parent, fichierId, proprietes } = {}) {
+  const b = 'atelier' + Math.random().toString(36).slice(2);
+  const meta = { name: nom, mimeType: mime, ...(fichierId ? {} : { parents: [parent] }), ...(proprietes ? { appProperties: proprietes } : {}) };
+  const corps = new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: ${mime}\r\n\r\n`, contenu, `\r\n--${b}--`]);
+  const url = `${API_ENVOI}/files${fichierId ? '/' + fichierId : ''}?uploadType=multipart&fields=id,name,modifiedTime,appProperties`;
+  return (await driveFetch(url, { method: fichierId ? 'PATCH' : 'POST', headers: { 'Content-Type': `multipart/related; boundary=${b}` }, body: corps })).json();
+}
+async function listerDrive(parent, champs = 'id,name,modifiedTime,size,mimeType,appProperties') {
+  const q = `'${parent}' in parents and trashed=false`;
+  return (await (await driveFetch(`${API_DRIVE}/files?q=${encodeURIComponent(q)}&orderBy=modifiedTime desc&pageSize=200&fields=files(${champs})`)).json()).files || [];
+}
+const telechargerDrive = async id => new Uint8Array(await (await driveFetch(`${API_DRIVE}/files/${id}?alt=media`)).arrayBuffer());
+const supprimerDrive = id => driveFetch(`${API_DRIVE}/files/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ trashed: true }) });
+
+/** « Aussi enregistrer dans Drive » (depuis la fenêtre Enregistrer / Partager). */
+async function envoyerVersDrive(octets, nom) {
+  try {
+    const f = await envoyerFichierDrive(new Blob([octets], { type: 'application/pdf' }), { nom, parent: await dossierPrincipal() });
+    toast(`« ${f.name} » est dans Google Drive (dossier Atelier PDF)`);
+    return true;
+  } catch (e) { console.error(e); toast('L\'envoi vers Google Drive n\'a pas abouti : ' + e.message, 6000); return false; }
+}
+
+/* Synchronisation de « Mes documents » (travail en cours et modèles) entre appareils.
+   Chaque document = un paquet JSON dans le sous-dossier de synchronisation. Règle : le plus récent l'emporte ;
+   si les deux côtés ont changé depuis la dernière synchro, on garde les deux (rien n'est écrasé). */
+const versBase64 = octets => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(new Blob([octets])); });
+const depuisBase64 = b => dataUrlVersOctets('data:;base64,' + b);
+async function paquetDe(doc) {
+  const sources = [];
+  for (let k = 0; k < doc.nbSources; k++) sources.push(await versBase64(await bdGet('fichiers', `${doc.id}:s${k}`)));
+  const { driveId, driveMaj, ...reste } = doc;
+  return JSON.stringify({ format: 'atelier-1', doc: reste, sources });
+}
+async function enregistrerPaquet(texte, { nouvelId, suffixeNom, driveId, driveMaj } = {}) {
+  const p = JSON.parse(texte); if (p.format !== 'atelier-1') throw new Error('paquet inconnu');
+  const doc = { ...p.doc };
+  if (nouvelId) { doc.id = idUnique(); doc.nom = `${nomSansExt(doc.nom)} ${suffixeNom}.pdf`; }
+  for (const [k, b] of p.sources.entries()) await bdPut('fichiers', depuisBase64(b), `${doc.id}:s${k}`);
+  doc.nbSources = p.sources.length;
+  if (!nouvelId) { doc.driveId = driveId; doc.driveMaj = driveMaj; }
+  await bdPut('documents', doc);
+  return doc;
+}
+let synchroEnCours = false;
+async function synchroniserDrive({ discret = false } = {}) {
+  if (synchroEnCours || !driveConfigure()) return;
+  synchroEnCours = true;
+  if (!discret) occupe('Synchronisation avec Google Drive…');
+  const bilan = { envoyes: 0, recus: 0, conflits: 0 };
+  try {
+    if (D && D.modifie) await sauvegarder(D);
+    const dossier = await dossierSynchro();
+    // Documents supprimés sur cet appareil : on les retire aussi de Drive
+    for (const id of prefs.driveSupprimes || []) { try { await supprimerDrive(id); } catch {} }
+    prefs.driveSupprimes = []; ecrirePrefs(prefs);
+    const distants = new Map((await listerDrive(dossier, 'id,appProperties')).filter(f => f.appProperties?.docId).map(f => [f.appProperties.docId, { id: f.id, maj: +f.appProperties.maj || 0 }]));
+    const locaux = await bdAll('documents');
+    const envoyer = async doc => {
+      const f = await envoyerFichierDrive(new Blob([await paquetDe(doc)], { type: 'application/json' }),
+        { nom: `${nomSansExt(doc.nom)}.atelier.json`, mime: 'application/json', parent: dossier, fichierId: doc.driveId, proprietes: { docId: doc.id, maj: String(doc.maj), modele: String(!!doc.modele) } });
+      await bdPut('documents', { ...doc, driveId: f.id, driveMaj: doc.maj }); bilan.envoyes++;
+    };
+    for (const doc of locaux) {
+      const dist = distants.get(doc.id), dernier = doc.driveMaj || 0;
+      distants.delete(doc.id);
+      if (!dist) {
+        // Déjà synchronisé, inchangé ici, et absent de Drive : il a été supprimé sur un autre appareil
+        if (doc.driveId && doc.maj <= dernier && D?.docId !== doc.id) { await supprimerSauvegarde({ ...doc, driveId: undefined }); bilan.supprimes = (bilan.supprimes || 0) + 1; }
+        else await envoyer({ ...doc, driveId: undefined });
+        continue;
+      }
+      doc.driveId = dist.id;
+      const localChange = doc.maj > dernier, distantChange = dist.maj > dernier;
+      if (localChange && !distantChange) await envoyer(doc);
+      else if (distantChange && !localChange) { await enregistrerPaquet(new TextDecoder().decode(await telechargerDrive(dist.id)), { driveId: dist.id, driveMaj: dist.maj }); bilan.recus++; }
+      else if (distantChange && localChange) {
+        // Modifié des deux côtés : on garde la version de l'autre appareil à part, puis on envoie la nôtre
+        await enregistrerPaquet(new TextDecoder().decode(await telechargerDrive(dist.id)), { nouvelId: true, suffixeNom: '(autre appareil)' });
+        await envoyer(doc); bilan.conflits++;
+      }
+    }
+    for (const [, dist] of distants) { await enregistrerPaquet(new TextDecoder().decode(await telechargerDrive(dist.id)), { driveId: dist.id, driveMaj: dist.maj }); bilan.recus++; }
+    prefs.derniereSynchro = Date.now(); ecrirePrefs(prefs);
+    majReprendre(); document.dispatchEvent(new Event('drive-etat'));
+    if (!discret || bilan.recus || bilan.conflits) toast(`Synchronisé : ${bilan.envoyes} envoyé${bilan.envoyes > 1 ? 's' : ''}, ${bilan.recus} reçu${bilan.recus > 1 ? 's' : ''}${bilan.supprimes ? `, ${bilan.supprimes} supprimé${bilan.supprimes > 1 ? 's' : ''} ailleurs` : ''}${bilan.conflits ? `, ${bilan.conflits} en double (modifié sur deux appareils)` : ''}`, 5000);
+    return bilan;
+  } catch (e) { console.error(e); if (!discret) toast('La synchronisation n\'a pas abouti : ' + e.message, 6000); }
+  finally { synchroEnCours = false; if (!discret) libre(); }
+}
+
+/** Bloc « Google Drive » (Paramètres et Mes documents). */
+const zonesDrive = new Set();
+function blocDrive() {
+  const z = el('div', { class: 'bloc-drive' });
+  zonesDrive.add(z); remplirBlocDrive(z);
+  return z;
+}
+function majEtatDrive() {
+  for (const z of zonesDrive) { if (z.isConnected) remplirBlocDrive(z); else zonesDrive.delete(z); }
+  document.dispatchEvent(new Event('drive-etat'));
+}
+/** Onglet « Drive » de Mes documents : les PDF du dossier « Atelier PDF ». */
+async function listeDrive(zone, ouvrirPuis) {
+  zone.append(blocDrive());
+  if (!driveConnecte()) return;
+  const liste = el('div', {}, el('p', { class: 'note', text: 'Chargement de votre dossier Drive…' }));
+  zone.append(el('h3', { class: 'titre-section', text: 'Dossier « Atelier PDF »' }), liste);
+  try {
+    const fichiers = (await listerDrive(await dossierPrincipal())).filter(f => f.mimeType === 'application/pdf');
+    liste.replaceChildren();
+    if (!fichiers.length) { liste.append(el('p', { class: 'vide', text: 'Aucun PDF pour l\'instant. Cochez « Aussi enregistrer dans Google Drive » quand vous enregistrez ou partagez un document.' })); return; }
+    fichiers.forEach(f => liste.append(ligneDoc({ ico: 'doc', titre: f.name, detail: `${quand(Date.parse(f.modifiedTime))}${f.size ? ' · ' + tailleLisible(+f.size) : ''}`,
+      onclick: async () => {
+        occupe('Téléchargement depuis Drive…');
+        let octets; try { octets = await telechargerDrive(f.id); } catch (e) { toast('Le fichier n\'a pas pu être téléchargé : ' + e.message, 5000); return; } finally { libre(); }
+        ouvrirPuis(() => ouvrirPdf(octets, f.name));
+      },
+      actions: [bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: `Mettre ${f.name} à la corbeille de Drive`, onclick: async () => {
+        if (!await confirmer({ titre: `Mettre « ${f.name} » à la corbeille de Drive ?`, texte: 'Vous pourrez le récupérer pendant 30 jours depuis la corbeille de Google Drive.', action: 'Mettre à la corbeille' })) return;
+        try { await supprimerDrive(f.id); toast('Mis à la corbeille de Drive'); document.dispatchEvent(new Event('drive-etat')); } catch (e) { toast('Impossible : ' + e.message, 5000); }
+      } })] })));
+  } catch (e) { console.error(e); liste.replaceChildren(el('p', { class: 'note', text: 'Le dossier Drive n\'a pas pu être lu : ' + e.message })); }
+}
+function remplirBlocDrive(z) {
+  z.replaceChildren();
+  if (!driveConfigure()) { z.append(el('p', { class: 'note', text: 'Google Drive sera disponible très bientôt.' })); return; }
+  preparerGoogle();
+  if (!driveConnecte()) {
+    z.append(el('p', { class: 'note', text: prefs.driveConnecte ? 'Reconnectez-vous pour utiliser Google Drive pendant cette session.' : 'Enregistrez vos PDF dans Google Drive et retrouvez vos documents sur tous vos appareils. Atelier PDF ne voit que les fichiers qu\'il crée (dossier « Atelier PDF »).' }),
+      bouton(prefs.driveConnecte ? 'Se reconnecter à Google Drive' : 'Se connecter à Google Drive', { ico: 'dossier', cls: 'btn principal', onclick: async () => {
+        try { await connecterDrive(); toast('Google Drive est connecté'); } catch (e) { toast('Connexion impossible : ' + e.message, 5000); }
+      } }));
+    return;
+  }
+  z.append(
+    el('p', { class: 'note' }, '✓ Connecté à Google Drive', prefs.derniereSynchro ? ` · dernière synchronisation ${quand(prefs.derniereSynchro)}` : ''),
+    el('label', { class: 'case-option' }, el('input', { type: 'checkbox', checked: !!prefs.driveAuto, onchange: e => { prefs.driveAuto = e.target.checked; ecrirePrefs(prefs); } }),
+      el('span', { class: 'texte' }, el('strong', { text: 'Enregistrer aussi chaque PDF dans Drive' }), el('small', { text: 'Coché par défaut dans la fenêtre Enregistrer / Partager.' }))),
+    el('div', { class: 'rangee-btn' },
+      bouton('Synchroniser', { ico: 'pivoter', cls: 'btn principal', label: 'Synchroniser Mes documents avec Google Drive', onclick: () => synchroniserDrive() }),
+      bouton('Se déconnecter', { onclick: deconnecterDrive })));
+}
+// Le script Google est préparé tôt si l'utilisateur s'est déjà connecté (la reconnexion se fera d'un toucher)
+if (prefs.driveConnecte) preparerGoogle();
+// Quand l'appli passe en arrière-plan, le travail est aussi envoyé dans Drive (si la session Google est ouverte)
+document.addEventListener('visibilitychange', () => { if (document.hidden && driveConnecte() && prefs.garderDocuments) synchroniserDrive({ discret: true }); });
 /* =========================================================
    15. INSTALLATION SUR LE TÉLÉPHONE
    ========================================================= */

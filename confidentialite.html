@@ -27,48 +27,61 @@ th{background:#faf9f6}
   <h1>Politique de confidentialité</h1>
   <p class="date">Dernière mise à jour : 8 novembre 2026</p>
 
-  <p class="resume"><strong>En bref :</strong> Atelier PDF ne collecte aucune donnée personnelle. Vos documents sont traités uniquement sur votre appareil et ne sont jamais envoyés à un serveur, ni au nôtre, ni à celui d'un tiers.</p>
+  <p class="resume"><strong>En bref :</strong> Atelier PDF ne collecte aucune donnée personnelle et n'a pas de serveur. Vos documents sont traités uniquement sur votre appareil. Ils n'en sortent que si vous le décidez : en les partageant, ou en les envoyant dans <strong>votre propre</strong> Google Drive (fonction facultative).</p>
 
   <h2>1. Qui sommes-nous ?</h2>
   <p>Atelier PDF est une application de lecture et de modification de documents PDF, accessible depuis un navigateur et sur Google Play. Pour toute question sur cette politique, écrivez-nous à : <strong>[ADRESSE E-MAIL DE CONTACT]</strong>.</p>
 
   <h2>2. Vos documents</h2>
   <p>Quand vous ouvrez, remplissez, signez, scannez ou transformez un document, tout le traitement est fait par votre téléphone ou votre ordinateur. Le fichier n'est transmis à aucun serveur. Nous n'y avons donc jamais accès.</p>
-  <p>Le document reste en mémoire le temps de votre travail. Il n'est conservé que si vous l'enregistrez ou le partagez vous-même, à l'endroit que vous choisissez.</p>
+  <p>Pour que vous puissiez reprendre votre travail plus tard, l'application garde sur votre appareil les documents que vous modifiez, les PDF que vous enregistrez ou partagez (historique) et vos modèles. Vous pouvez désactiver cette fonction dans <em>Paramètres → Mes documents</em>, et supprimer chaque document depuis <em>Mes documents</em>.</p>
+  <p>La reconnaissance de texte (OCR) et la conversion Excel → PDF sont faites, elles aussi, sur votre appareil : les modules nécessaires sont téléchargés depuis notre site la première fois, mais vos documents ne sont pas envoyés.</p>
 
   <h2>3. Ce qui est enregistré sur votre appareil</h2>
   <table>
     <tr><th>Donnée</th><th>Pourquoi</th><th>Où</th></tr>
     <tr><td>Vos signatures et tampons</td><td>Pour les réutiliser sans les redessiner</td><td>Stockage local du navigateur, sur votre appareil uniquement</td></tr>
     <tr><td>Vos réglages (taille du texte, couleur…)</td><td>Pour garder vos préférences</td><td>Stockage local du navigateur, sur votre appareil uniquement</td></tr>
+    <tr><td>Vos documents en cours, l'historique des PDF enregistrés ou partagés, vos modèles</td><td>Pour reprendre votre travail et retrouver vos envois</td><td>Base de données locale du navigateur (IndexedDB), sur votre appareil uniquement</td></tr>
     <tr><td>Les fichiers de l'application</td><td>Pour qu'elle fonctionne sans connexion</td><td>Mémoire cache du navigateur</td></tr>
   </table>
-  <p>Ces données ne quittent jamais votre appareil. Vous pouvez les supprimer à tout moment depuis <em>Paramètres → Effacer toutes mes données</em>, ou en désinstallant l'application.</p>
+  <p>Ces données ne quittent pas votre appareil, sauf si vous activez Google Drive (voir ci-dessous). Vous pouvez les supprimer à tout moment depuis <em>Paramètres → Effacer toutes mes données</em>, ou en désinstallant l'application.</p>
 
-  <h2>4. Ce que nous ne faisons pas</h2>
+  <h2>4. Google Drive (facultatif)</h2>
+  <p>Si vous choisissez de vous connecter à Google Drive (<em>Paramètres → Google Drive</em>), l'application peut :</p>
   <ul>
-    <li>Pas de compte ni d'inscription.</li>
+    <li>enregistrer une copie des PDF que vous choisissez dans un dossier « Atelier PDF » de <strong>votre</strong> Google Drive ;</li>
+    <li>y enregistrer vos documents en cours et vos modèles (sous-dossier « Synchronisation »), pour les retrouver sur vos autres appareils ;</li>
+    <li>relire ces fichiers pour les ouvrir ou les synchroniser.</li>
+  </ul>
+  <p>L'autorisation demandée est <strong>drive.file</strong> : l'application ne voit que les fichiers qu'elle a elle-même créés. Elle n'a aucun accès au reste de votre Drive. Les échanges se font directement entre votre appareil et Google (connexion chiffrée) ; ils ne passent par aucun serveur à nous. Le jeton de connexion fourni par Google reste en mémoire environ une heure et n'est jamais enregistré.</p>
+  <p>Les données obtenues via les API Google sont utilisées uniquement pour ces fonctions, à votre demande. Elles ne sont ni vendues, ni transmises à des tiers, ni utilisées pour de la publicité. L'utilisation des informations reçues des API Google respecte les <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">règles relatives aux données utilisateur des services API Google</a>, y compris les exigences d'utilisation limitée (« Limited Use »).</p>
+  <p>Vous pouvez vous déconnecter à tout moment dans <em>Paramètres → Google Drive → Se déconnecter</em>, et retirer l'accès depuis votre compte Google (<a href="https://myaccount.google.com/permissions" rel="noopener">myaccount.google.com/permissions</a>). Les fichiers déjà présents dans votre Drive vous appartiennent : vous les gérez depuis Google Drive. Le traitement par Google est régi par les <a href="https://policies.google.com/privacy?hl=fr" rel="noopener">règles de confidentialité de Google</a>.</p>
+
+  <h2>5. Ce que nous ne faisons pas</h2>
+  <ul>
+    <li>Pas de compte ni d'inscription chez nous (la connexion à Google Drive est facultative et se fait avec votre compte Google).</li>
     <li>Pas de publicité.</li>
     <li>Pas d'outil de mesure d'audience ni de traceur.</li>
     <li>Pas de vente ni de partage de données : nous n'en collectons aucune.</li>
   </ul>
 
-  <h2>5. Autorisations utilisées</h2>
+  <h2>6. Autorisations utilisées</h2>
   <ul>
     <li><strong>Fichiers</strong> : seulement ceux que vous choisissez d'ouvrir.</li>
     <li><strong>Appareil photo</strong> : seulement quand vous touchez « Scanner » ou « Photo », pour photographier un document, une signature ou un tampon. Les photos restent sur votre appareil.</li>
   </ul>
 
-  <h2>6. Hébergement</h2>
+  <h2>7. Hébergement</h2>
   <p>Les fichiers de l'application sont hébergés par GitHub Pages (GitHub, Inc.). Comme pour tout site internet, l'hébergeur peut enregistrer des informations techniques au moment du téléchargement de l'application, par exemple l'adresse IP. Vos documents, eux, ne passent jamais par cet hébergeur. Voir la <a href="https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">déclaration de confidentialité de GitHub</a>.</p>
 
-  <h2>7. Enfants</h2>
+  <h2>8. Enfants</h2>
   <p>L'application ne s'adresse pas spécifiquement aux enfants et ne collecte aucune donnée, y compris les leurs.</p>
 
-  <h2>8. Vos droits</h2>
-  <p>Comme nous ne détenons aucune donnée vous concernant, nous n'avons rien à vous transmettre, à corriger ni à supprimer. Vous restez libre de nous contacter à l'adresse ci-dessus, et d'adresser une réclamation à la CNIL (cnil.fr).</p>
+  <h2>9. Vos droits</h2>
+  <p>Comme nous ne détenons aucune donnée vous concernant (vos fichiers sont sur votre appareil et, si vous l'avez choisi, dans votre propre Google Drive), nous n'avons rien à vous transmettre, à corriger ni à supprimer. Vous restez libre de nous contacter à l'adresse ci-dessus, et d'adresser une réclamation à la CNIL (cnil.fr).</p>
 
-  <h2>9. Modifications</h2>
+  <h2>10. Modifications</h2>
   <p>Si cette politique change, la nouvelle version sera publiée sur cette page avec sa date de mise à jour.</p>
 </main>
 </body>
