@@ -123,9 +123,14 @@ a{color:var(--accent)}
 .pastille-outil{width:22px;height:22px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
 
 /* Quelle zone est visible ? (onglet Document, Pages ou Outils) */
-#barre-editer,#barre-contexte{display:none}
-#ecran-doc.onglet-document:not(.avec-selection) #barre-editer{display:flex}
-#ecran-doc.onglet-document.avec-selection #barre-contexte{display:flex}
+#barre-editer,#barre-contexte,#barre-apercu{display:none}
+#ecran-doc.mode-editer.onglet-document:not(.avec-selection) #barre-editer{display:flex}
+#ecran-doc.mode-editer.onglet-document.avec-selection #barre-contexte{display:flex}
+/* Aperçu : le document tel qu'il sera enregistré, sans cases bleues, cadres ni poignées */
+#ecran-doc.mode-lire.onglet-document #barre-apercu{display:flex}
+#ecran-doc.mode-lire :is(.inserer,.ajout-fin,#aide-placement){display:none!important}
+#ecran-doc.mode-lire #defil{background:#c9c7c0}
+#doc-apercu[aria-pressed="true"]{background:var(--accent-pale);color:var(--accent-fort)}
 #ecran-doc:not(.onglet-document) :is(#defil,#indic-page,#aide-placement,#barre-recherche,#bandeau-page){display:none!important}
 #ecran-doc:not(.onglet-pages) #vue-pages{display:none}
 #ecran-doc:not(.onglet-outils) #vue-outils{display:none}
@@ -388,6 +393,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   <header class="barre-doc">
     <button class="btn-icone" id="doc-retour" aria-label="Fermer le document" title="Fermer"><svg class="ico"><use href="#i-fermer"/></svg></button>
     <h1><span id="doc-titre">Document</span><small id="doc-sous-titre"></small></h1>
+    <button class="btn-icone" id="doc-apercu" aria-label="Aperçu du résultat final" aria-pressed="false" title="Aperçu"><svg class="ico"><use href="#i-oeil"/></svg></button>
     <button class="btn-icone" id="doc-annuler" aria-label="Annuler la dernière action" title="Annuler"><svg class="ico"><use href="#i-annuler"/></svg></button>
     <button class="btn-icone" id="doc-partager" aria-label="Partager le PDF" title="Partager"><svg class="ico"><use href="#i-partager"/></svg></button>
     <button class="btn-icone plein" id="doc-enregistrer" aria-label="Enregistrer le PDF" title="Enregistrer"><svg class="ico"><use href="#i-enregistrer"/></svg></button>
@@ -432,6 +438,11 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
     <button class="outil" data-action="corriger"><svg class="ico"><use href="#i-corriger"/></svg>Corriger</button>
   </footer>
   <footer id="barre-contexte" class="barre-bas barre-contexte" aria-label="Élément sélectionné"></footer>
+  <footer id="barre-apercu" class="barre-bas">
+    <button class="btn principal" id="ap-retour"><svg class="ico"><use href="#i-crayon"/></svg>Revenir à la modification</button>
+    <button class="outil" id="ap-partager"><svg class="ico"><use href="#i-partager"/></svg>Partager</button>
+    <button class="outil" id="ap-enregistrer"><svg class="ico"><use href="#i-enregistrer"/></svg>Enregistrer</button>
+  </footer>
 </section>
 
 <div id="toast" role="status" aria-live="polite"></div>
@@ -788,6 +799,29 @@ function choisirOnglet(o) {
   else { if (D.vueObsolete) { construireVue(); D.vueObsolete = false; } majIndicateur(); majBandeau(); }
 }
 $('#onglet-document').addEventListener('click', () => { if (D && D.onglet === 'document' && D.focus) voirTout(); else choisirOnglet('document'); });
+
+/* Aperçu : rendu final (valeurs des champs dessinées dans la page, éléments sans cadre), puis retour à la modification */
+function basculerApercu(actif = D.mode !== 'lire') {
+  if (!D) return;
+  if (document.activeElement && pagesEl.contains(document.activeElement)) document.activeElement.blur();
+  terminerEdition(); annulerPlacement(); selectionner(null);
+  D.mode = actif ? 'lire' : 'editer';
+  if (D.onglet !== 'document') choisirOnglet('document');
+  majClassesDoc();
+  $('#doc-apercu').setAttribute('aria-pressed', String(actif));
+  $('#doc-apercu').title = actif ? 'Revenir à la modification' : 'Aperçu';
+  for (const pg of D.pages) {
+    const v = D.vues.get(pg.id); if (!v) continue;
+    if (actif) { v.formulaire.replaceChildren(); v.formCle = null; }
+    rendreItems(pg.id);
+    if (v.visible) rendrePage(pg.id);
+  }
+  if (actif) toast('Aperçu : voici le document tel qu\'il sera enregistré.');
+}
+$('#doc-apercu').addEventListener('click', () => basculerApercu());
+$('#ap-retour').addEventListener('click', () => basculerApercu(false));
+$('#ap-partager').addEventListener('click', () => exporter('partager'));
+$('#ap-enregistrer').addEventListener('click', () => exporter('enregistrer'));
 $('#onglet-pages').addEventListener('click', () => choisirOnglet('pages'));
 $('#onglet-outils').addEventListener('click', () => choisirOnglet('outils'));
 
@@ -1148,8 +1182,9 @@ function elementItem(it) {
   if (D.mode === 'editer') {
     e.append(el('span', { class: 'poignee', title: 'Agrandir ou réduire', 'aria-hidden': 'true' }),
       el('span', { class: 'poignee-rot', title: 'Faire tourner', 'aria-hidden': 'true' }, icone('pivoter')),
-      it.type === 'texte' ? el('span', { class: 'poignee-deplacer', title: 'Déplacer', 'aria-hidden': 'true' }, icone('deplacer')) : null,
       el('button', { type: 'button', class: 'suppr', 'aria-label': 'Supprimer cet élément', title: 'Supprimer', onclick: ev => { ev.stopPropagation(); supprimerItem(it.id); } }, icone('fermer')));
+    // (append(null) écrirait « null » : la poignée « déplacer » n'est ajoutée que pour un texte)
+    if (it.type === 'texte') e.append(el('span', { class: 'poignee-deplacer', title: 'Déplacer', 'aria-hidden': 'true' }, icone('deplacer')));
     attacherGestes(e, it);
   }
   return e;
