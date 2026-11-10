@@ -2,7 +2,7 @@
    - garde l'appli en mémoire pour qu'elle fonctionne sans connexion ;
    - reçoit les fichiers envoyés depuis le menu « Partager » d'Android.
    À CHAQUE MODIFICATION DE app/ : augmenter VERSION (atelier-v1 → atelier-v2…). */
-const VERSION = 'atelier-v55';
+const VERSION = 'atelier-v56';
 const CACHE_PARTAGE = 'atelier-partage';
 // Bibliothèques lourdes et facultatives (Excel, OCR) : téléchargées à la première utilisation,
 // puis gardées hors ligne dans un cache à part, qui n'est PAS vidé à chaque nouvelle version de l'appli.
@@ -17,7 +17,8 @@ const FICHIERS = [
   'lib/pdf-lib.min.js',
   'icons/icon-192.png',
   'icons/icon-512.png',
-  'icons/icon-maskable-512.png'
+  'icons/icon-maskable-512.png',
+  'modeles/cerfa_15923-01.pdf'
 ];
 
 self.addEventListener('install', event => {

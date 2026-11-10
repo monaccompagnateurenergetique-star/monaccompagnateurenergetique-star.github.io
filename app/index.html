@@ -697,6 +697,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 .carte-form strong{font-size:15px}
 .carte-form span:last-child{font-size:13px;color:var(--doux);line-height:1.35}
 .carte-form.nouveau{border-style:dashed;background:#faf9f6}
+.carte-form-ico.officiel{background:#e8eefc;color:#1d3fb3}
 .carte-form-ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--accent-pale);color:var(--accent);margin-bottom:4px}
 .carte-form-modif{position:absolute;top:8px;right:8px}
 .case-form{position:relative}
@@ -974,7 +975,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.19.0';
+const VERSION_APPLI = '1.20.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -3850,7 +3851,7 @@ const MODELES_FORMULAIRES = [
     { t: 'signature', id: 'sig-ent', label: 'L\'entreprise', qui: 'entreprise' }
   ] }
 ];
-const tousLesModeles = () => [...MODELES_FORMULAIRES, ...(prefs.formulairesPerso || [])];
+const tousLesModeles = () => [...MODELES_FORMULAIRES, ...(prefs.formulairesPerso || []), ...MODELES_PDF];
 const visible = (b, rep) => {
   if (!b.si) return true;
   const [id, val] = b.si, v = rep[id] ?? '';
@@ -3880,12 +3881,17 @@ async function ouvrirFormulaires() {
         await supprimerBrouillon(b.id); await fe.fermer(); ouvrirFormulaires();
       } })))));
   fe.corps.append(el('h3', { class: 'titre-section', text: 'Nouveau document' }),
-    el('div', { class: 'grille-formulaires' }, tousLesModeles().map(m => el('div', { class: 'case-form' },
+    el('div', { class: 'grille-formulaires' }, tousLesModeles().filter(m => !m.officiel).map(m => el('div', { class: 'case-form' },
       el('button', { type: 'button', class: 'carte-form', onclick: async () => { await fe.fermer(); saisirFormulaire(m); } },
         el('span', { class: 'carte-form-ico' }, icone(m.perso ? 'copier' : 'formulaire')), el('strong', { text: m.nom }), el('span', { text: m.resume || (m.perso ? 'Mon modèle' : '') })),
       m.perso ? bouton('', { ico: 'crayon', cls: 'btn-icone carte-form-modif', label: `Modifier le modèle « ${m.nom} »`, onclick: async () => { await fe.fermer(); editerModeleFormulaire(m); } }) : null)),
       el('button', { type: 'button', class: 'carte-form nouveau', onclick: async () => { await fe.fermer(); editerModeleFormulaire(); } },
-        el('span', { class: 'carte-form-ico' }, icone('plus')), el('strong', { text: 'Créer mon modèle' }), el('span', { text: 'À partir de zéro ou d\'un modèle existant' }))));
+        el('span', { class: 'carte-form-ico' }, icone('plus')), el('strong', { text: 'Créer mon modèle' }), el('span', { text: 'À partir de zéro ou d\'un modèle existant' }))),
+    el('h3', { class: 'titre-section', text: 'Documents officiels' }),
+    el('p', { class: 'note', text: 'Le formulaire officiel est rempli à votre place : lettres dans les cases, croix, date, signatures.' }),
+    el('div', { class: 'grille-formulaires' }, MODELES_PDF.map(m => el('div', { class: 'case-form' },
+      el('button', { type: 'button', class: 'carte-form', onclick: async () => { await fe.fermer(); saisirFormulaire(m); } },
+        el('span', { class: 'carte-form-ico officiel' }, icone('doc')), el('strong', { text: m.nom }), el('span', { text: m.resume }))))));
 }
 async function supprimerBrouillon(id) {
   prefs.brouillonsForm = (prefs.brouillonsForm || []).filter(b => b.id !== id); ecrirePrefs(prefs);
@@ -3900,6 +3906,8 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {} } = {}) {
     if (b.t === 'date' && b.auto && !r[b.id]) r[b.id] = aujourdhuiIso();
     if (b.t === 'faitA' && !r[b.id]) r[b.id] = { lieu: '', date: aujourdhuiIso() };
     if (b.t === 'choix' && b.defaut && r[b.id] == null) r[b.id] = b.defaut;
+    if (b.t === 'case' && b.defaut && r[b.id] == null) r[b.id] = true;
+    if (b.memo && r[b.id] == null && prefs.memoForm?.[b.id] != null) r[b.id] = prefs.memoForm[b.id];
     if (b.t === 'repeter' && !Array.isArray(r[b.id])) r[b.id] = [{}];
   });
   initialiser(modele.blocs, rep);
@@ -4047,7 +4055,10 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {} } = {}) {
       if (manque) { toast(`Renseignez « ${manque.label} » avant de créer le PDF.`); $('#f-' + manque.id)?.focus(); return; }
       occupe('Création du PDF…');
       let octets;
-      try { octets = await genererPdfFormulaire(modele, rep); }
+      // Réponses à retenir pour la prochaine fois (ex. : nom du représentant de l'entreprise)
+      const memo = modele.blocs.filter(b => b.memo && rep[b.id] != null);
+      if (memo.length) { prefs.memoForm = { ...(prefs.memoForm || {}), ...Object.fromEntries(memo.map(b => [b.id, rep[b.id]])) }; ecrirePrefs(prefs); }
+      try { octets = modele.officiel ? await genererPdfOfficiel(modele, rep) : await genererPdfFormulaire(modele, rep); }
       catch (e) { console.error(e); toast('Le PDF n\'a pas pu être créé. Réessayez.'); return; }
       finally { libre(); }
       await sauverBrouillon(true);
@@ -4193,6 +4204,102 @@ async function genererPdfFormulaire(modele, rep) {
   return certs.length ? ajouterCertificat(octets, certs, `${modele.nom}${rep.nom || rep.client ? ' - ' + [rep.nom, rep.prenom].filter(Boolean).join(' ') || rep.client : ''}`) : octets;
 }
 
+/* =========================================================
+   DOCUMENTS OFFICIELS (bibliothèque) : un PDF officiel vierge + ses zones mesurées une fois pour toutes.
+   On répond à un formulaire simple ; l'entreprise est reprise du profil ; l'appli écrit chaque réponse
+   à sa place (lettres dans les petites cases, croix dans les cases à cocher), puis ouvre le PDF dans l'éditeur.
+   ========================================================= */
+const MODELES_PDF = [
+  { id: 'mandat-anah-po', officiel: true, nom: 'Mandat Anah – propriétaire occupant', resume: 'Cerfa n° 15923*01 : demande d\'aide en ligne (MaPrimeRénov\')', fichier: 'modeles/cerfa_15923-01.pdf',
+    blocs: [
+      { t: 'titre', texte: 'Mandat pour la constitution d\'une demande d\'aide en ligne' },
+      { t: 'section', texte: 'Le mandant (votre client)' },
+      { t: 'choix', id: 'civ', label: 'Civilité', options: ['M.', 'Mme'], defaut: 'M.' },
+      { t: 'champ', id: 'nom', label: 'Nom', requis: true, client: 'nom' },
+      { t: 'champ', id: 'prenom', label: 'Prénom', client: 'prenom' },
+      { t: 'choix', id: 'statut', label: 'Statut', options: ['Propriétaire', 'Autre'], defaut: 'Propriétaire' },
+      { t: 'champ', id: 'statutAutre', label: 'Préciser (locataire, usufruitier…)', si: ['statut', 'Autre'] },
+      { t: 'zone', id: 'adresse', label: 'Adresse complète du logement à rénover', client: 'adresseComplete' },
+      { t: 'champ', id: 'email', label: 'E-mail', clavier: 'email', client: 'email' },
+      { t: 'champ', id: 'tel', label: 'Téléphone', clavier: 'tel', client: 'tel' },
+      { t: 'section', texte: 'Le mandataire (votre entreprise)' },
+      { t: 'choix', id: 'mCiv', label: 'Civilité du représentant', options: ['M.', 'Mme'], defaut: 'M.', memo: true },
+      { t: 'champ', id: 'mNom', label: 'Nom du représentant', memo: true },
+      { t: 'champ', id: 'mPrenom', label: 'Prénom du représentant', memo: true },
+      { t: 'para', texte: 'Raison sociale, adresse, e-mail et téléphone : repris de Paramètres → Entreprise ({E.nom}).' },
+      { t: 'section', texte: 'Objet du mandat' },
+      { t: 'case', id: 'aide', label: 'Demande d\'aide (constitution et dépôt en ligne)', defaut: true },
+      { t: 'case', id: 'paiement', label: 'Demande(s) de paiement (avance, acompte, solde)' },
+      { t: 'faitA', id: 'fait' },
+      { t: 'signature', id: 'sig-client', label: 'Signature du mandant', qui: 'client' },
+      { t: 'signature', id: 'sig-ent', label: 'Signature du mandataire', qui: 'entreprise' }
+    ],
+    async remplir(doc, rep, e) {
+      const [p1, p2] = doc.getPages(), H = p1.getHeight();
+      const gras = await doc.embedFont(StandardFonts.HelveticaBold), pol = await doc.embedFont(StandardFonts.Helvetica);
+      const encre = rgb(0.05, 0.05, 0.1);
+      const texte = (p, t, x, yHaut, taille = 9.5, police = gras, largeurMax = 0) => {
+        let s = versWinAnsi(t || '').replace(/\n/g, ' ');
+        while (largeurMax && s && police.widthOfTextAtSize(s, taille) > largeurMax) taille -= 0.25;
+        if (s) p.drawText(s, { x, y: H - yHaut, size: taille, font: police, color: encre });
+      };
+      // Lettres une par case (« peigne »)
+      const peigne = (p, t, x0, n, yHaut, w = 10.87) => {
+        const s = versWinAnsi(t || '').slice(0, n);
+        [...s].forEach((c, i) => { const cw = gras.widthOfTextAtSize(c, 10); p.drawText(c, { x: x0 + i * w + (w - cw) / 2, y: H - yHaut, size: 10, font: gras, color: encre }); });
+      };
+      const croix = (p, cx, cyHaut, d = 3.2) => {
+        const cy = H - cyHaut;
+        p.drawLine({ start: { x: cx - d, y: cy - d }, end: { x: cx + d, y: cy + d }, thickness: 1.2, color: encre });
+        p.drawLine({ start: { x: cx - d, y: cy + d }, end: { x: cx + d, y: cy - d }, thickness: 1.2, color: encre });
+      };
+      // Mandant
+      croix(p1, rep.civ === 'Mme' ? 113.7 : 71, 222);
+      peigne(p1, (rep.nom || '').toUpperCase(), 77.7, 19, 241);
+      peigne(p1, rep.prenom, 332, 20, 241);
+      if (rep.statut === 'Autre') { croix(p1, 167.5, 256.5); texte(p1, rep.statutAutre, 335, 259, 9, gras, 220); } else croix(p1, 59.8, 256.5);
+      const lignesAdr = String(rep.adresse || '').split('\n').map(s => s.trim()).filter(Boolean);
+      const adr = lignesAdr.length > 2 ? [lignesAdr[0], lignesAdr.slice(1).join(', ')] : lignesAdr;
+      adr.forEach((l, i) => texte(p1, l, 60, 293 + i * 16.5, 9.5, gras, 480));
+      texte(p1, rep.email, 76, 323.5, 9.5, gras, 195);
+      texte(p1, rep.tel, 362, 323.5, 9.5, gras, 190);
+      // Mandataire (entreprise)
+      croix(p1, rep.mCiv === 'Mme' ? 113.7 : 71, 367);
+      peigne(p1, rep.mNom, 77.7, 19, 386);
+      peigne(p1, rep.mPrenom, 332, 20, 386);
+      texte(p1, e.nom, 190, 403.5, 9.5, gras, 360);
+      texte(p1, [e.adresse, e.cpVille].filter(Boolean).join(' '), 125, 421.5, 9.5, gras, 425);
+      texte(p1, e.email, 76, 456.5, 9.5, gras, 195);
+      texte(p1, e.tel, 362, 456.5, 9.5, gras, 190);
+      if (rep.aide !== false) croix(p1, 64, 531, 5.5);
+      if (rep.paiement) croix(p2, 51.7, 404, 5.5);
+      // Fait à … le jj mm aaaa
+      const f = rep.fait || {};
+      texte(p2, f.lieu, 64, 620, 9.5, gras, 82);
+      if (f.date) { const [a, m, j] = f.date.split('-'); peigne(p2, j, 160, 2, 620); peigne(p2, m, 187.3, 2, 620); peigne(p2, a, 215, 4, 620, 10.83); }
+      // Signatures
+      const img = async url => url.startsWith('data:image/png') ? doc.embedPng(dataUrlVersOctets(url)) : doc.embedJpg(dataUrlVersOctets(url));
+      const poser = async (p, url, x, yHaut, wMax, hMax) => { const im = await img(url), k = Math.min(wMax / im.width, hMax / im.height, 1); p.drawImage(im, { x, y: H - yHaut - im.height * k, width: im.width * k, height: im.height * k }); };
+      const sc = rep['sig-client'];
+      if (sc?.png) { if (sc.mention) texte(p2, 'Lu et approuvé', 45, 690, 9, pol); await poser(p2, sc.png, 45, sc.mention ? 692 : 680, 220, 56); }
+      const se = rep['sig-ent'];
+      texte(p2, [rep.mNom, rep.mPrenom].filter(Boolean).join(' '), 336, 704, 9, gras, 220);
+      texte(p2, e.nom, 336, 715, 9, gras, 220);
+      if (se?.tampon) await poser(p2, se.tampon, 400, 716, 150, 46);
+      if (se?.png) await poser(p2, se.png, 345, 718, 140, 42);
+    } }
+];
+
+/** Remplit un document officiel et rend ses octets (avec le certificat si le client a signé). */
+async function genererPdfOfficiel(modele, rep) {
+  const base = new Uint8Array(await (await fetch(modele.fichier)).arrayBuffer());
+  const doc = await PDFDocument.load(base, { updateMetadata: false });
+  await modele.remplir(doc, rep, entreprise());
+  const octets = await doc.save();
+  const s = rep['sig-client'];
+  return s?.client ? ajouterCertificat(octets, [{ nom: s.nom, date: s.date, fuseau: s.fuseau || fuseau(s.date), geo: s.geo, adresse: s.adresse, carte: s.carte, mention: s.mention, png: s.png }], `${modele.nom} - ${[rep.nom, rep.prenom].filter(Boolean).join(' ')}`) : octets;
+}
+
 /* ---------- Éditeur de modèles : on empile des blocs, sans rien dessiner ---------- */
 const TYPES_BLOCS = [
   ['titre', 'Titre du document', 'texte'], ['section', 'Intertitre', 'texte'], ['para', 'Texte fixe', 'texte'], ['liste', 'Liste à puces (fixe)', 'menu'],
@@ -4207,7 +4314,7 @@ function editerModeleFormulaire(existant = null) {
   fe.feuille.classList.add('large', 'editeur-form');
   const nom = el('input', { class: 'champ', id: 'fm-nom', placeholder: 'Ex. : Bon d\'intervention', maxlength: 60 }); nom.value = m.nom;
   const resume = el('input', { class: 'champ', id: 'fm-resume', placeholder: 'Une phrase pour le reconnaître (facultatif)', maxlength: 80 }); resume.value = m.resume || '';
-  const depart = el('select', { class: 'champ', id: 'fm-depart' }, el('option', { value: '', text: '— Choisir pour copier ses blocs —' }), tousLesModeles().filter(x => x.id !== m.id).map(x => el('option', { value: x.id, text: x.nom })));
+  const depart = el('select', { class: 'champ', id: 'fm-depart' }, el('option', { value: '', text: '— Choisir pour copier ses blocs —' }), tousLesModeles().filter(x => x.id !== m.id && !x.officiel).map(x => el('option', { value: x.id, text: x.nom })));
   depart.addEventListener('change', async () => {
     const src = tousLesModeles().find(x => x.id === depart.value); if (!src) return;
     if (m.blocs.length > 1 && !(await confirmer({ titre: `Remplacer les blocs par ceux de « ${src.nom} » ?`, texte: 'Les blocs déjà ajoutés à ce modèle seront remplacés.', action: 'Remplacer les blocs' }))) { depart.value = ''; return; }
