@@ -742,6 +742,14 @@ body .feuille.pleine.page-app.ouverte{opacity:1}
   .feuille.page-app .feuille-pied{padding-left:28px;padding-right:28px}
 }
 @media (prefers-reduced-motion:reduce){body .feuille.pleine.page-app{transition:none}}
+/* Test du dossier d'équipe */
+.test-equipe{margin-top:16px;padding-top:12px;border-top:1px solid var(--ligne)}
+.ligne-test{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--ligne)}
+.ligne-test span:last-child{display:flex;flex-direction:column;min-width:0;overflow-wrap:anywhere}
+.ligne-test small{color:var(--doux);font-size:13px}
+.puce-test{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;flex:none;background:#eef1f6;color:#3b4457}
+.ligne-test.ok .puce-test{background:var(--accent);color:#fff}
+.ligne-test.ko .puce-test{background:#c0392b;color:#fff}
 /* Fiche client */
 .recap-client{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .recap-coord{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -1123,7 +1131,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.26.1';
+const VERSION_APPLI = '1.27.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -6639,9 +6647,14 @@ function chargerSelecteurGoogle() {
 async function selecteurDansAppli(choix) {
   await chargerSelecteurGoogle();
   const P = google.picker;
-  const vue = choix === 'dossier'
-    ? new P.DocsView(P.ViewId.FOLDERS).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes('application/vnd.google-apps.folder')
-    : new P.DocsView(P.ViewId.DOCS).setIncludeFolders(true).setMimeTypes('application/pdf');
+  const DOSSIER = 'application/vnd.google-apps.folder';
+  const vues = choix === 'equipe' ? [
+      new P.DocsView(P.ViewId.DOCS).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes(DOSSIER).setOwnedByMe(false).setLabel('Partagés avec moi'),
+      new P.DocsView(P.ViewId.FOLDERS).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes(DOSSIER).setLabel('Mon Drive'),
+      new P.DocsView().setEnableDrives(true).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes(DOSSIER).setLabel('Drive partagés')]
+    : [choix === 'dossier'
+      ? new P.DocsView(P.ViewId.FOLDERS).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes(DOSSIER)
+      : new P.DocsView(P.ViewId.DOCS).setIncludeFolders(true).setMimeTypes('application/pdf')];
   return new Promise(res => {
     let selecteur = null, fini = false;
     // Barre de secours à nous, au-dessus du sélecteur : si Google affiche une erreur, on n'est jamais bloqué
@@ -6655,14 +6668,16 @@ async function selecteurDansAppli(choix) {
       res(v);
     };
     document.body.append(secours);
-    const b = new P.PickerBuilder().addView(vue).setOAuthToken(jetonDrive).setDeveloperKey(GOOGLE_CLE_API).setAppId(GOOGLE_NUMERO_PROJET)
-      .setLocale('fr').setTitle(choix === 'dossier' ? 'Choisir le dossier où enregistrer' : 'Choisir un PDF')
+    const b = new P.PickerBuilder().setOAuthToken(jetonDrive).setDeveloperKey(GOOGLE_CLE_API).setAppId(GOOGLE_NUMERO_PROJET)
+      .setLocale('fr').setTitle(choix === 'equipe' ? 'Choisir le dossier partagé à tester' : choix === 'dossier' ? 'Choisir le dossier où enregistrer' : 'Choisir un PDF')
       .setSize(Math.min(1051, innerWidth - 8), Math.min(650, innerHeight - 140)) // (place en haut pour la barre de secours)
       .setCallback(d => {
         if (d[P.Response.ACTION] === P.Action.PICKED) terminer((d[P.Response.DOCUMENTS] || []).map(x => x[P.Document.ID]));
         else if (d[P.Response.ACTION] === P.Action.CANCEL) terminer(null);
       });
-    if (choix !== 'dossier') b.enableFeature(P.Feature.MULTISELECT_ENABLED);
+    vues.forEach(v => b.addView(v));
+    if (choix === 'equipe') b.enableFeature(P.Feature.SUPPORT_DRIVES);
+    if (choix !== 'dossier' && choix !== 'equipe') b.enableFeature(P.Feature.MULTISELECT_ENABLED);
     selecteur = b.build(); selecteur.setVisible(true);
   });
 }
@@ -6683,6 +6698,7 @@ async function choisirDansDrive(choix) {
 }
 async function retourChoixDrive(choix, ids, rouvrir) {
   if (!ids.length) { await rouvrir(); toast('Aucun élément choisi dans Google Drive.'); return; }
+  if (choix === 'equipe') { await rouvrir(); return testerDossierEquipe(ids[0]); }
   if (choix === 'dossier') {
     let nom = 'Dossier choisi';
     try { nom = (await (await driveFetch(`${API_DRIVE}/files/${ids[0]}?fields=name`)).json()).name || nom; } catch (e) { console.warn(e); }
@@ -6912,7 +6928,56 @@ function remplirBlocDrive(z) {
       bouton('Changer', { cls: 'btn mini', label: 'Choisir le dossier Google Drive où enregistrer vos PDF', onclick: () => choisirDansDrive('dossier') })),
     el('div', { class: 'rangee-btn' },
       bouton('Synchroniser', { ico: 'pivoter', cls: 'btn principal', label: 'Synchroniser Mes documents avec Google Drive', onclick: () => synchroniserDrive() }),
-      bouton('Se déconnecter', { onclick: deconnecterDrive })));
+      bouton('Se déconnecter', { onclick: deconnecterDrive })),
+    enEntreprise() ? el('div', { class: 'test-equipe' },
+      el('p', { class: 'note', text: 'Test avant le partage en équipe : choisissez un dossier qu\'un collègue vous a partagé, avec un fichier qu\'il y a mis lui-même. L\'appli vérifie si elle peut le voir, le lire et y écrire.' }),
+      bouton('Tester le dossier d\'équipe', { ico: 'clients', onclick: () => choisirDansDrive('equipe') })) : null);
+}
+/** Test du Drive d'équipe : l'accès limité (drive.file) permet-il de voir et lire les fichiers d'un collègue ? */
+async function testerDossierEquipe(id) {
+  const res = { dossier: null, fichiers: [], lecture: null, ecriture: null };
+  const champs = 'id,name,mimeType,owners(displayName,me),lastModifyingUser(displayName,me)';
+  const deMoi = f => f.owners ? f.owners.some(o => o.me) : !!f.lastModifyingUser?.me;
+  occupe('Test du dossier d\'équipe…');
+  try {
+    try { res.dossier = await (await driveFetch(`${API_DRIVE}/files/${id}?supportsAllDrives=true&fields=name,owners(displayName,me),capabilities(canAddChildren)`)).json(); }
+    catch (e) { res.dossier = { erreur: e.message }; }
+    try {
+      const q = encodeURIComponent(`'${id}' in parents and trashed=false`);
+      res.fichiers = (await (await driveFetch(`${API_DRIVE}/files?q=${q}&pageSize=100&supportsAllDrives=true&includeItemsFromAllDrives=true&fields=files(${champs})`)).json()).files || [];
+    } catch (e) { res.liste = e.message; }
+    const collegue = res.fichiers.find(f => f.mimeType !== 'application/vnd.google-apps.folder' && !deMoi(f));
+    if (collegue) {
+      try { const r = await driveFetch(`${API_DRIVE}/files/${collegue.id}?alt=media&supportsAllDrives=true`); res.lecture = { ok: true, nom: collegue.name, taille: (await r.arrayBuffer()).byteLength }; }
+      catch (e) { res.lecture = { ok: false, nom: collegue.name, erreur: e.message }; }
+    }
+    try {
+      const b = 'atelier' + Math.random().toString(36).slice(2);
+      const meta = { name: 'Test Atelier PDF (supprimé tout de suite).txt', mimeType: 'text/plain', parents: [id] };
+      const corps = new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: text/plain\r\n\r\nTest\r\n--${b}--`]);
+      const cree = await (await driveFetch(`${API_ENVOI}/files?uploadType=multipart&supportsAllDrives=true&fields=id`, { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${b}` }, body: corps })).json();
+      await driveFetch(`${API_DRIVE}/files/${cree.id}?supportsAllDrives=true`, { method: 'DELETE' }).catch(() => {});
+      res.ecriture = { ok: true };
+    } catch (e) { res.ecriture = { ok: false, erreur: e.message }; }
+  } finally { libre(); }
+  console.info('Test dossier d\'équipe', res);
+  // Résultat lisible
+  const ligne = (ok, texte, detail) => el('div', { class: 'ligne-test' + (ok === true ? ' ok' : ok === false ? ' ko' : '') },
+    el('span', { class: 'puce-test', text: ok === true ? '✓' : ok === false ? '✗' : '?' }), el('span', {}, el('strong', { text: texte }), detail ? el('small', { text: detail }) : null));
+  const autres = res.fichiers.filter(f => !deMoi(f));
+  const fe = feuille({ titre: 'Résultat du test' });
+  fe.corps.append(
+    ligne(!res.dossier?.erreur, res.dossier?.erreur ? 'Dossier illisible' : `Dossier « ${res.dossier.name} »`,
+      res.dossier?.erreur || (res.dossier.owners?.length ? 'Propriétaire : ' + (res.dossier.owners[0].me ? 'vous' : res.dossier.owners[0].displayName) : 'Dans un Drive partagé')),
+    ligne(res.liste ? false : autres.length > 0, `${res.fichiers.length} élément${res.fichiers.length > 1 ? 's' : ''} visible${res.fichiers.length > 1 ? 's' : ''} dans le dossier, dont ${autres.length} d'un collègue`,
+      res.liste || res.fichiers.slice(0, 8).map(f => f.name + (deMoi(f) ? ' (vous)' : ' (' + (f.owners?.[0]?.displayName || f.lastModifyingUser?.displayName || 'collègue') + ')')).join(', ') || 'Aucun'),
+    ligne(res.lecture ? res.lecture.ok : null, res.lecture ? (res.lecture.ok ? `Lecture du fichier du collègue : OK` : 'Lecture du fichier du collègue : refusée') : 'Aucun fichier de collègue à lire',
+      res.lecture ? (res.lecture.ok ? `« ${res.lecture.nom} », ${tailleLisible(res.lecture.taille)}` : `« ${res.lecture.nom} » : ${res.lecture.erreur}`) : 'Soit le dossier n\'en contient pas, soit l\'appli ne peut pas les voir.'),
+    ligne(res.ecriture?.ok, res.ecriture?.ok ? 'Écriture dans le dossier : OK' : 'Écriture dans le dossier : refusée', res.ecriture?.ok ? 'Un petit fichier test a été créé puis supprimé.' : res.ecriture?.erreur),
+    el('p', { class: 'note', text: res.lecture?.ok && res.ecriture?.ok
+      ? 'Bonne nouvelle : le partage en équipe est possible avec l\'accès actuel.'
+      : 'Notez ce résultat et envoyez-le-moi : on choisira la suite ensemble.' }));
+  fe.pied.append(bouton('Fermer', { cls: 'btn principal', onclick: () => fe.fermer() }));
 }
 // Retour de Google après la connexion (#access_token=… dans l'adresse)
 if (driveConfigure()) setTimeout(() => traiterRetourGoogle().catch(e => console.error(e)), 0);
