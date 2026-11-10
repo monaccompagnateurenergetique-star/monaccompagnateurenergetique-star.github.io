@@ -723,6 +723,8 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 .piece-texte{flex:1;min-width:150px;display:flex;flex-direction:column}
 .piece-texte small{color:var(--doux);font-size:13px}
 .piece-actions{display:flex;gap:6px;align-items:center;margin-left:auto}
+.ligne-liste .piece-texte{gap:6px;min-width:0}
+@media (max-width:520px){.choix-listes{flex-direction:column;align-items:stretch}.choix-listes .btn{flex:none}}
 @media (max-width:520px){.stats-dossiers{grid-template-columns:repeat(2,1fr)}.barre-dossiers .lib-recherche{display:none}.piece-actions{width:100%;justify-content:flex-end}}
 /* Formulaires à blocs */
 .grille-formulaires{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
@@ -1010,7 +1012,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.21.1';
+const VERSION_APPLI = '1.22.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4346,6 +4348,11 @@ const LISTES_PIECES = {
   chantier: { nom: 'Chantier', pieces: [['Devis signé'], ['Visite technique', 'visite'], ['État des lieux avant travaux', 'edl'], ['PV de réception', 'pv'], ['Facture']] },
   vide: { nom: 'Liste vide (je la compose)', pieces: [] }
 };
+/** Toutes les listes : celles de l'appli, puis les vôtres (Dossiers clients → Mes listes), puis « Liste vide ». */
+const listesPieces = () => {
+  const { vide, ...base } = LISTES_PIECES;
+  return { ...base, ...Object.fromEntries((prefs.listesPerso || []).map(l => [l.id, l])), vide };
+};
 const dossiers = () => prefs.dossiers || [];
 const ecrireDossier = d => { d.maj = Date.now(); prefs.dossiers = [...dossiers().filter(x => x.id !== d.id), d]; ecrirePrefs(prefs); };
 const nomClient = c => [c.prenom, c.nom].filter(Boolean).join(' ') || 'Client sans nom';
@@ -4386,7 +4393,7 @@ function ouvrirDossiers() {
     const q = sansA(recherche.value.trim());
     const liste = tous.filter(d => !q || sansA([nomClient(d.client), d.client.ville, d.client.adresse].join(' ')).includes(q));
     zone.replaceChildren(...(liste.length ? liste.map(d => el('button', { type: 'button', class: 'carte-dossier', onclick: async () => { await fe.fermer(); ouvrirDossier(d.id); } },
-      el('span', { class: 'carte-dossier-tete' }, el('strong', { text: nomClient(d.client) }), el('small', { text: [d.client.ville, LISTES_PIECES[d.liste]?.nom].filter(Boolean).join(' · ') })),
+      el('span', { class: 'carte-dossier-tete' }, el('strong', { text: nomClient(d.client) }), el('small', { text: [d.client.ville, listesPieces()[d.liste]?.nom].filter(Boolean).join(' · ') })),
       barreAvancement(d)))
       : [el('div', { class: 'vide-dossiers' }, el('p', { text: tous.length ? 'Aucun dossier ne correspond à cette recherche.' : 'Aucun dossier pour l\'instant. Créez-en un par client : vous verrez d\'un coup d\'œil les pièces reçues et celles qui manquent.' }),
         tous.length ? null : bouton('Créer le premier dossier', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); nouveauDossier(); } }))]));
@@ -4395,6 +4402,7 @@ function ouvrirDossiers() {
   fe.corps.append(stats,
     el('div', { class: 'barre-dossiers' },
       el('label', { class: 'lib-recherche', for: 'recherche-dossiers' }, icone('zoom'), 'Rechercher'), recherche,
+      bouton('Mes listes', { ico: 'vue-liste', label: 'Mes listes de pièces', onclick: async () => { await fe.fermer(); ouvrirMesListes(ouvrirDossiers); } }),
       bouton('Nouveau dossier', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); nouveauDossier(); } })),
     zone);
   afficher();
@@ -4410,19 +4418,96 @@ function champsClient(c, prefixe) {
   });
 }
 function nouveauDossier() {
-  const c = {}; let liste = 'mpr';
+  const c = {}, toutes = listesPieces();
+  const choix = el('select', { class: 'champ', id: 'nd-liste' }, Object.entries(toutes).map(([k, v]) => el('option', { value: k, text: `${v.nom}${v.pieces.length ? ` (${v.pieces.length} pièce${v.pieces.length > 1 ? 's' : ''})` : ''}` })));
+  const apercu = el('p', { class: 'note' });
+  const majApercu = () => { const l = toutes[choix.value]; apercu.textContent = l.pieces.length ? l.pieces.map(p => p[0]).join(', ') : 'Aucune pièce : vous les ajouterez dans le dossier.'; };
+  choix.addEventListener('change', majApercu);
   const fe = feuille({ titre: 'Nouveau dossier client', plein: true });
   fe.corps.append(el('div', { class: 'form-blocs' }, ...champsClient(c, 'nd-'),
-    el('div', { class: 'etiquette', text: 'Pièces à réunir' }),
-    segments('nd-liste', Object.entries(LISTES_PIECES).map(([k, v]) => [k, v.nom]), liste, v => { liste = v; }),
+    el('label', { class: 'etiquette', for: 'nd-liste', text: 'Pièces à réunir' }), choix, apercu,
+    el('div', { class: 'rangee-btn' }, bouton('Créer ou modifier mes listes', { ico: 'vue-liste', onclick: async () => { await fe.fermer(); ouvrirMesListes(nouveauDossier); } })),
     el('p', { class: 'note', text: 'Vous pourrez ajouter, renommer ou retirer des pièces ensuite.' })));
+  majApercu();
   fe.pied.append(bouton('Annuler', { onclick: () => fe.fermer() }),
     bouton('Créer le dossier', { ico: 'valider', cls: 'btn principal', onclick: async () => {
       if (!c.nom) { toast('Indiquez au moins le nom du client.'); $('#nd-nom').focus(); return; }
-      const d = { id: idUnique(), cree: Date.now(), client: c, liste, pieces: LISTES_PIECES[liste].pieces.map(([nom, modele]) => ({ id: idUnique(), nom, modele: modele || null, etat: 'manquant' })) };
+      const liste = choix.value;
+      const d = { id: idUnique(), cree: Date.now(), client: c, liste, pieces: toutes[liste].pieces.map(([nom, modele]) => ({ id: idUnique(), nom, modele: modele || null, etat: 'manquant' })) };
       ecrireDossier(d); toast('Dossier créé'); await fe.fermer(); ouvrirDossier(d.id);
     } }));
   setTimeout(() => $('#nd-nom')?.focus(), 300);
+}
+
+/* ---------- Mes listes de pièces (réutilisables) ---------- */
+function ouvrirMesListes(retour) {
+  const fe = feuille({ titre: 'Mes listes de pièces', plein: true });
+  fe.feuille.classList.add('large');
+  const zone = el('div', { class: 'liste-pieces' });
+  const rendre = () => {
+    const perso = prefs.listesPerso || [];
+    zone.replaceChildren(...(perso.length ? perso.map(l => el('div', { class: 'piece' },
+      el('span', { class: 'piece-texte' }, el('strong', { text: l.nom }), el('small', { text: `${l.pieces.length} pièce${l.pieces.length > 1 ? 's' : ''} : ${l.pieces.map(p => p[0]).join(', ')}` })),
+      el('span', { class: 'piece-actions' },
+        bouton('Modifier', { ico: 'crayon', onclick: async () => { await fe.fermer(); editerListe(structuredClone(l), () => ouvrirMesListes(retour)); } }),
+        bouton('', { ico: 'poubelle', cls: 'btn danger', label: `Supprimer la liste « ${l.nom} »`, onclick: async () => {
+          if (!(await confirmer({ titre: `Supprimer la liste « ${l.nom} » ?`, texte: 'Les dossiers déjà créés avec cette liste gardent leurs pièces.', action: 'Supprimer la liste' }))) return;
+          prefs.listesPerso = (prefs.listesPerso || []).filter(x => x.id !== l.id); ecrirePrefs(prefs); toast('Liste supprimée'); rendre();
+        } })))) : [el('p', { class: 'vide', text: 'Aucune liste à vous pour l\'instant. Créez-en une, ou partez d\'une liste existante.' })]));
+  };
+  const base = Object.entries(LISTES_PIECES).filter(([k]) => k !== 'vide');
+  fe.corps.append(
+    el('p', { class: 'note', text: 'Une liste = les pièces à demander pour un type de dossier. Elle sera proposée à la création de chaque nouveau dossier.' }),
+    zone,
+    el('h3', { class: 'titre-section', text: 'Créer une liste' }),
+    el('div', { class: 'rangee-btn choix-listes' },
+      bouton('Nouvelle liste', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); editerListe({ id: 'perso-' + idUnique(), nom: '', pieces: [] }, () => ouvrirMesListes(retour)); } }),
+      ...base.map(([k, v]) => bouton(`Partir de « ${v.nom} »`, { ico: 'copier', onclick: async () => { await fe.fermer(); editerListe({ id: 'perso-' + idUnique(), nom: v.nom + ' (ma version)', pieces: structuredClone(v.pieces) }, () => ouvrirMesListes(retour)); } }))));
+  fe.pied.append(bouton('Retour', { ico: 'gauche', onclick: async () => { await fe.fermer(); retour?.(); } }));
+  rendre();
+}
+/** Éditeur d'une liste : son nom, puis une ligne par pièce (nom + formulaire à remplir, facultatif). */
+function editerListe(l, retour) {
+  const fe = feuille({ titre: l.nom ? 'Modifier la liste' : 'Nouvelle liste', plein: true });
+  fe.feuille.classList.add('large');
+  const nom = el('input', { class: 'champ', id: 'ml-nom', autocomplete: 'off', placeholder: 'Ex. : Pompe à chaleur' }); nom.value = l.nom;
+  const modeles = tousLesModeles();
+  const zone = el('div', { class: 'liste-pieces' });
+  const rendre = () => {
+    zone.replaceChildren(...l.pieces.map((p, i) => {
+      const n = el('input', { class: 'champ', 'aria-label': `Pièce ${i + 1}`, autocomplete: 'off' }); n.value = p[0];
+      n.addEventListener('input', () => { p[0] = n.value; });
+      const f = el('select', { class: 'champ', 'aria-label': `Formulaire de la pièce ${i + 1}` }, el('option', { value: '', text: 'Pas de formulaire (pièce à recevoir)' }), modeles.map(m => el('option', { value: m.id, text: 'Formulaire : ' + m.nom })));
+      f.value = p[1] || ''; f.addEventListener('change', () => { if (f.value) p[1] = f.value; else p.length = 1; });
+      return el('div', { class: 'piece ligne-liste' },
+        el('span', { class: 'piece-texte' }, n, f),
+        el('span', { class: 'piece-actions' },
+          bouton('', { ico: 'haut', label: 'Monter', onclick: () => { if (i) { [l.pieces[i - 1], l.pieces[i]] = [l.pieces[i], l.pieces[i - 1]]; rendre(); } } }),
+          bouton('', { ico: 'poubelle', cls: 'btn danger', label: `Retirer « ${p[0] || 'pièce'} »`, onclick: () => { l.pieces.splice(i, 1); rendre(); } })));
+    }), ...(l.pieces.length ? [] : [el('p', { class: 'vide', text: 'Aucune pièce : ajoutez la première ci-dessous.' })]));
+  };
+  const nouvelle = el('input', { class: 'champ', id: 'ml-ajout', autocomplete: 'off', placeholder: 'Ex. : Attestation d\'assurance' });
+  const ajouter = () => { const t = nouvelle.value.trim(); if (!t) { nouvelle.focus(); return; } l.pieces.push([t]); nouvelle.value = ''; rendre(); nouvelle.focus(); };
+  nouvelle.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ajouter(); } });
+  fe.corps.append(el('div', { class: 'form-blocs' },
+    el('label', { class: 'etiquette', for: 'ml-nom' }, 'Nom de la liste', el('span', { class: 'requis', text: ' *' })), nom,
+    el('div', { class: 'etiquette', text: 'Pièces à demander' }),
+    el('p', { class: 'note', text: 'Si une pièce se remplit avec un formulaire de l\'appli, choisissez-le : le bouton « Remplir » apparaîtra dans le dossier.' }),
+    zone,
+    el('label', { class: 'etiquette', for: 'ml-ajout', text: 'Ajouter une pièce' }),
+    el('div', { class: 'barre-dossiers' }, nouvelle, bouton('Ajouter', { ico: 'plus', onclick: ajouter }))));
+  fe.pied.append(bouton('Annuler', { onclick: async () => { await fe.fermer(); retour?.(); } }),
+    bouton('Enregistrer la liste', { ico: 'valider', cls: 'btn principal', onclick: async () => {
+      l.nom = nom.value.trim();
+      if (!l.nom) { toast('Donnez un nom à la liste.'); nom.focus(); return; }
+      l.pieces = l.pieces.map(p => [p[0].trim(), p[1]].filter(Boolean)).filter(p => p[0]);
+      if (!l.pieces.length) { toast('Ajoutez au moins une pièce.'); nouvelle.focus(); return; }
+      const perso = prefs.listesPerso || [], i = perso.findIndex(x => x.id === l.id);
+      if (i >= 0) perso[i] = l; else perso.push(l);
+      prefs.listesPerso = perso; ecrirePrefs(prefs); toast('Liste enregistrée'); await fe.fermer(); retour?.();
+    } }));
+  rendre();
+  if (!l.nom) setTimeout(() => nom.focus(), 300);
 }
 
 /* ---------- Un dossier ---------- */
@@ -4524,6 +4609,11 @@ function ouvrirDossier(id) {
     el('div', { class: 'rangee-btn' }, bouton('Ajouter une pièce à la liste', { ico: 'plus', cls: 'btn', onclick: () => {
       const n = prompt('Nom de la pièce (ex. : Attestation d\'assurance) :'); if (!n || !n.trim()) return;
       d.pieces.push({ id: idUnique(), nom: n.trim(), modele: null, etat: 'manquant' }); sauver();
+    } }),
+    bouton('Enregistrer comme liste', { ico: 'vue-liste', label: 'Enregistrer ces pièces comme liste réutilisable', onclick: async () => {
+      if (!d.pieces.length) { toast('Ajoutez d\'abord des pièces à ce dossier.'); return; }
+      const l = { id: 'perso-' + idUnique(), nom: 'Ma liste ' + ((prefs.listesPerso || []).length + 1), pieces: d.pieces.map(p => p.modele ? [p.nom, p.modele] : [p.nom]) };
+      await fe.fermer(); editerListe(l, () => ouvrirDossier(d.id));
     } })));
   fe.pied.append(
     bouton('', { ico: 'poubelle', cls: 'btn danger', label: `Supprimer le dossier de ${nomClient(d.client)}`, onclick: async () => {
