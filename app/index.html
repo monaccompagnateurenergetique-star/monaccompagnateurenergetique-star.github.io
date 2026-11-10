@@ -717,11 +717,6 @@ body.mode-entreprise .seul-particulier{display:none!important}
 .tb-actions .btn.principal{background:#0d6b4f}
 .tb-vide{margin:0;color:#b9c0cf;font-size:14px}
 @media (max-width:520px){.tb-stats{grid-template-columns:repeat(2,1fr)}}
-.etape{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:#eef1f6;color:#3b4457}
-.etape.signe,.etape.travaux{background:#e6f3ee;color:#0d6b4f}
-.etape.termine{background:#0d6b4f;color:#fff}
-.etape.perdu{background:#f6e7e7;color:#9b2c2c}
-.etape.devis{background:#fdf3dc;color:#8a5a00}
 .suivi-client{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .suivi-client>div{display:flex;flex-direction:column;gap:4px}
 @media (max-width:520px){.suivi-client{grid-template-columns:1fr}}
@@ -1057,7 +1052,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.23.0';
+const VERSION_APPLI = '1.23.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -1197,6 +1192,13 @@ async function verifierQuota(docId) {
   if (!docId || liste.includes(docId)) return true;
   if (liste.length >= QUOTA.gratuit && QUOTA.bloquer) { await feuilleOffre(); return false; }
   prefs.docsEnregistres = { ...(prefs.docsEnregistres || {}), [m]: [...liste, docId] }; ecrirePrefs(prefs);
+  // On prévient sans bloquer : un rappel à 3 documents de la fin, puis une fenêtre une seule fois quand c'est dépassé
+  const n = liste.length + 1, reste = QUOTA.gratuit - n;
+  if (reste === 3) toast(`Plus que 3 documents gratuits en mode ${enEntreprise() ? 'Entreprise' : 'Particulier'}.`, 5000);
+  if (n > QUOTA.gratuit && !prefs.quotaPrevenu?.[m]) {
+    prefs.quotaPrevenu = { ...(prefs.quotaPrevenu || {}), [m]: true }; ecrirePrefs(prefs);
+    await feuilleOffre();
+  }
   return true;
 }
 function blocOffre() {
@@ -1210,8 +1212,9 @@ function blocOffre() {
 function feuilleOffre() {
   return new Promise(res => {
     const fe = feuille({ titre: 'Documents gratuits utilisés', surFermeture: () => res() });
-    fe.corps.append(el('p', { text: `Vous avez enregistré vos ${QUOTA.gratuit} documents gratuits en mode ${enEntreprise() ? 'Entreprise' : 'Particulier'}.` }), blocOffre());
-    fe.pied.append(bouton('Fermer', { cls: 'btn principal', onclick: () => fe.fermer() }));
+    fe.corps.append(el('p', { text: `Vous avez utilisé vos ${QUOTA.gratuit} documents gratuits en mode ${enEntreprise() ? 'Entreprise' : 'Particulier'}.` }),
+      el('p', { class: 'note', text: 'Vous pouvez continuer à enregistrer vos documents normalement. Un abonnement sera proposé plus tard : vous serez prévenu.' }), blocOffre());
+    fe.pied.append(bouton('Continuer', { ico: 'valider', cls: 'btn principal', onclick: () => fe.fermer() }));
   });
 }
 function lireTampons() { try { const t = JSON.parse(localStorage.getItem(CLE_TAMPONS) || '[]'); return Array.isArray(t) ? t : []; } catch { return []; } }
@@ -4457,10 +4460,8 @@ function barreAvancement(d) {
 }
 
 /* ---------- Suivi client (mini CRM) ---------- */
-const ETAPES = [['prospect', 'Prospect'], ['devis', 'Devis envoyé'], ['signe', 'Devis signé'], ['travaux', 'Travaux en cours'], ['termine', 'Terminé'], ['perdu', 'Perdu']];
-const nomEtape = k => (ETAPES.find(e => e[0] === k) || ETAPES[0])[1];
-const etapeDe = d => d.etape || 'prospect';
-const dossierActif = d => !['termine', 'perdu'].includes(etapeDe(d));
+// Collecte de documents uniquement : un dossier est « en cours » tant qu'il manque des pièces
+const dossierActif = d => !avancement(d).complet;
 const dateCourte = iso => new Date(iso + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
 /** Dossiers à relancer : date de relance arrivée, ou dossier actif incomplet sans activité depuis 7 jours. */
 function aRelancer() {
@@ -4475,8 +4476,8 @@ function majTableauBord() {
   const zone = $('#tableau-bord'); if (!zone) return;
   if (!enEntreprise()) { zone.replaceChildren(); return; }
   const tous = dossiers(), actifs = tous.filter(dossierActif), relances = aRelancer();
-  const complets = actifs.filter(d => avancement(d).complet).length;
-  const signes = tous.filter(d => ['signe', 'travaux'].includes(etapeDe(d))).length;
+  const complets = tous.length - actifs.length;
+  const manquantes = actifs.reduce((s, d) => s + d.pieces.filter(p => p.etat !== 'recu').length, 0);
   const stat = (n, texte, cls, filtre) => el('button', { type: 'button', class: 'tb-stat' + (cls ? ' ' + cls : ''), onclick: () => ouvrirDossiers(filtre) }, el('strong', { text: String(n) }), el('span', { text: texte }));
   zone.replaceChildren(
     el('div', { class: 'tb-tete' },
@@ -4484,8 +4485,8 @@ function majTableauBord() {
       bouton('', { ico: 'reglages', cls: 'btn-icone', label: 'Coordonnées de l\'entreprise', onclick: () => { prefs.ongletParametres = 'p-entreprise'; ecrirePrefs(prefs); ouvrirParametres(); } })),
     el('div', { class: 'tb-stats' },
       stat(actifs.length, 'dossier' + (actifs.length > 1 ? 's' : '') + ' en cours', '', 'actifs'),
-      stat(signes, 'devis signé' + (signes > 1 ? 's' : ''), '', 'signe'),
       stat(complets, 'complet' + (complets > 1 ? 's' : ''), 'ok', 'complets'),
+      stat(manquantes, 'pièce' + (manquantes > 1 ? 's' : '') + ' manquante' + (manquantes > 1 ? 's' : ''), '', 'actifs'),
       stat(relances.length, 'à relancer', relances.length ? 'alerte' : '', 'relancer')),
     el('div', { class: 'tb-relances' },
       el('h3', { text: relances.length ? 'À relancer' : 'Relances' }),
@@ -4517,17 +4518,17 @@ function ouvrirDossiers(filtreInitial = 'tous') {
       el('div', { class: 'stat' }, el('strong', { text: String(manquantes) }), el('span', { text: 'pièce' + (manquantes > 1 ? 's' : '') + ' manquante' + (manquantes > 1 ? 's' : '') })));
     const q = sansA(recherche.value.trim()), f = filtre.value, relancer = new Set(aRelancer().map(x => x.d.id));
     const liste = tous.filter(d => !q || sansA([nomClient(d.client), d.client.ville, d.client.adresse].join(' ')).includes(q))
-      .filter(d => f === 'tous' || (f === 'actifs' && dossierActif(d)) || (f === 'complets' && dossierActif(d) && avancement(d).complet) || (f === 'relancer' && relancer.has(d.id)) || (f === 'signe' && ['signe', 'travaux'].includes(etapeDe(d))) || f === etapeDe(d));
+      .filter(d => f === 'tous' || (f === 'actifs' && dossierActif(d)) || (f === 'complets' && !dossierActif(d)) || (f === 'relancer' && relancer.has(d.id)));
     zone.replaceChildren(...(liste.length ? liste.map(d => el('button', { type: 'button', class: 'carte-dossier', onclick: async () => { await fe.fermer(); ouvrirDossier(d.id); } },
       el('span', { class: 'carte-dossier-tete' }, el('strong', { text: nomClient(d.client) }), el('small', { text: [d.client.ville, listesPieces()[d.liste]?.nom].filter(Boolean).join(' · ') })),
-      el('span', {}, el('span', { class: 'etape ' + etapeDe(d), text: nomEtape(etapeDe(d)) }), relancer.has(d.id) ? el('small', { class: 'relance-due', text: '  À relancer' }) : null),
+      relancer.has(d.id) ? el('small', { class: 'relance-due', text: 'À relancer' }) : null,
       barreAvancement(d)))
       : [el('div', { class: 'vide-dossiers' }, el('p', { text: tous.length ? 'Aucun dossier ne correspond à cette recherche ou à ce filtre.' : 'Aucun dossier pour l\'instant. Créez-en un par client : vous verrez d\'un coup d\'œil les pièces reçues et celles qui manquent.' }),
         tous.length ? null : bouton('Créer le premier dossier', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); nouveauDossier(); } }))]));
   };
   recherche.addEventListener('input', afficher);
   const filtre = el('select', { class: 'champ', id: 'filtre-dossiers', 'aria-label': 'Afficher' },
-    [['tous', 'Tous les dossiers'], ['actifs', 'En cours'], ['relancer', 'À relancer'], ['complets', 'Complets (en cours)'], ['signe', 'Devis signés et travaux'], ...ETAPES.map(([k, n]) => [k, 'Étape : ' + n])].map(([v, t]) => el('option', { value: v, text: t })));
+    [['tous', 'Tous les dossiers'], ['actifs', 'En cours (pièces manquantes)'], ['relancer', 'À relancer'], ['complets', 'Complets']].map(([v, t]) => el('option', { value: v, text: t })));
   filtre.value = filtreInitial; filtre.addEventListener('change', afficher);
   fe.corps.append(stats,
     el('div', { class: 'barre-dossiers' },
@@ -4657,10 +4658,7 @@ function ouvrirDossier(id) {
         el('p', { class: 'note', text: [c.tel, c.email].filter(Boolean).join(' · ') || 'Téléphone et e-mail non renseignés' })),
       barreAvancement(d),
       bouton('Modifier le client', { ico: 'crayon', cls: 'btn', onclick: modifierClient }));
-    // Suivi : étape, date de relance, notes (le plus récent en haut)
-    const etape = el('select', { class: 'champ', id: 'd-etape' }, ETAPES.map(([k, n]) => el('option', { value: k, text: n })));
-    etape.value = etapeDe(d);
-    etape.addEventListener('change', () => { d.etape = etape.value; (d.notes ||= []).push({ d: Date.now(), t: 'Étape : ' + nomEtape(d.etape), auto: true }); if (!dossierActif(d)) d.relance = ''; sauver(); toast('Étape enregistrée'); });
+    // Suivi de la collecte : date de relance, notes (le plus récent en haut)
     const relance = el('input', { class: 'champ', id: 'd-relance', type: 'date' }); relance.value = d.relance || '';
     relance.addEventListener('change', () => { d.relance = relance.value; sauver(); toast(relance.value ? 'Relance prévue le ' + dateCourte(relance.value) : 'Relance retirée'); });
     const note = el('input', { class: 'champ', id: 'd-note', autocomplete: 'off', placeholder: 'Ex. : Appelé, rappeler pour le RIB' });
@@ -4669,12 +4667,11 @@ function ouvrirDossier(id) {
     const notes = (d.notes || []).slice().reverse();
     suivi.replaceChildren(
       el('div', { class: 'suivi-client' },
-        el('div', {}, el('label', { class: 'etiquette', for: 'd-etape', text: 'Étape' }), etape),
-        el('div', {}, el('label', { class: 'etiquette', for: 'd-relance', text: 'Relancer le' }), relance)),
+        el('div', {}, el('label', { class: 'etiquette', for: 'd-relance', text: 'Relancer le client le' }), relance)),
       el('label', { class: 'etiquette', for: 'd-note', text: 'Ajouter une note' }),
       el('div', { class: 'barre-dossiers' }, note, bouton('Ajouter', { ico: 'plus', onclick: ajouterNote })),
-      notes.length ? el('div', { class: 'notes-client' }, notes.slice(0, 20).map(n => el('div', { class: 'note-client' },
-        el('small', { text: new Date(n.d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }), n.t))) : null);
+      ...(notes.length ? [el('div', { class: 'notes-client' }, notes.slice(0, 20).map(n => el('div', { class: 'note-client' },
+        el('small', { text: new Date(n.d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }), n.t)))] : []));
     liste.replaceChildren(...d.pieces.map((p, i) => {
       const modele = p.modele && tousLesModeles().find(m => m.id === p.modele);
       const recu = p.etat === 'recu';
