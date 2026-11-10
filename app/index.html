@@ -690,6 +690,40 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 .rangee-btn{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .rangee-btn .btn{flex:1 1 140px}
 .pad{width:100%;height:240px;border:1px solid var(--ligne);border-radius:12px;touch-action:none;display:block;background:#fff}
+/* Dossiers clients */
+.stats-dossiers{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat{background:#fff;border:1px solid var(--ligne);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column}
+.stat strong{font-size:24px;line-height:1.1}
+.stat span{font-size:13px;color:var(--doux)}
+.stat.ok strong{color:var(--accent)}
+.barre-dossiers{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+.barre-dossiers .champ{flex:1}
+.barre-dossiers .lib-recherche{display:inline-flex;align-items:center;gap:6px;font-size:14px;color:var(--doux)}
+.liste-dossiers{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.carte-dossier{display:flex;flex-direction:column;gap:10px;text-align:left;padding:14px;border:1px solid var(--ligne);border-radius:14px;background:#fff}
+.carte-dossier:hover{border-color:var(--accent)}
+.carte-dossier-tete{display:flex;flex-direction:column}
+.carte-dossier-tete strong{font-size:16px}
+.carte-dossier-tete small{color:var(--doux);font-size:13px}
+.vide-dossiers{grid-column:1/-1;text-align:center;padding:24px 12px;color:var(--doux)}
+.avancement{display:flex;align-items:center;gap:10px}
+.avancement-barre{flex:1;height:8px;border-radius:99px;background:#e9e6df;overflow:hidden}
+.avancement-barre span{display:block;height:100%;border-radius:99px;background:#e0a526;transition:width .3s}
+.avancement.complet .avancement-barre span{background:var(--accent)}
+.avancement small{font-size:13px;font-weight:600;white-space:nowrap}
+.avancement.complet small{color:var(--accent)}
+.dossier-tete{display:flex;flex-direction:column;gap:10px;padding:12px 14px;border:1px solid var(--ligne);border-radius:14px;background:#fff}
+.dossier-infos p{margin:0}
+.dossier-tete .btn{align-self:flex-start}
+.liste-pieces{display:flex;flex-direction:column;gap:8px}
+.piece{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--ligne);border-radius:12px;background:#fff;flex-wrap:wrap}
+.piece.recue{background:#f2f8f5;border-color:#cfe6da}
+.piece-etat{width:26px;height:26px;border-radius:50%;border:2px solid #cfcac0;display:grid;place-items:center;font-weight:700;flex:none}
+.piece.recue .piece-etat{background:var(--accent);border-color:var(--accent);color:#fff}
+.piece-texte{flex:1;min-width:150px;display:flex;flex-direction:column}
+.piece-texte small{color:var(--doux);font-size:13px}
+.piece-actions{display:flex;gap:6px;align-items:center;margin-left:auto}
+@media (max-width:520px){.stats-dossiers{grid-template-columns:repeat(2,1fr)}.barre-dossiers .lib-recherche{display:none}.piece-actions{width:100%;justify-content:flex-end}}
 /* Formulaires à blocs */
 .grille-formulaires{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
 .carte-form{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:14px;min-height:112px;border:1px solid var(--ligne);border-radius:14px;background:#fff}
@@ -892,6 +926,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
     </div>
     <h2 class="titre-section">En plus</h2>
     <div class="grille-outils outils-plus">
+      <button class="tuile" id="btn-dossiers"><svg class="ico"><use href="#i-dossier"/></svg><strong>Dossiers clients</strong><span>Pièces reçues, manquantes, dossier complet</span></button>
       <button class="tuile" id="btn-formulaires"><svg class="ico"><use href="#i-formulaire"/></svg><strong>Formulaires</strong><span>PV de réception, visite, attestation…</span></button>
       <button class="tuile" id="btn-remplir"><svg class="ico"><use href="#i-texte"/></svg><strong>Remplir un formulaire</strong><span>Cerfa, mandat, contrat…</span></button>
       <button class="tuile" id="btn-signer"><svg class="ico"><use href="#i-signature"/></svg><strong>Signer un PDF</strong><span>Signature et tampon</span></button>
@@ -975,7 +1010,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.20.0';
+const VERSION_APPLI = '1.21.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -3873,7 +3908,7 @@ async function ouvrirFormulaires() {
     bouton('Renseigner mon entreprise', { ico: 'reglages', onclick: async () => { prefs.ongletParametres = 'p-entreprise'; ecrirePrefs(prefs); await fe.fermer(); ouvrirParametres(); } })));
   if (brouillons.length) fe.corps.append(el('h3', { class: 'titre-section', text: 'En cours' }),
     el('div', { class: 'liste-docs' }, brouillons.map(b => el('div', { class: 'ligne-doc' },
-      el('button', { type: 'button', class: 'ligne-doc-principal', onclick: async () => { const d = await bdGet('fichiers', 'brouillon:' + b.id).catch(() => null); const m = tousLesModeles().find(x => x.id === b.modele); if (!d || !m) { toast('Ce brouillon est introuvable.'); return; } await fe.fermer(); saisirFormulaire(m, { id: b.id, rep: d.rep }); } },
+      el('button', { type: 'button', class: 'ligne-doc-principal', onclick: async () => { const d = await bdGet('fichiers', 'brouillon:' + b.id).catch(() => null); const m = tousLesModeles().find(x => x.id === b.modele); if (!d || !m) { toast('Ce brouillon est introuvable.'); return; } await fe.fermer(); saisirFormulaire(m, { id: b.id, rep: d.rep, dossier: d.dossier || null }); } },
         el('span', { class: 'ligne-doc-ico' }, icone('texte')),
         el('span', { class: 'texte' }, el('strong', { text: b.titre }), el('small', { text: `${b.modeleNom} · modifié ${new Date(b.maj).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}${b.pdf ? ' · PDF créé' : ''}` }))),
       bouton('', { ico: 'poubelle', cls: 'btn-icone', label: `Supprimer le brouillon « ${b.titre} »`, onclick: async () => {
@@ -3899,7 +3934,7 @@ async function supprimerBrouillon(id) {
 }
 
 /* ---------- Saisie ---------- */
-function saisirFormulaire(modele, { id = idUnique(), rep = {} } = {}) {
+function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null } = {}) {
   rep = JSON.parse(JSON.stringify(rep));
   // Valeurs par défaut : date du jour, ville de l'entreprise pour « Fait à », choix par défaut
   const initialiser = (blocs, r) => blocs.forEach(b => {
@@ -3919,7 +3954,7 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {} } = {}) {
     const vide = !Object.entries(rep).some(([k, v]) => v && (typeof v === 'string' ? v.trim() && !/^\d{4}-\d{2}-\d{2}$/.test(v) : typeof v === 'object' && !(v.date && !v.lieu) && JSON.stringify(v) !== '[{}]'));
     if (vide) return;
     try {
-      await bdPut('fichiers', { modele: modele.id, rep }, 'brouillon:' + id);
+      await bdPut('fichiers', { modele: modele.id, rep, dossier }, 'brouillon:' + id);
       const l = (prefs.brouillonsForm || []).filter(b => b.id !== id);
       const ancien = (prefs.brouillonsForm || []).find(b => b.id === id);
       l.push({ id, modele: modele.id, modeleNom: modele.nom, titre: titreDoc(), maj: Date.now(), pdf: pdf || ancien?.pdf });
@@ -4064,9 +4099,10 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {} } = {}) {
       await sauverBrouillon(true);
       await fe.fermer();
       const nom = titreDoc().replace(/[\\/:*?"<>|]+/g, ' ').trim() + '.pdf';
+      const range = dossier ? await rangerDansDossier(dossier, octets, nom).catch(() => false) : false;
       await ouvrirPdf(octets, nom);
       if (D) { D.modifie = true; journaliser(`Créé depuis le formulaire « ${modele.nom} »`); }
-      toast('PDF créé : enregistrez-le ou partagez-le avec les boutons en haut.', 5000);
+      toast(range ? 'PDF créé et rangé dans le dossier du client. Enregistrez-le ou partagez-le avec les boutons en haut.' : 'PDF créé : enregistrez-le ou partagez-le avec les boutons en haut.', 6000);
     } }));
 }
 
@@ -4298,6 +4334,215 @@ async function genererPdfOfficiel(modele, rep) {
   const octets = await doc.save();
   const s = rep['sig-client'];
   return s?.client ? ajouterCertificat(octets, [{ nom: s.nom, date: s.date, fuseau: s.fuseau || fuseau(s.date), geo: s.geo, adresse: s.adresse, carte: s.carte, mention: s.mention, png: s.png }], `${modele.nom} - ${[rep.nom, rep.prenom].filter(Boolean).join(' ')}`) : octets;
+}
+
+/* =========================================================
+   DOSSIERS CLIENTS : une fiche client + la liste des pièces à réunir (reçue / manquante),
+   une barre de progression, « Dossier complet », et tout réunir en un seul PDF.
+   Les fichiers des pièces restent sur l'appareil (base locale).
+   ========================================================= */
+const LISTES_PIECES = {
+  mpr: { nom: 'Dossier MaPrimeRénov\'', pieces: [['Mandat Anah signé', 'mandat-anah-po'], ['Avis d\'imposition'], ['Justificatif de propriété (taxe foncière)'], ['Devis signé'], ['Photos avant travaux', 'visite'], ['Facture'], ['Attestation de fin de travaux', 'aft'], ['RIB']] },
+  chantier: { nom: 'Chantier', pieces: [['Devis signé'], ['Visite technique', 'visite'], ['État des lieux avant travaux', 'edl'], ['PV de réception', 'pv'], ['Facture']] },
+  vide: { nom: 'Liste vide (je la compose)', pieces: [] }
+};
+const dossiers = () => prefs.dossiers || [];
+const ecrireDossier = d => { d.maj = Date.now(); prefs.dossiers = [...dossiers().filter(x => x.id !== d.id), d]; ecrirePrefs(prefs); };
+const nomClient = c => [c.prenom, c.nom].filter(Boolean).join(' ') || 'Client sans nom';
+const avancement = d => { const n = d.pieces.length, ok = d.pieces.filter(p => p.etat === 'recu').length; return { n, ok, complet: n > 0 && ok === n }; };
+/** Données du client pour pré-remplir un formulaire (champs marqués client: …). */
+function reponsesClient(c, modele) {
+  const v = { nom: c.nom, prenom: c.prenom, tel: c.tel, email: c.email, adresse: c.adresse, cp: c.cp, ville: c.ville,
+    nomComplet: nomClient(c), adresseComplete: [c.adresse, [c.cp, c.ville].filter(Boolean).join(' ')].filter(Boolean).join(' ') };
+  const rep = {};
+  for (const b of modele.blocs) if (b.client && v[b.client]) rep[b.id] = v[b.client];
+  return rep;
+}
+function barreAvancement(d) {
+  const { n, ok, complet } = avancement(d);
+  return el('div', { class: 'avancement' + (complet ? ' complet' : '') },
+    el('div', { class: 'avancement-barre', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(n), 'aria-valuenow': String(ok), 'aria-label': 'Pièces reçues' },
+      el('span', { style: { width: (n ? ok / n * 100 : 0) + '%' } })),
+    el('small', { text: complet ? '✓ Dossier complet' : `${ok} / ${n} pièce${n > 1 ? 's' : ''}` }));
+}
+
+/* ---------- Tableau de bord ---------- */
+function ouvrirDossiers() {
+  const fe = feuille({ titre: 'Dossiers clients', plein: true, pied: false });
+  fe.feuille.classList.add('large');
+  const recherche = el('input', { class: 'champ', id: 'recherche-dossiers', type: 'search', placeholder: 'Nom, ville…', autocomplete: 'off' });
+  const zone = el('div', { class: 'liste-dossiers' });
+  const stats = el('div', { class: 'stats-dossiers' });
+  const sansA = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const afficher = () => {
+    const tous = dossiers().slice().sort((a, b) => b.maj - a.maj);
+    const complets = tous.filter(d => avancement(d).complet).length;
+    const manquantes = tous.reduce((s, d) => s + d.pieces.filter(p => p.etat !== 'recu').length, 0);
+    stats.replaceChildren(
+      el('div', { class: 'stat' }, el('strong', { text: String(tous.length) }), el('span', { text: 'dossier' + (tous.length > 1 ? 's' : '') })),
+      el('div', { class: 'stat' }, el('strong', { text: String(tous.length - complets) }), el('span', { text: 'en cours' })),
+      el('div', { class: 'stat ok' }, el('strong', { text: String(complets) }), el('span', { text: 'complet' + (complets > 1 ? 's' : '') })),
+      el('div', { class: 'stat' }, el('strong', { text: String(manquantes) }), el('span', { text: 'pièce' + (manquantes > 1 ? 's' : '') + ' manquante' + (manquantes > 1 ? 's' : '') })));
+    const q = sansA(recherche.value.trim());
+    const liste = tous.filter(d => !q || sansA([nomClient(d.client), d.client.ville, d.client.adresse].join(' ')).includes(q));
+    zone.replaceChildren(...(liste.length ? liste.map(d => el('button', { type: 'button', class: 'carte-dossier', onclick: async () => { await fe.fermer(); ouvrirDossier(d.id); } },
+      el('span', { class: 'carte-dossier-tete' }, el('strong', { text: nomClient(d.client) }), el('small', { text: [d.client.ville, LISTES_PIECES[d.liste]?.nom].filter(Boolean).join(' · ') })),
+      barreAvancement(d)))
+      : [el('div', { class: 'vide-dossiers' }, el('p', { text: tous.length ? 'Aucun dossier ne correspond à cette recherche.' : 'Aucun dossier pour l\'instant. Créez-en un par client : vous verrez d\'un coup d\'œil les pièces reçues et celles qui manquent.' }),
+        tous.length ? null : bouton('Créer le premier dossier', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); nouveauDossier(); } }))]));
+  };
+  recherche.addEventListener('input', afficher);
+  fe.corps.append(stats,
+    el('div', { class: 'barre-dossiers' },
+      el('label', { class: 'lib-recherche', for: 'recherche-dossiers' }, icone('zoom'), 'Rechercher'), recherche,
+      bouton('Nouveau dossier', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); nouveauDossier(); } })),
+    zone);
+  afficher();
+}
+
+/* ---------- Création / fiche client ---------- */
+const CHAMPS_CLIENT = [['nom', 'Nom', true], ['prenom', 'Prénom'], ['adresse', 'Adresse'], ['cp', 'Code postal', false, 'numeric'], ['ville', 'Ville'], ['tel', 'Téléphone', false, 'tel'], ['email', 'E-mail', false, 'email']];
+function champsClient(c, prefixe) {
+  return CHAMPS_CLIENT.flatMap(([cle, titre, requis, clavier]) => {
+    const id = prefixe + cle, i = el('input', { class: 'champ', id, autocomplete: 'off', inputmode: clavier || null });
+    i.value = c[cle] || ''; i.addEventListener('input', () => { c[cle] = i.value.trim(); });
+    return [el('label', { class: 'etiquette', for: id }, titre, requis ? el('span', { class: 'requis', text: ' *' }) : null), i];
+  });
+}
+function nouveauDossier() {
+  const c = {}; let liste = 'mpr';
+  const fe = feuille({ titre: 'Nouveau dossier client', plein: true });
+  fe.corps.append(el('div', { class: 'form-blocs' }, ...champsClient(c, 'nd-'),
+    el('div', { class: 'etiquette', text: 'Pièces à réunir' }),
+    segments('nd-liste', Object.entries(LISTES_PIECES).map(([k, v]) => [k, v.nom]), liste, v => { liste = v; }),
+    el('p', { class: 'note', text: 'Vous pourrez ajouter, renommer ou retirer des pièces ensuite.' })));
+  fe.pied.append(bouton('Annuler', { onclick: () => fe.fermer() }),
+    bouton('Créer le dossier', { ico: 'valider', cls: 'btn principal', onclick: async () => {
+      if (!c.nom) { toast('Indiquez au moins le nom du client.'); $('#nd-nom').focus(); return; }
+      const d = { id: idUnique(), cree: Date.now(), client: c, liste, pieces: LISTES_PIECES[liste].pieces.map(([nom, modele]) => ({ id: idUnique(), nom, modele: modele || null, etat: 'manquant' })) };
+      ecrireDossier(d); toast('Dossier créé'); await fe.fermer(); ouvrirDossier(d.id);
+    } }));
+  setTimeout(() => $('#nd-nom')?.focus(), 300);
+}
+
+/* ---------- Un dossier ---------- */
+function ouvrirDossier(id) {
+  let d = dossiers().find(x => x.id === id); if (!d) { toast('Dossier introuvable.'); return; }
+  const fe = feuille({ titre: nomClient(d.client), plein: true });
+  fe.feuille.classList.add('large', 'fiche-dossier');
+  const tete = el('div', { class: 'dossier-tete' }), liste = el('div', { class: 'liste-pieces' });
+  const sauver = () => { ecrireDossier(d); rendre(); };
+  function rendre() {
+    fe.feuille.querySelector('.feuille-tete h2').textContent = nomClient(d.client);
+    const c = d.client;
+    tete.replaceChildren(
+      el('div', { class: 'dossier-infos' },
+        el('p', { text: [c.adresse, [c.cp, c.ville].filter(Boolean).join(' ')].filter(Boolean).join(', ') || 'Adresse non renseignée' }),
+        el('p', { class: 'note', text: [c.tel, c.email].filter(Boolean).join(' · ') || 'Téléphone et e-mail non renseignés' })),
+      barreAvancement(d),
+      bouton('Modifier le client', { ico: 'crayon', cls: 'btn', onclick: modifierClient }));
+    liste.replaceChildren(...d.pieces.map((p, i) => {
+      const modele = p.modele && tousLesModeles().find(m => m.id === p.modele);
+      const recu = p.etat === 'recu';
+      return el('div', { class: 'piece' + (recu ? ' recue' : '') },
+        el('span', { class: 'piece-etat', 'aria-hidden': 'true', text: recu ? '✓' : '' }),
+        el('span', { class: 'piece-texte' }, el('strong', { text: p.nom }),
+          el('small', { text: recu ? (p.fichier ? `${p.fichier.nom} · ${new Date(p.fichier.date).toLocaleDateString('fr-FR')}` : 'Marquée comme reçue') : 'Manquante' })),
+        el('span', { class: 'piece-actions' },
+          recu && p.fichier ? bouton('Voir', { ico: 'oeil', cls: 'btn', onclick: () => voirPiece(p) }) : null,
+          !recu && modele ? bouton('Remplir', { ico: 'formulaire', cls: 'btn principal', onclick: () => remplirPiece(p, modele) }) : null,
+          !recu ? bouton('Ajouter', { ico: 'plus', cls: 'btn', onclick: () => ajouterFichierPiece(p) }) : null,
+          bouton('', { ico: 'menu', cls: 'btn-icone', label: `Autres actions pour « ${p.nom} »`, onclick: () => menuPiece(p, i) })));
+    }));
+  }
+  async function modifierClient() {
+    const c = { ...d.client };
+    const f2 = feuille({ titre: 'Client', plein: true });
+    f2.corps.append(el('div', { class: 'form-blocs' }, ...champsClient(c, 'mc-')));
+    f2.pied.append(bouton('Annuler', { onclick: () => f2.fermer() }), bouton('Enregistrer', { ico: 'valider', cls: 'btn principal', onclick: async () => {
+      if (!c.nom) { toast('Le nom du client est obligatoire.'); return; }
+      d.client = c; sauver(); toast('Client enregistré'); await f2.fermer();
+    } }));
+  }
+  async function ajouterFichierPiece(p) {
+    const choix = await demanderChoix(`Ajouter : ${p.nom}`, [
+      { valeur: 'photo', texte: 'Prendre une photo', ico: 'camera' }, { valeur: 'fichier', texte: 'Choisir un fichier (PDF ou image)', ico: 'doc' }]);
+    if (!choix) return;
+    const [f] = await choisirFichiers({ accept: 'application/pdf,.pdf,image/*', capture: choix === 'photo' ? 'environment' : undefined });
+    if (!f) return;
+    occupe('Ajout de la pièce…');
+    try {
+      let octets, type = 'application/pdf';
+      if (estPdf(f)) octets = (await lireFichier(f)).octets;
+      else { const c = await chargerImage(f, 2000); octets = await imagesVersPdf([c], 'auto'); }
+      await bdPut('fichiers', octets, 'piece:' + p.id);
+      p.fichier = { nom: estPdf(f) ? f.name : p.nom + '.pdf', type, taille: octets.length, date: Date.now() }; p.etat = 'recu';
+      sauver(); toast(`« ${p.nom} » ajoutée au dossier`);
+    } catch (e) { console.error(e); toast('Ce fichier n\'a pas pu être ajouté. Réessayez avec un PDF ou une photo.'); }
+    finally { libre(); }
+  }
+  async function voirPiece(p) {
+    const octets = await bdGet('fichiers', 'piece:' + p.id).catch(() => null);
+    if (!octets) { toast('Le fichier de cette pièce est introuvable sur cet appareil.'); return; }
+    await fe.fermer(); ouvrirPdf(new Uint8Array(octets), p.fichier?.nom || p.nom + '.pdf');
+  }
+  async function remplirPiece(p, modele) {
+    await fe.fermer();
+    saisirFormulaire(modele, { rep: reponsesClient(d.client, modele), dossier: { id: d.id, piece: p.id } });
+  }
+  async function menuPiece(p, i) {
+    const recu = p.etat === 'recu';
+    const choix = await demanderChoix(p.nom, [
+      { valeur: 'basculer', texte: recu ? 'Marquer comme manquante' : 'Marquer comme reçue (sans fichier)', ico: recu ? 'annuler' : 'valider' },
+      recu && p.fichier ? { valeur: 'remplacer', texte: 'Remplacer le fichier', ico: 'doc' } : null,
+      { valeur: 'renommer', texte: 'Renommer la pièce', ico: 'crayon' },
+      i > 0 ? { valeur: 'monter', texte: 'Monter', ico: 'haut' } : null,
+      i < d.pieces.length - 1 ? { valeur: 'descendre', texte: 'Descendre', ico: 'bas' } : null,
+      { valeur: 'retirer', texte: 'Retirer cette pièce de la liste', ico: 'poubelle' }].filter(Boolean));
+    if (choix === 'basculer') { p.etat = recu ? 'manquant' : 'recu'; if (recu && p.fichier) { await bdDel('fichiers', 'piece:' + p.id).catch(() => {}); delete p.fichier; } sauver(); }
+    if (choix === 'remplacer') { p.etat = 'manquant'; await ajouterFichierPiece(p); }
+    if (choix === 'renommer') { const n = prompt('Nouveau nom de la pièce :', p.nom); if (n && n.trim()) { p.nom = n.trim(); sauver(); } }
+    if (choix === 'monter' || choix === 'descendre') { const j = i + (choix === 'monter' ? -1 : 1); [d.pieces[i], d.pieces[j]] = [d.pieces[j], d.pieces[i]]; sauver(); }
+    if (choix === 'retirer' && await confirmer({ titre: `Retirer « ${p.nom} » du dossier ?`, texte: p.fichier ? 'Le fichier de cette pièce sera effacé de cet appareil.' : 'La pièce disparaît de la liste.', action: 'Retirer la pièce' })) {
+      await bdDel('fichiers', 'piece:' + p.id).catch(() => {}); d.pieces.splice(i, 1); sauver();
+    }
+  }
+  async function toutReunir() {
+    const recues = d.pieces.filter(p => p.etat === 'recu' && p.fichier);
+    if (!recues.length) { toast('Aucune pièce avec un fichier pour l\'instant.'); return; }
+    const lots = [];
+    for (const p of recues) { const o = await bdGet('fichiers', 'piece:' + p.id).catch(() => null); if (o) lots.push({ octets: new Uint8Array(o), nom: p.fichier.nom }); }
+    if (!lots.length) { toast('Les fichiers des pièces sont introuvables sur cet appareil.'); return; }
+    const manquantes = d.pieces.length - recues.length;
+    await fe.fermer();
+    await ouvrirDocuments(lots, { onglet: 'pages' });
+    if (D) { D.nom = `Dossier ${nomClient(d.client)}.pdf`; majTitre(); }
+    toast(manquantes ? `${lots.length} pièce(s) réunie(s). Attention : ${manquantes} pièce(s) encore manquante(s).` : 'Toutes les pièces sont réunies en un seul PDF.', 6000);
+  }
+  fe.corps.append(tete,
+    el('h3', { class: 'titre-section', text: 'Pièces du dossier' }), liste,
+    el('div', { class: 'rangee-btn' }, bouton('Ajouter une pièce à la liste', { ico: 'plus', cls: 'btn', onclick: () => {
+      const n = prompt('Nom de la pièce (ex. : Attestation d\'assurance) :'); if (!n || !n.trim()) return;
+      d.pieces.push({ id: idUnique(), nom: n.trim(), modele: null, etat: 'manquant' }); sauver();
+    } })));
+  fe.pied.append(
+    bouton('', { ico: 'poubelle', cls: 'btn danger', label: `Supprimer le dossier de ${nomClient(d.client)}`, onclick: async () => {
+      if (!(await confirmer({ titre: `Supprimer le dossier de ${nomClient(d.client)} ?`, texte: 'La fiche client et les fichiers des pièces seront effacés de cet appareil. Les PDF déjà enregistrés ailleurs ne changent pas.', action: 'Supprimer le dossier' }))) return;
+      for (const p of d.pieces) await bdDel('fichiers', 'piece:' + p.id).catch(() => {});
+      prefs.dossiers = dossiers().filter(x => x.id !== d.id); ecrirePrefs(prefs); toast('Dossier supprimé'); await fe.fermer(); ouvrirDossiers();
+    } }),
+    bouton('Dossiers', { ico: 'gauche', onclick: async () => { await fe.fermer(); ouvrirDossiers(); } }),
+    bouton('Tout réunir', { ico: 'fusion', cls: 'btn principal', label: 'Tout réunir en un seul PDF', onclick: toutReunir }));
+  rendre();
+}
+/** Un formulaire rempli depuis un dossier : le PDF créé devient la pièce (reçue). */
+async function rangerDansDossier(lien, octets, nom) {
+  const d = dossiers().find(x => x.id === lien.id), p = d?.pieces.find(x => x.id === lien.piece);
+  if (!p) return false;
+  await bdPut('fichiers', octets, 'piece:' + p.id);
+  p.fichier = { nom, type: 'application/pdf', taille: octets.length, date: Date.now() }; p.etat = 'recu';
+  ecrireDossier(d);
+  return true;
 }
 
 /* ---------- Éditeur de modèles : on empile des blocs, sans rien dessiner ---------- */
@@ -6364,6 +6609,7 @@ $('#btn-photos').addEventListener('click', async () => { const fs = await choisi
 $('#btn-param').addEventListener('click', ouvrirParametres);
 $('#btn-mesdocs').addEventListener('click', () => ouvrirMesDocuments('documents'));
 $('#btn-formulaires').addEventListener('click', ouvrirFormulaires);
+$('#btn-dossiers').addEventListener('click', ouvrirDossiers);
 $('#btn-excel').addEventListener('click', async () => { const [f] = await choisirFichiers({ accept: ACCEPT_TABLEUR }); if (f) convertirTableur(f); });
 $('#btn-modeles').addEventListener('click', () => ouvrirMesDocuments('modeles'));
 $('#btn-creer-tampon').addEventListener('click', async () => { const t = await tamponTexte(); if (t) toast('Votre tampon est prêt : touchez « Tampon » dans un document pour le poser'); });
