@@ -915,7 +915,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.16.1';
+const VERSION_APPLI = '1.16.2';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4759,7 +4759,8 @@ const urlRetourGoogle = () => new URL('./', location.href).href; // https://…/
 /** Part chez Google. Le document ouvert est gardé avant, et rouvert au retour. */
 async function redirigerVersGoogle({ silencieux = false, choix = null } = {}) {
   if (D) { try { await sauvegarder(D, { force: true }); prefs.oauthReouvrir = D.docId; } catch {} }
-  prefs.oauthEtat = Array.from(crypto.getRandomValues(new Uint8Array(24)), o => o.toString(16).padStart(2, '0')).join(''); // code anti-usurpation, vraiment aléatoire prefs.oauthSilencieux = silencieux && !choix; prefs.oauthChoix = choix; ecrirePrefs(prefs);
+  // code anti-usurpation, vraiment aléatoire (vérifié au retour de Google)
+  prefs.oauthEtat = Array.from(crypto.getRandomValues(new Uint8Array(24)), o => o.toString(16).padStart(2, '0')).join(''); prefs.oauthSilencieux = silencieux && !choix; prefs.oauthChoix = choix; ecrirePrefs(prefs);
   const p = new URLSearchParams({ client_id: GOOGLE_CLIENT_ID, redirect_uri: urlRetourGoogle(), response_type: 'token', scope: DRIVE_SCOPE, include_granted_scopes: 'true', state: prefs.oauthEtat });
   if (choix) {
     // Sélecteur de fichiers de Google : l'utilisateur choisit dans TOUT son Drive, et l'appli reçoit l'accès aux fichiers choisis
