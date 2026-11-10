@@ -693,6 +693,41 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 .rangee-btn{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .rangee-btn .btn{flex:1 1 140px}
 .pad{width:100%;height:240px;border:1px solid var(--ligne);border-radius:12px;touch-action:none;display:block;background:#fff}
+/* Navigation : menu à gauche (ordinateur), barre du bas (téléphone) */
+#menu-app{display:none}
+.menu-bas{display:none}
+@media (max-width:999px){
+  #ecran-accueil #menu-app{display:block;order:3;flex:none}
+  .menu-lateral{display:none}
+  .menu-bas{display:grid;grid-template-columns:repeat(5,1fr);background:var(--carte);border-top:1px solid var(--ligne);padding:4px 4px calc(6px + var(--bas-sur));box-shadow:0 -4px 16px rgba(27,33,48,.05)}
+}
+.menu-bas button{position:relative;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:54px;padding:2px 0;font-size:11.5px;font-weight:600;color:var(--doux);border-radius:12px}
+.menu-bas button[aria-current="page"]{color:var(--accent)}
+.menu-bas .creer .ico{width:46px;height:46px;padding:12px;border-radius:50%;background:var(--accent);color:#fff;margin-top:-20px;box-shadow:0 6px 14px rgba(13,107,79,.35)}
+.menu-bas .badge,.menu-lateral .badge{font-size:11px;font-weight:700;line-height:18px;min-width:18px;padding:0 6px;border-radius:99px;background:#1fae76;color:#fff;text-align:center}
+.menu-bas .badge{position:absolute;top:3px;left:calc(50% + 4px)}
+.menu-bas .badge.alerte,.menu-lateral .badge.alerte{background:#f4b740;color:#1b2130}
+@media (min-width:1000px){
+  #ecran-accueil.actif{display:grid;grid-template-columns:244px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+  #ecran-accueil #menu-app{display:flex;grid-column:1;grid-row:1/3;min-height:0}
+  #ecran-accueil>.barre-accueil,#ecran-accueil>.accueil{grid-column:2;min-height:0}
+  #ecran-accueil .barre-accueil .marque{visibility:hidden}
+  .menu-lateral{display:flex;flex-direction:column;gap:2px;width:100%;background:#1b2130;color:#fff;padding:16px 12px calc(14px + var(--bas-sur));overflow-y:auto}
+  .menu-marque{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;padding:2px 10px 14px}
+  .menu-marque svg{width:30px;height:30px}
+  .menu-groupe{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#9aa3b5;padding:14px 10px 4px}
+  .menu-item{display:flex;align-items:center;gap:12px;min-height:40px;padding:0 10px;border:0;border-radius:10px;background:none;color:#e8ebf1;font-size:14.5px;font-weight:500;text-align:left}
+  .menu-item span{flex:1}
+  .menu-item .ico{width:20px;height:20px;color:#9aa3b5}
+  .menu-item:hover{background:rgba(255,255,255,.07)}
+  .menu-item:focus-visible,.menu-bas button:focus-visible{outline:2px solid #1fae76;outline-offset:1px}
+  .menu-item[aria-current="page"]{background:rgba(255,255,255,.09);box-shadow:inset 3px 0 0 #1fae76;color:#fff;font-weight:600}
+  .menu-item[aria-current="page"] .ico{color:#1fae76}
+  .menu-offre{margin-top:auto;border:0;text-align:left;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.06);color:#b9c0cf;font-size:12.5px}
+  .menu-offre:hover{background:rgba(255,255,255,.1)}
+  .menu-offre .jauge{margin-top:6px;background:rgba(255,255,255,.12)}
+}
+@media (prefers-reduced-motion:reduce){.accueil{scroll-behavior:auto}}
 /* Modes Particulier / Entreprise */
 body:not(.mode-entreprise) .seul-entreprise{display:none!important}
 body.mode-entreprise .seul-particulier{display:none!important}
@@ -880,6 +915,9 @@ body.mode-entreprise .seul-particulier{display:none!important}
   <symbol id="i-oeil" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-fermer" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
   <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-maison" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-4v-6h-6v6H5a1 1 0 0 1-1-1z"/></symbol>
+  <symbol id="i-clients" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c2.4.2 4 1.8 4.5 4.8"/></symbol>
+  <symbol id="i-lignes" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
   <symbol id="i-copier" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
   <symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
   <symbol id="i-image" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><circle cx="9" cy="9" r="1.5"/><path d="M20 15l-4.5-4.5L6 20"/></symbol>
@@ -920,6 +958,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
 
 <!-- ================= ÉCRAN D'ACCUEIL ================= -->
 <section id="ecran-accueil" class="ecran actif" aria-label="Accueil">
+  <nav id="menu-app" aria-label="Menu principal"></nav>
   <header class="barre-accueil">
     <div class="marque">
       <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0d6b4f"/><path d="M19 12h19l9 9v31H19z" fill="#fff"/><path d="M38 12v9h9" fill="#cfe6dc"/><path d="M24 40c4-1 5-9 8-9s-1 9 2 9 4-4 6-4" fill="none" stroke="#0d6b4f" stroke-width="3" stroke-linecap="round"/></svg>
@@ -1052,7 +1091,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.23.1';
+const VERSION_APPLI = '1.24.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -1191,7 +1230,7 @@ async function verifierQuota(docId) {
   const m = prefs.mode, liste = docsComptes(m);
   if (!docId || liste.includes(docId)) return true;
   if (liste.length >= QUOTA.gratuit && QUOTA.bloquer) { await feuilleOffre(); return false; }
-  prefs.docsEnregistres = { ...(prefs.docsEnregistres || {}), [m]: [...liste, docId] }; ecrirePrefs(prefs);
+  prefs.docsEnregistres = { ...(prefs.docsEnregistres || {}), [m]: [...liste, docId] }; ecrirePrefs(prefs); majMenu();
   // On prévient sans bloquer : un rappel à 3 documents de la fin, puis une fenêtre une seule fois quand c'est dépassé
   const n = liste.length + 1, reste = QUOTA.gratuit - n;
   if (reste === 3) toast(`Plus que 3 documents gratuits en mode ${enEntreprise() ? 'Entreprise' : 'Particulier'}.`, 5000);
@@ -4459,7 +4498,76 @@ function barreAvancement(d) {
     el('small', { text: complet ? '✓ Dossier complet' : `${ok} / ${n} pièce${n > 1 ? 's' : ''}` }));
 }
 
-/* ---------- Suivi client (mini CRM) ---------- */
+/* ---------- Navigation : menu à gauche (ordinateur), barre du bas et « Menu » (téléphone) ---------- */
+const allerEnHaut = () => $('#ecran-accueil .accueil')?.scrollTo({ top: 0, behavior: 'smooth' });
+const allerAuxOutils = () => document.querySelector('.col-outils > .titre-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+const ouvrirParam = onglet => { prefs.ongletParametres = onglet; ecrirePrefs(prefs); ouvrirParametres(); };
+/** Les entrées du menu, rangées en espaces. Le mode Particulier n'affiche pas l'espace Clients. */
+function groupesMenu() {
+  const it = (texte, ico, action, badge = 0, alerte = false) => ({ texte, ico, action, badge, alerte });
+  const modifier = it('Modifier un PDF', 'crayon', () => $('#btn-ouvrir').click());
+  const signer = it('Signer un PDF', 'signature', () => $('#btn-signer').click());
+  const mesDocs = it('Mes documents', 'doc', () => ouvrirMesDocuments('documents'));
+  const outils = it('Tous les outils', 'pages', allerAuxOutils);
+  if (enEntreprise()) {
+    const brouillons = (prefs.brouillonsForm || []).length;
+    return [
+      { items: [{ ...it('Tableau de bord', 'maison', allerEnHaut), courant: true }] },
+      { groupe: 'Clients', items: [it('Tous les clients', 'clients', () => ouvrirDossiers(), dossiers().length), it('Pièces à demander', 'horloge', () => ouvrirDossiers('relancer'), aRelancer().length, true), it('Nouveau client', 'plus', () => nouveauDossier())] },
+      { groupe: 'Documents', items: [it('Rédiger un document', 'formulaire', () => ouvrirFormulaires(), brouillons, true), mesDocs, it('Mes modèles', 'copier', () => ouvrirMesDocuments('modeles'))] },
+      { groupe: 'Outils PDF', items: [modifier, signer, outils] },
+      { groupe: 'Réglages', items: [it('Mon entreprise', 'tampon', () => ouvrirParam('p-entreprise')), it('Paramètres', 'reglages', () => ouvrirParam('p-reglages'))] }];
+  }
+  return [
+    { items: [{ ...it('Accueil', 'maison', allerEnHaut), courant: true }] },
+    { groupe: 'Documents', items: [modifier, signer, mesDocs] },
+    { groupe: 'Outils', items: [it('Scanner une feuille', 'scanner', () => nouveauScan()), it('Fusionner', 'fusion', () => lancerOutil('fusion')), outils] },
+    { groupe: 'Réglages', items: [it('Mes signatures', 'signature', () => ouvrirParam('p-entreprise')), it('Paramètres', 'reglages', () => ouvrirParam('p-reglages'))] }];
+}
+function majMenu() {
+  const nav = $('#menu-app'); if (!nav) return;
+  const groupes = groupesMenu(), ent = enEntreprise();
+  const entree = (i, cls) => el('button', { type: 'button', class: cls, onclick: i.action, 'aria-current': i.courant ? 'page' : null, title: i.badge ? `${i.texte} : ${i.badge}` : null },
+    icone(i.ico), el('span', { text: i.texte }), i.badge ? el('small', { class: 'badge' + (i.alerte ? ' alerte' : ''), text: String(i.badge) }) : null);
+  const n = Math.min(docsComptes().length, QUOTA.gratuit);
+  const logo = $('.barre-accueil .marque svg')?.cloneNode(true);
+  const lateral = el('div', { class: 'menu-lateral' },
+    el('div', { class: 'menu-marque' }, logo, el('span', { text: 'Atelier PDF' })),
+    groupes.flatMap(g => [g.groupe ? el('div', { class: 'menu-groupe', text: g.groupe }) : null, ...g.items.map(i => entree(i, 'menu-item'))]),
+    el('button', { type: 'button', class: 'menu-offre', onclick: () => ouvrirParam('p-reglages') }, `${n} / ${QUOTA.gratuit} documents gratuits`,
+      el('div', { class: 'jauge' + (n >= QUOTA.gratuit ? ' pleine' : '') }, el('span', { style: { width: n / QUOTA.gratuit * 100 + '%' } }))));
+  const bas = el('div', { class: 'menu-bas' },
+    entree({ texte: 'Accueil', ico: 'maison', action: allerEnHaut, courant: true }, ''),
+    ent ? entree({ texte: 'Clients', ico: 'clients', action: () => ouvrirDossiers(), badge: aRelancer().length, alerte: true }, '')
+        : entree({ texte: 'Outils', ico: 'pages', action: allerAuxOutils }, ''),
+    entree({ texte: 'Créer', ico: 'plus', action: menuCreer }, 'creer'),
+    entree({ texte: 'Documents', ico: 'doc', action: () => ouvrirMesDocuments('documents') }, ''),
+    entree({ texte: 'Menu', ico: 'lignes', action: menuComplet }, ''));
+  nav.replaceChildren(lateral, bas);
+}
+/** Bouton « Créer » (téléphone) : les façons de commencer un document. */
+async function menuCreer() {
+  const ent = enEntreprise();
+  const v = await demanderChoix('Créer', [
+    { valeur: 'pdf', texte: 'Modifier un PDF', ico: 'crayon' },
+    ...(ent ? [{ valeur: 'rediger', texte: 'Rédiger un document (PV, attestation, mandat…)', ico: 'formulaire' }, { valeur: 'client', texte: 'Nouveau client', ico: 'clients' }] : []),
+    { valeur: 'signer', texte: 'Signer un PDF', ico: 'signature' },
+    { valeur: 'scan', texte: 'Scanner une feuille', ico: 'scanner' },
+    { valeur: 'photos', texte: 'Photos en PDF', ico: 'image' },
+    { valeur: 'fusion', texte: 'Fusionner des PDF', ico: 'fusion' }]);
+  ({ pdf: () => $('#btn-ouvrir').click(), rediger: () => ouvrirFormulaires(), client: () => nouveauDossier(), signer: () => $('#btn-signer').click(),
+     scan: () => nouveauScan(), photos: () => $('#btn-photos').click(), fusion: () => lancerOutil('fusion') })[v]?.();
+}
+/** Bouton « Menu » (téléphone) : tout le menu, par espaces. */
+function menuComplet() {
+  const fe = feuille({ titre: 'Menu', pied: false });
+  for (const g of groupesMenu()) {
+    if (g.groupe) fe.corps.append(el('h3', { class: 'titre-section', text: g.groupe }));
+    fe.corps.append(el('div', { class: 'menu-liste' }, g.items.map(i => bouton(i.badge ? `${i.texte} (${i.badge})` : i.texte, { ico: i.ico, onclick: async () => { await fe.fermer(); i.action(); } }))));
+  }
+}
+
+/* ---------- Suivi de la collecte de documents ---------- */
 // Collecte de documents uniquement : un dossier est « en cours » tant qu'il manque des pièces
 const dossierActif = d => !avancement(d).complet;
 const dateCourte = iso => new Date(iso + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
@@ -4473,6 +4581,7 @@ function aRelancer() {
   }).filter(Boolean).sort((a, b) => (a.d.relance || '9') .localeCompare(b.d.relance || '9'));
 }
 function majTableauBord() {
+  majMenu();
   const zone = $('#tableau-bord'); if (!zone) return;
   if (!enEntreprise()) { zone.replaceChildren(); return; }
   const tous = dossiers(), actifs = tous.filter(dossierActif), relances = aRelancer();
