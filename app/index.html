@@ -728,6 +728,23 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   .menu-offre .jauge{margin-top:6px;background:rgba(255,255,255,.12)}
 }
 @media (prefers-reduced-motion:reduce){.accueil{scroll-behavior:auto}}
+/* Pages (rubriques du menu) : pleine zone de contenu, sans voile, le menu reste visible */
+.voile.voile-page{display:none}
+body .feuille.pleine.page-app{left:0;right:0;top:0;bottom:var(--h-menu-bas,0px);max-width:none;max-height:none;margin:0;border-radius:0;box-shadow:none;transform:none;opacity:0;transition:opacity .14s ease-out;background:var(--fond)}
+body .feuille.pleine.page-app.ouverte{opacity:1}
+.feuille.page-app .feuille-tete{background:var(--carte);padding-left:6px}
+.feuille.page-app .feuille-tete h2{font-size:19px}
+@media (min-width:1000px){
+  body .feuille.pleine.page-app{left:244px;bottom:0}
+  .feuille.page-app .feuille-tete{padding:14px 24px 12px 14px}
+  .feuille.page-app .feuille-tete h2{font-size:22px}
+  .feuille.page-app .feuille-corps{padding-left:28px;padding-right:28px}
+  .feuille.page-app .feuille-pied{padding-left:28px;padding-right:28px}
+}
+@media (prefers-reduced-motion:reduce){body .feuille.pleine.page-app{transition:none}}
+/* Doublons retirés de l'accueil : tout est dans le menu */
+#btn-param{display:none!important}
+.accueil .titre-plus,.accueil .outils-plus,#btn-creer-tampon{display:none!important}
 /* Modes Particulier / Entreprise */
 body:not(.mode-entreprise) .seul-entreprise{display:none!important}
 body.mode-entreprise .seul-particulier{display:none!important}
@@ -1005,7 +1022,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
       <button class="tuile" data-outil="filigrane"><svg class="ico"><use href="#i-filigrane"/></svg><strong>Filigrane</strong><span>« COPIE », « CONFIDENTIEL »…</span></button>
       <button class="tuile seul-entreprise" id="btn-creer-tampon"><svg class="ico"><use href="#i-tampon"/></svg><strong>Créer un tampon</strong><span>Votre société, signé dessus</span></button>
     </div>
-    <h2 class="titre-section">En plus</h2>
+    <h2 class="titre-section titre-plus">En plus</h2>
     <div class="grille-outils outils-plus">
       <button class="tuile seul-entreprise" id="btn-dossiers"><svg class="ico"><use href="#i-dossier"/></svg><strong>Dossiers clients</strong><span>Pièces reçues, manquantes, dossier complet</span></button>
       <button class="tuile seul-entreprise" id="btn-formulaires"><svg class="ico"><use href="#i-formulaire"/></svg><strong>Formulaires</strong><span>PV de réception, visite, attestation…</span></button>
@@ -1091,7 +1108,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.24.0';
+const VERSION_APPLI = '1.25.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -1276,23 +1293,37 @@ addEventListener('popstate', () => {
 
 let zFeuille = 100;
 /** Ouvre une « feuille » (fenêtre qui monte du bas). Renvoie { corps, pied, fermer }. */
-function feuille({ titre, plein = false, pied = true, surFermeture }) {
+/* Pages : Clients, Documents, Rédiger, Paramètres s'ouvrent comme des pages (le menu reste visible),
+   les petites questions (choix, confirmations) restent des fenêtres. */
+let rubriqueCourante = 'accueil';
+const pagesOuvertes = () => [...document.querySelectorAll('.feuille.page-app:not(.fermee)')];
+/** Passe à une autre rubrique du menu : ferme d'abord les pages (et fenêtres) ouvertes, sans les empiler. */
+async function naviguer(action) {
+  let garde = 20;
+  while (pagesOuvertes().length && pile.length && garde--) await fermerCouche();
+  action?.();
+}
+function feuille({ titre, plein = false, pied = true, surFermeture, page = null, retour = null }) {
   const corps = el('div', { class: 'feuille-corps' });
   const zonePied = pied ? el('div', { class: 'feuille-pied' }) : null;
   let ferme = false;
   const declencheur = document.activeElement;
   const api = { corps, pied: zonePied, ferme: () => ferme };
-  const f = el('div', { class: 'feuille' + (plein ? ' pleine' : ''), role: 'dialog', 'aria-modal': 'true', 'aria-label': titre },
-    el('div', { class: 'feuille-tete' }, el('h2', { text: titre }), bouton('', { ico: 'fermer', cls: 'btn-icone', label: 'Fermer', onclick: () => api.fermer() })),
+  const f = el('div', { class: 'feuille' + (plein || page ? ' pleine' : '') + (page ? ' page-app' : ''), role: page ? 'region' : 'dialog', 'aria-modal': page ? null : 'true', 'aria-label': titre, dataset: page ? { page } : null },
+    el('div', { class: 'feuille-tete' }, page ? bouton('', { ico: 'gauche', cls: 'btn-icone retour-page', label: retour ? retour.label : 'Retour', onclick: () => retour ? retour.action() : api.fermer() }) : null, el('h2', { text: titre }),
+      page ? null : bouton('', { ico: 'fermer', cls: 'btn-icone', label: 'Fermer', onclick: () => api.fermer() })),
     corps, zonePied);
   api.feuille = f;
   const voile = el('div', { class: 'voile', onclick: () => api.fermer() });
   voile.style.zIndex = ++zFeuille; f.style.zIndex = ++zFeuille;
   document.body.append(voile, f);
   feuillesOuvertes++;
+  if (page) { voile.classList.add('voile-page'); rubriqueCourante = page; majMenu(); }
   requestAnimationFrame(() => { voile.classList.add('ouvert'); f.classList.add('ouverte'); });
   function retirer() {
     if (ferme) return; ferme = true; feuillesOuvertes--;
+    f.classList.add('fermee');
+    if (page) { rubriqueCourante = pagesOuvertes().pop()?.dataset.page || 'accueil'; majMenu(); }
     f.classList.remove('ouverte'); voile.classList.remove('ouvert');
     setTimeout(() => { f.remove(); voile.remove(); }, 230);
     if (declencheur && declencheur.isConnected && declencheur.focus) declencheur.focus({ preventScroll: true });
@@ -4026,7 +4057,7 @@ const aujourdhuiIso = () => { const d = new Date(); return `${d.getFullYear()}-$
 
 /* ---------- Liste des formulaires et des brouillons ---------- */
 async function ouvrirFormulaires() {
-  const fe = feuille({ titre: 'Formulaires', plein: true, pied: false });
+  const fe = feuille({ titre: 'Rédiger un document', plein: true, pied: false, page: 'rediger' });
   fe.feuille.classList.add('large');
   const brouillons = (prefs.brouillonsForm || []).slice().sort((a, b) => b.maj - a.maj);
   const e = entreprise();
@@ -4073,7 +4104,7 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null } 
     if (b.t === 'repeter' && !Array.isArray(r[b.id])) r[b.id] = [{}];
   });
   initialiser(modele.blocs, rep);
-  const fe = feuille({ titre: modele.nom, plein: true, surFermeture: () => { clearTimeout(minuteur); sauverBrouillon(); } });
+  const fe = feuille({ titre: modele.nom, plein: true, page: 'rediger', surFermeture: () => { clearTimeout(minuteur); sauverBrouillon(); } });
   fe.feuille.classList.add('large', 'saisie-form');
   let minuteur;
   const titreDoc = () => { const nom = modele.blocs.find(b => b.requis); return [modele.nom, nom && rep[nom.id]].filter(Boolean).join(' – '); };
@@ -4509,41 +4540,44 @@ function groupesMenu() {
   const signer = it('Signer un PDF', 'signature', () => $('#btn-signer').click());
   const mesDocs = it('Mes documents', 'doc', () => ouvrirMesDocuments('documents'));
   const outils = it('Tous les outils', 'pages', allerAuxOutils);
+  // Une entrée = une page ; chaque fonction n'apparaît qu'une fois
+  const param = { ...it('Paramètres', 'reglages', () => ouvrirParametres()), page: 'parametres' };
   if (enEntreprise()) {
-    const brouillons = (prefs.brouillonsForm || []).length;
     return [
-      { items: [{ ...it('Tableau de bord', 'maison', allerEnHaut), courant: true }] },
-      { groupe: 'Clients', items: [it('Tous les clients', 'clients', () => ouvrirDossiers(), dossiers().length), it('Pièces à demander', 'horloge', () => ouvrirDossiers('relancer'), aRelancer().length, true), it('Nouveau client', 'plus', () => nouveauDossier())] },
-      { groupe: 'Documents', items: [it('Rédiger un document', 'formulaire', () => ouvrirFormulaires(), brouillons, true), mesDocs, it('Mes modèles', 'copier', () => ouvrirMesDocuments('modeles'))] },
+      { items: [{ ...it('Tableau de bord', 'maison', allerEnHaut), page: 'accueil' }] },
+      { groupe: 'Clients', items: [{ ...it('Clients', 'clients', () => ouvrirDossiers(), dossiers().length), page: 'clients' }, it('Pièces à demander', 'horloge', () => ouvrirDossiers('relancer'), aRelancer().length, true)] },
+      { groupe: 'Documents', items: [{ ...it('Rédiger un document', 'formulaire', () => ouvrirFormulaires(), (prefs.brouillonsForm || []).length), page: 'rediger' }, { ...mesDocs, page: 'documents' }] },
       { groupe: 'Outils PDF', items: [modifier, signer, outils] },
-      { groupe: 'Réglages', items: [it('Mon entreprise', 'tampon', () => ouvrirParam('p-entreprise')), it('Paramètres', 'reglages', () => ouvrirParam('p-reglages'))] }];
+      { items: [param] }];
   }
   return [
-    { items: [{ ...it('Accueil', 'maison', allerEnHaut), courant: true }] },
-    { groupe: 'Documents', items: [modifier, signer, mesDocs] },
+    { items: [{ ...it('Accueil', 'maison', allerEnHaut), page: 'accueil' }] },
+    { groupe: 'Documents', items: [modifier, signer, { ...mesDocs, page: 'documents' }] },
     { groupe: 'Outils', items: [it('Scanner une feuille', 'scanner', () => nouveauScan()), it('Fusionner', 'fusion', () => lancerOutil('fusion')), outils] },
-    { groupe: 'Réglages', items: [it('Mes signatures', 'signature', () => ouvrirParam('p-entreprise')), it('Paramètres', 'reglages', () => ouvrirParam('p-reglages'))] }];
+    { items: [param] }];
 }
 function majMenu() {
   const nav = $('#menu-app'); if (!nav) return;
   const groupes = groupesMenu(), ent = enEntreprise();
-  const entree = (i, cls) => el('button', { type: 'button', class: cls, onclick: i.action, 'aria-current': i.courant ? 'page' : null, title: i.badge ? `${i.texte} : ${i.badge}` : null },
+  const entree = (i, cls) => el('button', { type: 'button', class: cls, onclick: () => naviguer(i.action), 'aria-current': i.page && i.page === rubriqueCourante ? 'page' : null, title: i.badge ? `${i.texte} : ${i.badge}` : null },
     icone(i.ico), el('span', { text: i.texte }), i.badge ? el('small', { class: 'badge' + (i.alerte ? ' alerte' : ''), text: String(i.badge) }) : null);
   const n = Math.min(docsComptes().length, QUOTA.gratuit);
   const logo = $('.barre-accueil .marque svg')?.cloneNode(true);
   const lateral = el('div', { class: 'menu-lateral' },
     el('div', { class: 'menu-marque' }, logo, el('span', { text: 'Atelier PDF' })),
     groupes.flatMap(g => [g.groupe ? el('div', { class: 'menu-groupe', text: g.groupe }) : null, ...g.items.map(i => entree(i, 'menu-item'))]),
-    el('button', { type: 'button', class: 'menu-offre', onclick: () => ouvrirParam('p-reglages') }, `${n} / ${QUOTA.gratuit} documents gratuits`,
+    el('button', { type: 'button', class: 'menu-offre', onclick: () => naviguer(() => ouvrirParam('p-reglages')) }, `${n} / ${QUOTA.gratuit} documents gratuits`,
       el('div', { class: 'jauge' + (n >= QUOTA.gratuit ? ' pleine' : '') }, el('span', { style: { width: n / QUOTA.gratuit * 100 + '%' } }))));
   const bas = el('div', { class: 'menu-bas' },
-    entree({ texte: 'Accueil', ico: 'maison', action: allerEnHaut, courant: true }, ''),
-    ent ? entree({ texte: 'Clients', ico: 'clients', action: () => ouvrirDossiers(), badge: aRelancer().length, alerte: true }, '')
+    entree({ texte: 'Accueil', ico: 'maison', action: allerEnHaut, page: 'accueil' }, ''),
+    ent ? entree({ texte: 'Clients', ico: 'clients', action: () => ouvrirDossiers(), badge: aRelancer().length, alerte: true, page: 'clients' }, '')
         : entree({ texte: 'Outils', ico: 'pages', action: allerAuxOutils }, ''),
-    entree({ texte: 'Créer', ico: 'plus', action: menuCreer }, 'creer'),
-    entree({ texte: 'Documents', ico: 'doc', action: () => ouvrirMesDocuments('documents') }, ''),
+    el('button', { type: 'button', class: 'creer', onclick: menuCreer }, icone('plus'), el('span', { text: 'Créer' })),
+    entree({ texte: 'Documents', ico: 'doc', action: () => ouvrirMesDocuments('documents'), page: 'documents' }, ''),
     entree({ texte: 'Menu', ico: 'lignes', action: menuComplet }, ''));
   nav.replaceChildren(lateral, bas);
+  // Les pages s'arrêtent au-dessus de la barre du bas (téléphone)
+  requestAnimationFrame(() => document.documentElement.style.setProperty('--h-menu-bas', (bas.offsetHeight || 0) + 'px'));
 }
 /** Bouton « Créer » (téléphone) : les façons de commencer un document. */
 async function menuCreer() {
@@ -4555,6 +4589,8 @@ async function menuCreer() {
     { valeur: 'scan', texte: 'Scanner une feuille', ico: 'scanner' },
     { valeur: 'photos', texte: 'Photos en PDF', ico: 'image' },
     { valeur: 'fusion', texte: 'Fusionner des PDF', ico: 'fusion' }]);
+  if (!v) return;
+  await naviguer();
   ({ pdf: () => $('#btn-ouvrir').click(), rediger: () => ouvrirFormulaires(), client: () => nouveauDossier(), signer: () => $('#btn-signer').click(),
      scan: () => nouveauScan(), photos: () => $('#btn-photos').click(), fusion: () => lancerOutil('fusion') })[v]?.();
 }
@@ -4563,7 +4599,7 @@ function menuComplet() {
   const fe = feuille({ titre: 'Menu', pied: false });
   for (const g of groupesMenu()) {
     if (g.groupe) fe.corps.append(el('h3', { class: 'titre-section', text: g.groupe }));
-    fe.corps.append(el('div', { class: 'menu-liste' }, g.items.map(i => bouton(i.badge ? `${i.texte} (${i.badge})` : i.texte, { ico: i.ico, onclick: async () => { await fe.fermer(); i.action(); } }))));
+    fe.corps.append(el('div', { class: 'menu-liste' }, g.items.map(i => bouton(i.badge ? `${i.texte} (${i.badge})` : i.texte, { ico: i.ico, onclick: () => naviguer(i.action) }))));
   }
 }
 
@@ -4603,14 +4639,12 @@ function majTableauBord() {
         el('span', {}, el('strong', { text: nomClient(d.client) }), el('small', { text: pourquoi })), icone('droite')))
         : [el('p', { class: 'tb-vide', text: tous.length ? 'Aucune relance aujourd\'hui.' : 'Créez votre premier dossier client pour suivre vos chantiers ici.' })])),
     el('div', { class: 'tb-actions' },
-      bouton('Nouveau dossier', { ico: 'plus', cls: 'btn principal', onclick: () => nouveauDossier() }),
-      bouton('Tous les dossiers', { ico: 'dossier', onclick: () => ouvrirDossiers() }),
-      bouton('Formulaires', { ico: 'formulaire', onclick: () => ouvrirFormulaires() })));
+      bouton('Nouveau client', { ico: 'plus', cls: 'btn principal', onclick: () => nouveauDossier() })));
 }
 
 /* ---------- Tableau de bord ---------- */
 function ouvrirDossiers(filtreInitial = 'tous') {
-  const fe = feuille({ titre: 'Dossiers clients', plein: true, pied: false });
+  const fe = feuille({ titre: 'Clients', plein: true, pied: false, page: 'clients' });
   fe.feuille.classList.add('large');
   const recherche = el('input', { class: 'champ', id: 'recherche-dossiers', type: 'search', placeholder: 'Nom, ville…', autocomplete: 'off' });
   const zone = el('div', { class: 'liste-dossiers' });
@@ -4644,7 +4678,7 @@ function ouvrirDossiers(filtreInitial = 'tous') {
       el('label', { class: 'lib-recherche', for: 'recherche-dossiers' }, icone('zoom'), 'Rechercher'), recherche,
       filtre,
       bouton('Mes listes', { ico: 'vue-liste', label: 'Mes listes de pièces', onclick: async () => { await fe.fermer(); ouvrirMesListes(ouvrirDossiers); } }),
-      bouton('Nouveau dossier', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); nouveauDossier(); } })),
+      bouton('Nouveau client', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); nouveauDossier(); } })),
     zone);
   afficher();
 }
@@ -4664,7 +4698,7 @@ function nouveauDossier() {
   const apercu = el('p', { class: 'note' });
   const majApercu = () => { const l = toutes[choix.value]; apercu.textContent = l.pieces.length ? l.pieces.map(p => p[0]).join(', ') : 'Aucune pièce : vous les ajouterez dans le dossier.'; };
   choix.addEventListener('change', majApercu);
-  const fe = feuille({ titre: 'Nouveau dossier client', plein: true });
+  const fe = feuille({ titre: 'Nouveau client', plein: true, page: 'clients' });
   fe.corps.append(el('div', { class: 'form-blocs' }, ...champsClient(c, 'nd-'),
     el('label', { class: 'etiquette', for: 'nd-liste', text: 'Pièces à réunir' }), choix, apercu,
     el('div', { class: 'rangee-btn' }, bouton('Créer ou modifier mes listes', { ico: 'vue-liste', onclick: async () => { await fe.fermer(); ouvrirMesListes(nouveauDossier); } })),
@@ -4682,7 +4716,7 @@ function nouveauDossier() {
 
 /* ---------- Mes listes de pièces (réutilisables) ---------- */
 function ouvrirMesListes(retour) {
-  const fe = feuille({ titre: 'Mes listes de pièces', plein: true });
+  const fe = feuille({ titre: 'Mes listes de pièces', plein: true, page: 'clients' });
   fe.feuille.classList.add('large');
   const zone = el('div', { class: 'liste-pieces' });
   const rendre = () => {
@@ -4709,7 +4743,7 @@ function ouvrirMesListes(retour) {
 }
 /** Éditeur d'une liste : son nom, puis une ligne par pièce (nom + formulaire à remplir, facultatif). */
 function editerListe(l, retour) {
-  const fe = feuille({ titre: l.nom ? 'Modifier la liste' : 'Nouvelle liste', plein: true });
+  const fe = feuille({ titre: l.nom ? 'Modifier la liste' : 'Nouvelle liste', plein: true, page: 'clients' });
   fe.feuille.classList.add('large');
   const nom = el('input', { class: 'champ', id: 'ml-nom', autocomplete: 'off', placeholder: 'Ex. : Pompe à chaleur' }); nom.value = l.nom;
   const modeles = tousLesModeles();
@@ -4754,7 +4788,7 @@ function editerListe(l, retour) {
 /* ---------- Un dossier ---------- */
 function ouvrirDossier(id) {
   let d = dossiers().find(x => x.id === id); if (!d) { toast('Dossier introuvable.'); return; }
-  const fe = feuille({ titre: nomClient(d.client), plein: true });
+  const fe = feuille({ titre: nomClient(d.client), plein: true, page: 'clients', retour: { label: 'Retour à la liste des clients', action: async () => { await fe.fermer(); ouvrirDossiers(); } } });
   fe.feuille.classList.add('large', 'fiche-dossier');
   const tete = el('div', { class: 'dossier-tete' }), liste = el('div', { class: 'liste-pieces' }), suivi = el('div', { class: 'dossier-tete' });
   const sauver = () => { ecrireDossier(d); rendre(); };
@@ -4877,7 +4911,6 @@ function ouvrirDossier(id) {
       for (const p of d.pieces) await bdDel('fichiers', 'piece:' + p.id).catch(() => {});
       prefs.dossiers = dossiers().filter(x => x.id !== d.id); ecrirePrefs(prefs); toast('Dossier supprimé'); await fe.fermer(); ouvrirDossiers();
     } }),
-    bouton('Dossiers', { ico: 'gauche', onclick: async () => { await fe.fermer(); ouvrirDossiers(); } }),
     bouton('Tout réunir', { ico: 'fusion', cls: 'btn principal', label: 'Tout réunir en un seul PDF', onclick: toutReunir }));
   rendre();
 }
@@ -4901,7 +4934,7 @@ const TYPES_BLOCS = [
 const nomType = t => (TYPES_BLOCS.find(x => x[0] === t) || [t, t === 'repeter' ? 'Groupe répétable' : t])[1];
 function editerModeleFormulaire(existant = null) {
   const m = existant ? JSON.parse(JSON.stringify(existant)) : { id: 'perso-' + idUnique(), nom: '', resume: '', perso: true, blocs: [{ t: 'titre', texte: 'Titre du document' }] };
-  const fe = feuille({ titre: existant ? 'Modifier mon modèle' : 'Créer mon modèle', plein: true });
+  const fe = feuille({ titre: existant ? 'Modifier mon modèle' : 'Créer mon modèle', plein: true, page: 'rediger' });
   fe.feuille.classList.add('large', 'editeur-form');
   const nom = el('input', { class: 'champ', id: 'fm-nom', placeholder: 'Ex. : Bon d\'intervention', maxlength: 60 }); nom.value = m.nom;
   const resume = el('input', { class: 'champ', id: 'fm-resume', placeholder: 'Une phrase pour le reconnaître (facultatif)', maxlength: 80 }); resume.value = m.resume || '';
@@ -5392,7 +5425,7 @@ async function changerMode(mode) {
 }
 let fermerFeuilleParametres = null;
 function ouvrirParametres() {
-  const fe = feuille({ titre: 'Paramètres', plein: true, pied: false });
+  const fe = feuille({ titre: 'Paramètres', plein: true, pied: false, page: 'parametres' });
   fermerFeuilleParametres = async () => { await fe.fermer(); ouvrirParametres(); };
   // Deux rubriques séparées : « Mes signatures » et « Mes tampons », chacune en blocs (comme les Réglages)
   const sectionSig = el('div'), sectionTam = el('div'), sectionLogo = el('div');
@@ -6301,7 +6334,7 @@ function ouvrirJournal(doc) {
 
 /** Écran « Mes documents » : Documents, Historique, Modèles. */
 async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
-  const fe = feuille({ titre: 'Mes documents', plein: true, pied: false });
+  const fe = feuille({ titre: 'Mes documents', plein: true, pied: false, page: 'documents' });
   const zone = el('div', { class: 'liste-docs' });
   let courant = onglet;
   const onglets = [['documents', 'Documents'], ['historique', 'Historique'], ['modeles', 'Modèles']];
