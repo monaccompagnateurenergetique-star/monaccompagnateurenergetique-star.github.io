@@ -721,7 +721,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   .menu-item .ico{width:20px;height:20px;color:#9aa3b5}
   .menu-item:hover{background:rgba(255,255,255,.07)}
   .menu-item:focus-visible,.menu-bas button:focus-visible{outline:2px solid #1fae76;outline-offset:1px}
-  .menu-item[aria-current="page"]{background:rgba(255,255,255,.09);box-shadow:inset 3px 0 0 #1fae76;color:#fff;font-weight:600}
+  .menu-item[aria-current="page"]{background:rgba(31,174,118,.18);color:#fff;font-weight:600}
   .menu-item[aria-current="page"] .ico{color:#1fae76}
   .menu-offre{margin-top:auto;border:0;text-align:left;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.06);color:#b9c0cf;font-size:12.5px}
   .menu-offre:hover{background:rgba(255,255,255,.1)}
@@ -742,6 +742,21 @@ body .feuille.pleine.page-app.ouverte{opacity:1}
   .feuille.page-app .feuille-pied{padding-left:28px;padding-right:28px}
 }
 @media (prefers-reduced-motion:reduce){body .feuille.pleine.page-app{transition:none}}
+/* Fiche client */
+.recap-client{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.recap-coord{display:flex;flex-direction:column;gap:2px;min-width:0}
+.recap-coord strong{font-size:17px}
+.recap-coord span{font-size:14px;color:var(--doux);overflow-wrap:anywhere}
+.recap-coord .manque{font-style:italic}
+.recap-etat{margin:0;font-size:14px;font-weight:600}
+.repli-notes{margin-top:18px;border:1px solid var(--ligne);border-radius:14px;background:var(--carte)}
+.repli-notes summary{cursor:pointer;min-height:44px;display:flex;align-items:center;padding:0 14px;font-weight:600}
+.repli-notes>.dossier-tete{border:0;border-top:1px solid var(--ligne);border-radius:0 0 14px 14px}
+/* Accueil : les cartes « Reprendre » restent dans la largeur */
+#reprendre-liste{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+#reprendre-liste .ligne-doc,#reprendre-liste .ligne-doc-principal{min-width:0}
+#reprendre-liste strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+@media (max-width:999px){#reprendre-liste{grid-template-columns:1fr!important}}
 /* Doublons retirés de l'accueil : tout est dans le menu */
 #btn-param{display:none!important}
 .accueil .titre-plus,.accueil .outils-plus,#btn-creer-tampon{display:none!important}
@@ -1108,7 +1123,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.25.0';
+const VERSION_APPLI = '1.26.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -1296,21 +1311,25 @@ let zFeuille = 100;
 /* Pages : Clients, Documents, Rédiger, Paramètres s'ouvrent comme des pages (le menu reste visible),
    les petites questions (choix, confirmations) restent des fenêtres. */
 let rubriqueCourante = 'accueil';
+/* Retour au bon endroit : quand une page se ferme pour ouvrir un document (voir une pièce, ouvrir un document
+   de « Mes documents », PDF créé par un formulaire), on rouvre cette page en fermant le document. */
+let dernierePage = null, retourDoc = null;
 const pagesOuvertes = () => [...document.querySelectorAll('.feuille.page-app:not(.fermee)')];
 /** Passe à une autre rubrique du menu : ferme d'abord les pages (et fenêtres) ouvertes, sans les empiler. */
 async function naviguer(action) {
   let garde = 20;
   while (pagesOuvertes().length && pile.length && garde--) await fermerCouche();
+  dernierePage = null;
   action?.();
 }
-function feuille({ titre, plein = false, pied = true, surFermeture, page = null, retour = null }) {
+function feuille({ titre, plein = false, pied = true, surFermeture, page = null, retour = null, rouvrir = null }) {
   const corps = el('div', { class: 'feuille-corps' });
   const zonePied = pied ? el('div', { class: 'feuille-pied' }) : null;
   let ferme = false;
   const declencheur = document.activeElement;
   const api = { corps, pied: zonePied, ferme: () => ferme };
   const f = el('div', { class: 'feuille' + (plein || page ? ' pleine' : '') + (page ? ' page-app' : ''), role: page ? 'region' : 'dialog', 'aria-modal': page ? null : 'true', 'aria-label': titre, dataset: page ? { page } : null },
-    el('div', { class: 'feuille-tete' }, page ? bouton('', { ico: 'gauche', cls: 'btn-icone retour-page', label: retour ? retour.label : 'Retour', onclick: () => retour ? retour.action() : api.fermer() }) : null, el('h2', { text: titre }),
+    el('div', { class: 'feuille-tete' }, page ? bouton('', { ico: 'gauche', cls: 'btn-icone retour-page', label: retour ? retour.label : 'Retour', onclick: async () => { await (retour ? retour.action() : api.fermer()); dernierePage = null; } }) : null, el('h2', { text: titre }),
       page ? null : bouton('', { ico: 'fermer', cls: 'btn-icone', label: 'Fermer', onclick: () => api.fermer() })),
     corps, zonePied);
   api.feuille = f;
@@ -1323,7 +1342,7 @@ function feuille({ titre, plein = false, pied = true, surFermeture, page = null,
   function retirer() {
     if (ferme) return; ferme = true; feuillesOuvertes--;
     f.classList.add('fermee');
-    if (page) { rubriqueCourante = pagesOuvertes().pop()?.dataset.page || 'accueil'; majMenu(); }
+    if (page) { rubriqueCourante = pagesOuvertes().pop()?.dataset.page || 'accueil'; majMenu(); if (rouvrir) dernierePage = { rouvrir, t: Date.now() }; }
     f.classList.remove('ouverte'); voile.classList.remove('ouvert');
     setTimeout(() => { f.remove(); voile.remove(); }, 230);
     if (declencheur && declencheur.isConnected && declencheur.focus) declencheur.focus({ preventScroll: true });
@@ -1535,7 +1554,12 @@ async function ouvrirDocuments(fichiers, { onglet = 'document', restaurer = null
     panneau.hidden = true; panneau.replaceChildren(); avantPanneau = null;
     if (ancien) ancien.sources.forEach(s => s.pdf.destroy());
     majTitre();
-    if (!ancien) { afficherEcran('doc'); ouvrirCouche(fermerDocument); }
+    if (!ancien) {
+      retourDoc = dernierePage && Date.now() - dernierePage.t < 30000 ? dernierePage.rouvrir : null; dernierePage = null;
+      $('#doc-retour use')?.setAttribute('href', retourDoc ? '#i-gauche' : '#i-fermer');
+      $('#doc-retour').setAttribute('aria-label', retourDoc ? 'Revenir à la page précédente' : 'Fermer le document');
+      afficherEcran('doc'); ouvrirCouche(fermerDocument);
+    }
     fermerRecherche(true);
     majClassesDoc();
     choisirOnglet(onglet);
@@ -1566,6 +1590,8 @@ function fermerDocument() {
   observateur?.disconnect(); obsMini?.disconnect();
   pagesEl.replaceChildren(); grillePages.replaceChildren();
   afficherEcran('accueil');
+  const r = retourDoc; retourDoc = null;
+  if (r) setTimeout(r, 60);
 }
 function afficherEcran(nom) {
   $$('.ecran').forEach(e => e.classList.toggle('actif', e.id === 'ecran-' + nom));
@@ -4057,7 +4083,7 @@ const aujourdhuiIso = () => { const d = new Date(); return `${d.getFullYear()}-$
 
 /* ---------- Liste des formulaires et des brouillons ---------- */
 async function ouvrirFormulaires() {
-  const fe = feuille({ titre: 'Rédiger un document', plein: true, pied: false, page: 'rediger' });
+  const fe = feuille({ titre: 'Rédiger un document', plein: true, pied: false, page: 'rediger', rouvrir: () => ouvrirFormulaires() });
   fe.feuille.classList.add('large');
   const brouillons = (prefs.brouillonsForm || []).slice().sort((a, b) => b.maj - a.maj);
   const e = entreprise();
@@ -4104,11 +4130,16 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null } 
     if (b.t === 'repeter' && !Array.isArray(r[b.id])) r[b.id] = [{}];
   });
   initialiser(modele.blocs, rep);
-  const fe = feuille({ titre: modele.nom, plein: true, page: 'rediger', surFermeture: () => { clearTimeout(minuteur); sauverBrouillon(); } });
+  const fe = feuille({ titre: modele.nom, plein: true, page: 'rediger',
+    rouvrir: () => dossier ? ouvrirDossier(dossier.id) : ouvrirFormulaires(),
+    retour: { label: dossier ? 'Revenir au client' : 'Revenir à la liste des documents', action: async () => { await fe.fermer(); dossier ? ouvrirDossier(dossier.id) : ouvrirFormulaires(); } },
+    surFermeture: () => { clearTimeout(minuteur); sauverBrouillon(); } });
   fe.feuille.classList.add('large', 'saisie-form');
   let minuteur;
   const titreDoc = () => { const nom = modele.blocs.find(b => b.requis); return [modele.nom, nom && rep[nom.id]].filter(Boolean).join(' – '); };
+  let touche = false; // un formulaire ouvert puis quitté sans rien saisir ne crée pas de brouillon
   async function sauverBrouillon(pdf = false) {
+    if (!pdf && !touche && !(prefs.brouillonsForm || []).some(b => b.id === id)) return;
     const vide = !Object.entries(rep).some(([k, v]) => v && (typeof v === 'string' ? v.trim() && !/^\d{4}-\d{2}-\d{2}$/.test(v) : typeof v === 'object' && !(v.date && !v.lieu) && JSON.stringify(v) !== '[{}]'));
     if (vide) return;
     try {
@@ -4119,7 +4150,7 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null } 
       prefs.brouillonsForm = l; ecrirePrefs(prefs);
     } catch (e) { console.warn('Brouillon non gardé', e); }
   }
-  const changer = () => { clearTimeout(minuteur); minuteur = setTimeout(sauverBrouillon, 800); majVisibles(); };
+  const changer = () => { touche = true; clearTimeout(minuteur); minuteur = setTimeout(sauverBrouillon, 800); majVisibles(); };
   const zone = el('div', { class: 'form-blocs' });
   const blocsEls = [];
   function rendreBlocs(blocs, r, parent, prefixe = '') {
@@ -4644,7 +4675,7 @@ function majTableauBord() {
 
 /* ---------- Tableau de bord ---------- */
 function ouvrirDossiers(filtreInitial = 'tous') {
-  const fe = feuille({ titre: 'Clients', plein: true, pied: false, page: 'clients' });
+  const fe = feuille({ titre: 'Clients', plein: true, pied: false, page: 'clients', rouvrir: () => ouvrirDossiers(filtre.value) });
   fe.feuille.classList.add('large');
   const recherche = el('input', { class: 'champ', id: 'recherche-dossiers', type: 'search', placeholder: 'Nom, ville…', autocomplete: 'off' });
   const zone = el('div', { class: 'liste-dossiers' });
@@ -4698,7 +4729,7 @@ function nouveauDossier() {
   const apercu = el('p', { class: 'note' });
   const majApercu = () => { const l = toutes[choix.value]; apercu.textContent = l.pieces.length ? l.pieces.map(p => p[0]).join(', ') : 'Aucune pièce : vous les ajouterez dans le dossier.'; };
   choix.addEventListener('change', majApercu);
-  const fe = feuille({ titre: 'Nouveau client', plein: true, page: 'clients' });
+  const fe = feuille({ titre: 'Nouveau client', plein: true, page: 'clients', retour: { label: 'Revenir à la liste des clients', action: async () => { await fe.fermer(); ouvrirDossiers(); } } });
   fe.corps.append(el('div', { class: 'form-blocs' }, ...champsClient(c, 'nd-'),
     el('label', { class: 'etiquette', for: 'nd-liste', text: 'Pièces à réunir' }), choix, apercu,
     el('div', { class: 'rangee-btn' }, bouton('Créer ou modifier mes listes', { ico: 'vue-liste', onclick: async () => { await fe.fermer(); ouvrirMesListes(nouveauDossier); } })),
@@ -4716,7 +4747,7 @@ function nouveauDossier() {
 
 /* ---------- Mes listes de pièces (réutilisables) ---------- */
 function ouvrirMesListes(retour) {
-  const fe = feuille({ titre: 'Mes listes de pièces', plein: true, page: 'clients' });
+  const fe = feuille({ titre: 'Mes listes de pièces', plein: true, pied: false, page: 'clients', retour: { label: 'Retour', action: async () => { await fe.fermer(); retour?.(); } } });
   fe.feuille.classList.add('large');
   const zone = el('div', { class: 'liste-pieces' });
   const rendre = () => {
@@ -4738,12 +4769,11 @@ function ouvrirMesListes(retour) {
     el('div', { class: 'rangee-btn choix-listes' },
       bouton('Nouvelle liste', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); editerListe({ id: 'perso-' + idUnique(), nom: '', pieces: [] }, () => ouvrirMesListes(retour)); } }),
       ...base.map(([k, v]) => bouton(`Partir de « ${v.nom} »`, { ico: 'copier', onclick: async () => { await fe.fermer(); editerListe({ id: 'perso-' + idUnique(), nom: v.nom + ' (ma version)', pieces: structuredClone(v.pieces) }, () => ouvrirMesListes(retour)); } }))));
-  fe.pied.append(bouton('Retour', { ico: 'gauche', onclick: async () => { await fe.fermer(); retour?.(); } }));
   rendre();
 }
 /** Éditeur d'une liste : son nom, puis une ligne par pièce (nom + formulaire à remplir, facultatif). */
 function editerListe(l, retour) {
-  const fe = feuille({ titre: l.nom ? 'Modifier la liste' : 'Nouvelle liste', plein: true, page: 'clients' });
+  const fe = feuille({ titre: l.nom ? 'Modifier la liste' : 'Nouvelle liste', plein: true, page: 'clients', retour: { label: 'Annuler', action: async () => { await fe.fermer(); retour?.(); } } });
   fe.feuille.classList.add('large');
   const nom = el('input', { class: 'champ', id: 'ml-nom', autocomplete: 'off', placeholder: 'Ex. : Pompe à chaleur' }); nom.value = l.nom;
   const modeles = tousLesModeles();
@@ -4788,19 +4818,24 @@ function editerListe(l, retour) {
 /* ---------- Un dossier ---------- */
 function ouvrirDossier(id) {
   let d = dossiers().find(x => x.id === id); if (!d) { toast('Dossier introuvable.'); return; }
-  const fe = feuille({ titre: nomClient(d.client), plein: true, page: 'clients', retour: { label: 'Retour à la liste des clients', action: async () => { await fe.fermer(); ouvrirDossiers(); } } });
+  const fe = feuille({ titre: nomClient(d.client), plein: true, page: 'clients', rouvrir: () => ouvrirDossier(id), retour: { label: 'Retour à la liste des clients', action: async () => { await fe.fermer(); ouvrirDossiers(); } } });
   fe.feuille.classList.add('large', 'fiche-dossier');
   const tete = el('div', { class: 'dossier-tete' }), liste = el('div', { class: 'liste-pieces' }), suivi = el('div', { class: 'dossier-tete' });
   const sauver = () => { ecrireDossier(d); rendre(); };
   function rendre() {
     fe.feuille.querySelector('.feuille-tete h2').textContent = nomClient(d.client);
     const c = d.client;
+    const adresse = [c.adresse, [c.cp, c.ville].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+    const { n, ok } = avancement(d), manque = n - ok;
     tete.replaceChildren(
-      el('div', { class: 'dossier-infos' },
-        el('p', { text: [c.adresse, [c.cp, c.ville].filter(Boolean).join(' ')].filter(Boolean).join(', ') || 'Adresse non renseignée' }),
-        el('p', { class: 'note', text: [c.tel, c.email].filter(Boolean).join(' · ') || 'Téléphone et e-mail non renseignés' })),
+      el('div', { class: 'recap-client' },
+        el('div', { class: 'recap-coord' },
+          el('strong', { text: nomClient(c) }),
+          el('span', { class: adresse ? '' : 'manque', text: adresse || 'Adresse à compléter' }),
+          el('span', { class: c.tel || c.email ? '' : 'manque', text: [c.tel, c.email].filter(Boolean).join(' · ') || 'Téléphone et e-mail à compléter' })),
+        bouton('Modifier', { ico: 'crayon', cls: 'btn', label: 'Modifier les coordonnées du client', onclick: modifierClient })),
       barreAvancement(d),
-      bouton('Modifier le client', { ico: 'crayon', cls: 'btn', onclick: modifierClient }));
+      el('p', { class: 'recap-etat', text: !n ? 'Aucune pièce dans ce dossier : ajoutez-en ci-dessous.' : manque ? `${manque} pièce${manque > 1 ? 's' : ''} à récupérer` : 'Toutes les pièces sont là : vous pouvez tout réunir en un seul PDF.' }));
     // Suivi de la collecte : date de relance, notes (le plus récent en haut)
     const relance = el('input', { class: 'champ', id: 'd-relance', type: 'date' }); relance.value = d.relance || '';
     relance.addEventListener('change', () => { d.relance = relance.value; sauver(); toast(relance.value ? 'Relance prévue le ' + dateCourte(relance.value) : 'Relance retirée'); });
@@ -4893,8 +4928,9 @@ function ouvrirDossier(id) {
     if (D) { D.nom = `Dossier ${nomClient(d.client)}.pdf`; majTitre(); }
     toast(manquantes ? `${lots.length} pièce(s) réunie(s). Attention : ${manquantes} pièce(s) encore manquante(s).` : 'Toutes les pièces sont réunies en un seul PDF.', 6000);
   }
+  const notesRepli = el('details', { class: 'repli-notes' }, el('summary', {}, 'Notes et rappel'), suivi);
+  if ((d.notes || []).length || d.relance) notesRepli.open = true;
   fe.corps.append(tete,
-    el('h3', { class: 'titre-section', text: 'Suivi' }), suivi,
     el('h3', { class: 'titre-section', text: 'Pièces du dossier' }), liste,
     el('div', { class: 'rangee-btn' }, bouton('Ajouter une pièce à la liste', { ico: 'plus', cls: 'btn', onclick: () => {
       const n = prompt('Nom de la pièce (ex. : Attestation d\'assurance) :'); if (!n || !n.trim()) return;
@@ -4904,7 +4940,8 @@ function ouvrirDossier(id) {
       if (!d.pieces.length) { toast('Ajoutez d\'abord des pièces à ce dossier.'); return; }
       const l = { id: 'perso-' + idUnique(), nom: 'Ma liste ' + ((prefs.listesPerso || []).length + 1), pieces: d.pieces.map(p => p.modele ? [p.nom, p.modele] : [p.nom]) };
       await fe.fermer(); editerListe(l, () => ouvrirDossier(d.id));
-    } })));
+    } })),
+    notesRepli);
   fe.pied.append(
     bouton('', { ico: 'poubelle', cls: 'btn danger', label: `Supprimer le dossier de ${nomClient(d.client)}`, onclick: async () => {
       if (!(await confirmer({ titre: `Supprimer le dossier de ${nomClient(d.client)} ?`, texte: 'La fiche client et les fichiers des pièces seront effacés de cet appareil. Les PDF déjà enregistrés ailleurs ne changent pas.', action: 'Supprimer le dossier' }))) return;
@@ -4934,7 +4971,7 @@ const TYPES_BLOCS = [
 const nomType = t => (TYPES_BLOCS.find(x => x[0] === t) || [t, t === 'repeter' ? 'Groupe répétable' : t])[1];
 function editerModeleFormulaire(existant = null) {
   const m = existant ? JSON.parse(JSON.stringify(existant)) : { id: 'perso-' + idUnique(), nom: '', resume: '', perso: true, blocs: [{ t: 'titre', texte: 'Titre du document' }] };
-  const fe = feuille({ titre: existant ? 'Modifier mon modèle' : 'Créer mon modèle', plein: true, page: 'rediger' });
+  const fe = feuille({ titre: existant ? 'Modifier mon modèle' : 'Créer mon modèle', plein: true, page: 'rediger', retour: { label: 'Revenir à la liste des documents', action: async () => { await fe.fermer(); ouvrirFormulaires(); } } });
   fe.feuille.classList.add('large', 'editeur-form');
   const nom = el('input', { class: 'champ', id: 'fm-nom', placeholder: 'Ex. : Bon d\'intervention', maxlength: 60 }); nom.value = m.nom;
   const resume = el('input', { class: 'champ', id: 'fm-resume', placeholder: 'Une phrase pour le reconnaître (facultatif)', maxlength: 80 }); resume.value = m.resume || '';
@@ -6334,7 +6371,7 @@ function ouvrirJournal(doc) {
 
 /** Écran « Mes documents » : Documents, Historique, Modèles. */
 async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
-  const fe = feuille({ titre: 'Mes documents', plein: true, pied: false, page: 'documents' });
+  const fe = feuille({ titre: 'Mes documents', plein: true, pied: false, page: 'documents', rouvrir: () => ouvrirMesDocuments(onglet) });
   const zone = el('div', { class: 'liste-docs' });
   let courant = onglet;
   const onglets = [['documents', 'Documents'], ['historique', 'Historique'], ['modeles', 'Modèles']];
@@ -7009,6 +7046,7 @@ majCarteInstall();
 /* =========================================================
    16. DÉMARRAGE
    ========================================================= */
+$('#ecran-accueil').addEventListener('click', () => { dernierePage = null; }, true);
 $('#btn-ouvrir').addEventListener('click', async () => { const [f] = await choisirFichiers(); if (f) ouvrirFichier(f); });
 $('#btn-scanner').addEventListener('click', () => nouveauScan());
 $('#btn-photos').addEventListener('click', async () => { const fs = await choisirFichiers({ accept: 'image/*', multiple: true }); if (fs.length) outilPhotos({ fichiers: fs }); });
