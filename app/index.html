@@ -1010,7 +1010,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.21.0';
+const VERSION_APPLI = '1.21.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -5104,27 +5104,30 @@ function ouvrirParametres() {
   // Les réglages sont rangés en blocs thématiques, chacun avec son icône
   const groupe = (ico, nom, ...lignes) => el('div', { class: 'groupe-reglage' }, el('h4', { class: 'titre-groupe' }, el('span', { class: 'pastille-groupe' }, icone(ico)), nom), ...lignes);
   // Sommaire : on saute directement à la rubrique voulue
-  const rubriques = [['p-drive', 'Google Drive', 'dossier'], ['p-entreprise', 'Entreprise', 'doc'], ['p-signatures', 'Signatures', 'signature'], ['p-tampons', 'Tampons', 'tampon'], ['p-reglages', 'Réglages', 'reglages'], ['p-stockage', 'Stockage', 'doc'], ['p-apropos', 'À propos', 'info']].filter(([id]) => id !== 'p-drive' || driveConfigure());
+  // Trois onglets seulement : tout ce qui concerne l'entreprise, puis les réglages de l'appli, puis « À propos »
+  const rubriques = [['p-entreprise', 'Mon entreprise'], ['p-reglages', 'Réglages'], ['p-apropos', 'À propos']];
+  // Anciens noms d'onglets (versions précédentes) → nouvel onglet qui les contient
+  const ANCIENS = { 'p-signatures': 'p-entreprise', 'p-tampons': 'p-entreprise', 'p-drive': 'p-reglages', 'p-stockage': 'p-reglages' };
   const titre = (id, texte) => el('h3', { class: 'titre-section', id, text: texte });
   // Sous-menus (onglets), comme dans « Mes documents » : une rubrique à la fois, sans faire défiler la page
-  const COURTS = { 'p-drive': 'Drive', 'p-entreprise': 'Entreprise', 'p-signatures': 'Signatures', 'p-tampons': 'Tampons', 'p-reglages': 'Réglages', 'p-stockage': 'Stockage', 'p-apropos': 'À propos' };
-  let rubrique = rubriques.some(([id]) => id === prefs.ongletParametres) ? prefs.ongletParametres : (rubriques.find(([id]) => id === 'p-signatures') || rubriques[0])[0];
-  const sommaire = segments('param-onglet', rubriques.map(([id]) => [id, COURTS[id]]), rubrique, v => { rubrique = v; prefs.ongletParametres = v; ecrirePrefs(prefs); montrerRubrique(); });
+  const voulu = ANCIENS[prefs.ongletParametres] || prefs.ongletParametres;
+  let rubrique = rubriques.some(([id]) => id === voulu) ? voulu : 'p-entreprise';
+  const sommaire = segments('param-onglet', rubriques, rubrique, v => { rubrique = v; prefs.ongletParametres = v; ecrirePrefs(prefs); montrerRubrique(); });
   sommaire.classList.add('onglets', 'onglets-param');
   function montrerRubrique() {
-    fe.corps.querySelectorAll('.carte-param').forEach((c, i) => { c.hidden = rubriques[i]?.[0] !== rubrique; });
+    fe.corps.querySelectorAll('.carte-param').forEach((c, i) => { c.hidden = c.dataset.onglet !== rubrique; });
     fe.corps.scrollTop = 0;
   }  // Chaque rubrique est une carte : en colonne sur téléphone, sur deux colonnes sur PC
-  const carte = (...enfants) => el('section', { class: 'carte-param' }, ...enfants);
+  const carte = (onglet, ...enfants) => el('section', { class: 'carte-param', 'data-onglet': onglet }, ...enfants);
   fe.feuille?.classList.add('large', 'atelier', 'parametres');
   fe.corps.append(
     sommaire,
     el('div', { class: 'param-contenu' },
-    ...(driveConfigure() ? [carte(titre('p-drive', 'Google Drive'), blocDrive())] : []),
-    carte(el('div', { id: 'p-entreprise' }, blocEntreprise())),
-    carte(el('div', { id: 'p-signatures' }, sectionSig)),
-    carte(el('div', { id: 'p-tampons' }, sectionTam, sectionLogo)),
-    carte(titre('p-reglages', 'Réglages'),
+    carte('p-entreprise', el('div', { id: 'p-infos' }, blocEntreprise())),
+    carte('p-entreprise', el('div', { id: 'p-logos' }, sectionLogo)),
+    carte('p-entreprise', el('div', { id: 'p-signatures' }, sectionSig)),
+    carte('p-entreprise', el('div', { id: 'p-tampons' }, sectionTam)),
+    carte('p-reglages', titre('p-reglages-app', 'Réglages'),
     groupe('texte', 'Texte ajouté',
       reglage('tailleTexte', 'Taille', [['9', 'Petite'], ['11', 'Normale'], ['14', 'Grande']], 'Pour le texte que vous écrivez sur un PDF'),
       reglage('couleurTexte', 'Couleur', COULEURS_TEXTE.map(([c, n]) => [c, n, c]), 'Couleur par défaut du texte')),
@@ -5134,11 +5137,12 @@ function ouvrirParametres() {
     groupe('image', 'Photos et compression',
       reglage('formatPhotos', 'Format des pages', [['a4', 'A4'], ['image', 'Taille de la photo']], 'Quand vous transformez des photos en PDF'),
       reglage('compression', 'Compression par défaut', [['forte', 'Forte'], ['moyenne', 'Moyenne'], ['legere', 'Légère']], 'Proposée à l\'enregistrement'))),
-    carte(titre('p-stockage', 'Stockage sur cet appareil'),
+    ...(driveConfigure() ? [carte('p-reglages', titre('p-drive', 'Google Drive'), blocDrive())] : []),
+    carte('p-reglages', titre('p-stockage', 'Stockage sur cet appareil'),
     el('div', {}, el('div', { class: 'etiquette', text: 'Garder mes documents et leur historique sur cet appareil' }),
       segments('pref-garder', [['oui', 'Oui (conseillé)'], ['non', 'Non']], prefs.garderDocuments ? 'oui' : 'non', v => { prefs.garderDocuments = v === 'oui'; ecrirePrefs(prefs); })),
     espace),
-    carte(titre('p-apropos', 'À propos'),
+    carte('p-apropos', titre('p-apropos-titre', 'À propos'),
     el('p', { class: 'note', text: `Atelier PDF ${VERSION_APPLI}. Tout est traité sur cet appareil. Vos documents ne quittent l'appareil que si vous les partagez, ou si vous les envoyez vous-même dans votre Google Drive.` }),
     el('p', {}, el('a', { href: '../confidentialite.html', text: 'Politique de confidentialité' })),
     el('div', { class: 'rangee-btn' }, bouton('Installer l\'appli (téléphone, ordinateur)', { ico: 'installer', onclick: () => aideInstallation() })),
