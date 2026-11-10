@@ -697,7 +697,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 #menu-app{display:none}
 .menu-bas{display:none}
 @media (max-width:999px){
-  #ecran-accueil #menu-app{display:block;order:3;flex:none}
+  #ecran-accueil #menu-app{display:block;order:3;flex:none;position:relative;z-index:6}
   .menu-lateral{display:none}
   .menu-bas{display:grid;grid-template-columns:repeat(5,1fr);background:var(--carte);border-top:1px solid var(--ligne);padding:4px 4px calc(6px + var(--bas-sur));box-shadow:0 -4px 16px rgba(27,33,48,.05)}
 }
@@ -730,7 +730,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 @media (prefers-reduced-motion:reduce){.accueil{scroll-behavior:auto}}
 /* Pages (rubriques du menu) : pleine zone de contenu, sans voile, le menu reste visible */
 .voile.voile-page{display:none}
-body .feuille.pleine.page-app{left:0;right:0;top:0;bottom:var(--h-menu-bas,0px);max-width:none;max-height:none;margin:0;border-radius:0;box-shadow:none;transform:none;opacity:0;transition:opacity .14s ease-out;background:var(--fond)}
+body .feuille.pleine.page-app{left:0;right:0;top:0;bottom:var(--h-menu-bas,calc(62px + var(--bas-sur)));max-width:none;max-height:none;margin:0;border-radius:0;box-shadow:none;transform:none;opacity:0;transition:opacity .14s ease-out;background:var(--fond)}
 body .feuille.pleine.page-app.ouverte{opacity:1}
 .feuille.page-app .feuille-tete{background:var(--carte);padding-left:6px}
 .feuille.page-app .feuille-tete h2{font-size:19px}
@@ -742,14 +742,6 @@ body .feuille.pleine.page-app.ouverte{opacity:1}
   .feuille.page-app .feuille-pied{padding-left:28px;padding-right:28px}
 }
 @media (prefers-reduced-motion:reduce){body .feuille.pleine.page-app{transition:none}}
-/* Test du dossier d'équipe */
-.test-equipe{margin-top:16px;padding-top:12px;border-top:1px solid var(--ligne)}
-.ligne-test{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--ligne)}
-.ligne-test span:last-child{display:flex;flex-direction:column;min-width:0;overflow-wrap:anywhere}
-.ligne-test small{color:var(--doux);font-size:13px}
-.puce-test{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;flex:none;background:#eef1f6;color:#3b4457}
-.ligne-test.ok .puce-test{background:var(--accent);color:#fff}
-.ligne-test.ko .puce-test{background:#c0392b;color:#fff}
 /* Fiche client */
 .recap-client{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
 .recap-coord{display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -765,6 +757,35 @@ body .feuille.pleine.page-app.ouverte{opacity:1}
 #reprendre-liste .ligne-doc,#reprendre-liste .ligne-doc-principal{min-width:0}
 #reprendre-liste strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
 @media (max-width:999px){#reprendre-liste{grid-template-columns:1fr!important}}
+@media (min-width:1000px){
+  #ecran-accueil .carte-installer{grid-row:1;margin:0 0 14px}
+  #ecran-accueil #tableau-bord{grid-row:2}
+  #ecran-accueil #btn-ouvrir,#ecran-accueil #btn-ouvrir-drive,#ecran-accueil .col-outils .duo{grid-row:2}
+  #ecran-accueil #reprendre{grid-row:3}
+  body.mode-entreprise #ecran-accueil #btn-ouvrir,body.mode-entreprise #ecran-accueil #btn-ouvrir-drive,body.mode-entreprise #ecran-accueil .col-outils .duo{grid-row:3}
+  body.mode-entreprise #ecran-accueil #reprendre{grid-row:4}
+  .feuille.page-app.parametres .onglets-param{margin-left:-28px;margin-right:-28px;padding-left:28px;padding-right:28px}
+}
+/* Corrections de l'audit visuel */
+.carte-form{width:100%;height:100%;box-sizing:border-box}
+.case-form{display:flex}
+.menu-liste button{justify-content:flex-start}
+.fiche-dossier .feuille-pied .btn.danger{flex:0 0 auto;width:48px;padding:0}
+.repli-notes summary{list-style:none;justify-content:space-between}
+.repli-notes summary::-webkit-details-marker{display:none}
+.repli-notes summary::after{content:"";width:9px;height:9px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin:-4px 4px 0 0;transition:transform .15s}
+.repli-notes[open] summary::after{transform:rotate(-135deg);margin-top:4px}
+@media (max-width:520px){
+  .barre-dossiers.barre-clients{flex-wrap:wrap}
+  .barre-clients #recherche-dossiers,.barre-clients #filtre-dossiers{flex:1 1 100%}
+  .barre-clients .btn{flex:1 1 0}
+}
+@media (min-width:1000px){
+  .feuille.page-app .feuille-pied{justify-content:flex-end}
+  .feuille.page-app .feuille-pied .btn{flex:0 0 auto;min-width:170px}
+  .fiche-dossier .feuille-pied .btn.danger{min-width:0;margin-right:auto}
+}
+@media (prefers-reduced-motion:reduce){.repli-notes summary::after{transition:none}}
 /* Doublons retirés de l'accueil : tout est dans le menu */
 #btn-param{display:none!important}
 .accueil .titre-plus,.accueil .outils-plus,#btn-creer-tampon{display:none!important}
@@ -1131,7 +1152,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.27.0';
+const VERSION_APPLI = '1.27.3';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -1324,20 +1345,26 @@ let rubriqueCourante = 'accueil';
 let dernierePage = null, retourDoc = null;
 const pagesOuvertes = () => [...document.querySelectorAll('.feuille.page-app:not(.fermee)')];
 /** Passe à une autre rubrique du menu : ferme d'abord les pages (et fenêtres) ouvertes, sans les empiler. */
+let navigationEnCours = false;
+/** Ferme toutes les pages et fenêtres ouvertes (le document éventuel reste ouvert dessous). */
+async function fermerTout() {
+  navigationEnCours = true;
+  try { let garde = 20; while (document.querySelector('.feuille:not(.fermee)') && pile.length && garde--) await fermerCouche(); }
+  finally { navigationEnCours = false; }
+}
 async function naviguer(action) {
-  let garde = 20;
-  while (pagesOuvertes().length && pile.length && garde--) await fermerCouche();
+  await fermerTout();
   dernierePage = null;
   action?.();
 }
 function feuille({ titre, plein = false, pied = true, surFermeture, page = null, retour = null, rouvrir = null }) {
   const corps = el('div', { class: 'feuille-corps' });
   const zonePied = pied ? el('div', { class: 'feuille-pied' }) : null;
-  let ferme = false;
+  let ferme = false, enFermeture = false, fermetureVoulue = false;
   const declencheur = document.activeElement;
   const api = { corps, pied: zonePied, ferme: () => ferme };
   const f = el('div', { class: 'feuille' + (plein || page ? ' pleine' : '') + (page ? ' page-app' : ''), role: page ? 'region' : 'dialog', 'aria-modal': page ? null : 'true', 'aria-label': titre, dataset: page ? { page } : null },
-    el('div', { class: 'feuille-tete' }, page ? bouton('', { ico: 'gauche', cls: 'btn-icone retour-page', label: retour ? retour.label : 'Retour', onclick: async () => { await (retour ? retour.action() : api.fermer()); dernierePage = null; } }) : null, el('h2', { text: titre }),
+    el('div', { class: 'feuille-tete' }, page && retour ? bouton('', { ico: 'gauche', cls: 'btn-icone retour-page', label: retour ? retour.label : 'Retour', onclick: async () => { await (retour ? retour.action() : api.fermer()); dernierePage = null; } }) : null, el('h2', { text: titre }),
       page ? null : bouton('', { ico: 'fermer', cls: 'btn-icone', label: 'Fermer', onclick: () => api.fermer() })),
     corps, zonePied);
   api.feuille = f;
@@ -1345,19 +1372,31 @@ function feuille({ titre, plein = false, pied = true, surFermeture, page = null,
   voile.style.zIndex = ++zFeuille; f.style.zIndex = ++zFeuille;
   document.body.append(voile, f);
   feuillesOuvertes++;
-  if (page) { voile.classList.add('voile-page'); rubriqueCourante = page; majMenu(); }
+  if (page) {
+    voile.classList.add('voile-page'); rubriqueCourante = page; majMenu();
+    // Le contenu de l'accueil, caché derrière la page, n'est plus atteignable au clavier
+    for (const x of [$('#ecran-accueil .accueil'), $('#ecran-accueil .barre-accueil')]) if (x) x.inert = true;
+    setTimeout(() => (f.querySelector('.retour-page') || f.querySelector('.feuille-tete h2'))?.focus({ preventScroll: true }), 60);
+    f.querySelector('.feuille-tete h2')?.setAttribute('tabindex', '-1');
+  }
   requestAnimationFrame(() => { voile.classList.add('ouvert'); f.classList.add('ouverte'); });
   function retirer() {
     if (ferme) return; ferme = true; feuillesOuvertes--;
     f.classList.add('fermee');
-    if (page) { rubriqueCourante = pagesOuvertes().pop()?.dataset.page || 'accueil'; majMenu(); if (rouvrir) dernierePage = { rouvrir, t: Date.now() }; }
+    if (page) {
+      rubriqueCourante = pagesOuvertes().pop()?.dataset.page || 'accueil'; majMenu();
+      if (rouvrir) dernierePage = { rouvrir, t: Date.now() };
+      if (!pagesOuvertes().length) for (const x of [$('#ecran-accueil .accueil'), $('#ecran-accueil .barre-accueil')]) if (x) x.inert = false;
+      // Retour d'Android ou touche Échap : même destination que la flèche ← de la page
+      if (retour && !fermetureVoulue && !navigationEnCours) { dernierePage = null; setTimeout(() => retour.action(), 0); }
+    }
     f.classList.remove('ouverte'); voile.classList.remove('ouvert');
     setTimeout(() => { f.remove(); voile.remove(); }, 230);
     if (declencheur && declencheur.isConnected && declencheur.focus) declencheur.focus({ preventScroll: true });
     if (surFermeture) surFermeture();
   }
   ouvrirCouche(retirer);
-  api.fermer = () => ferme ? Promise.resolve() : fermerCouche();
+  api.fermer = () => { if (ferme || enFermeture) return Promise.resolve(); enFermeture = fermetureVoulue = true; return fermerCouche(); };
   return api;
 }
 /** Petite fenêtre de choix : renvoie la valeur choisie, ou null. */
@@ -1383,7 +1422,7 @@ function confirmer({ titre, texte, action }) {
 addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
   if (D && D.edition) { terminerEdition(true); e.preventDefault(); return; }
-  if (feuillesOuvertes > 0) { fermerCouche(); e.preventDefault(); return; }
+  if (feuillesOuvertes > 0) { if (!attentesRetour.length) fermerCouche(); e.preventDefault(); return; }
   if (D && D.attente) { annulerPlacement(); return; }
   if (D && D.panneau) { fermerPanneau(); return; }
   if (D && D.selection) selectionner(null);
@@ -1531,6 +1570,7 @@ async function ouvrirFichier(f) {
 const ouvrirPdf = (octets, nom, opts) => ouvrirDocuments([{ octets, nom }], opts);
 
 async function ouvrirDocuments(fichiers, { onglet = 'document', restaurer = null } = {}) {
+  if (!D && document.querySelector('.feuille.page-app:not(.fermee)')) await fermerTout();
   if (D && D.modifie) {
     // Le document en cours est gardé dans « Mes documents » (sinon, on demande avant de le perdre)
     if (prefs.garderDocuments) sauvegarder(D);
@@ -1568,6 +1608,7 @@ async function ouvrirDocuments(fichiers, { onglet = 'document', restaurer = null
       $('#doc-retour').setAttribute('aria-label', retourDoc ? 'Revenir à la page précédente' : 'Fermer le document');
       afficherEcran('doc'); ouvrirCouche(fermerDocument);
     }
+    dernierePage = null;
     fermerRecherche(true);
     majClassesDoc();
     choisirOnglet(onglet);
@@ -1584,7 +1625,7 @@ function fermerDocument() {
   if (D && D.modifie && prefs.garderDocuments) {
     // Rien n'est perdu : le travail est gardé dans « Mes documents »
     const d = D;
-    sauvegarder(d).then(id => { if (id) { toast('Gardé dans « Mes documents » pour plus tard', { action: 'Voir', onAction: () => ouvrirMesDocuments() }); majReprendre(); } });
+    sauvegarder(d).then(id => { if (id) { toast('Gardé dans « Mes documents » pour plus tard', { action: 'Voir', onAction: () => naviguer(() => ouvrirMesDocuments()) }); majReprendre(); } });
     d.modifie = false;
   }
   if (D && D.modifie) {
@@ -3454,15 +3495,15 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
     retenirNom();
     const nomFinal = nomTouche ? nomSaisi() + '.pdf' : compresse ? nomSortie(nom, 'compressé') : aplatir ? nomSortie(nom, 'aplati') : nom;
     await fe.fermer();
-    if (!(await verifierQuota(D.docId))) return;
+    if (QUOTA.bloquer && docsComptes().length >= QUOTA.gratuit && !docsComptes().includes(D.docId)) { await feuilleOffre(); return; }
     if (!partage) { prefs.destinationExport = destination; ecrirePrefs(prefs); }
     const surDrive = partage ? versDrive : destination !== 'appareil';
     const seulementDrive = !partage && destination === 'drive';
-    if (partage) { if (await partager([fichierPdf(final, nomFinal)])) noterHistorique(D, 'partagé', final, nomFinal); }
-    else if (!seulementDrive && await enregistrer(final, nomFinal)) { noterHistorique(D, 'enregistré', final, nomFinal); D.modifie = false; if (!surDrive) toast(`PDF enregistré (${tailleLisible(final.length)})`); }
+    if (partage) { if (await partager([fichierPdf(final, nomFinal)])) { noterHistorique(D, 'partagé', final, nomFinal); verifierQuota(D.docId); } }
+    else if (!seulementDrive && await enregistrer(final, nomFinal)) { noterHistorique(D, 'enregistré', final, nomFinal); verifierQuota(D.docId); D.modifie = false; if (!surDrive) toast(`PDF enregistré (${tailleLisible(final.length)})`); }
     if (!surDrive) return;
     if (driveConnecte()) {
-      if (await envoyerVersDrive(final, nomFinal) && seulementDrive) { noterHistorique(D, 'drive', final, nomFinal); D.modifie = false; }
+      if (await envoyerVersDrive(final, nomFinal) && seulementDrive) { noterHistorique(D, 'drive', final, nomFinal); verifierQuota(D.docId); D.modifie = false; }
       return;
     }
     // Session Google fermée : le PDF attend, on passe chez Google, il part dans Drive au retour
@@ -4140,10 +4181,10 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null } 
   initialiser(modele.blocs, rep);
   const fe = feuille({ titre: modele.nom, plein: true, page: 'rediger',
     rouvrir: () => dossier ? ouvrirDossier(dossier.id) : ouvrirFormulaires(),
-    retour: { label: dossier ? 'Revenir au client' : 'Revenir à la liste des documents', action: async () => { await fe.fermer(); dossier ? ouvrirDossier(dossier.id) : ouvrirFormulaires(); } },
-    surFermeture: () => { clearTimeout(minuteur); sauverBrouillon(); } });
+    retour: { label: dossier ? 'Revenir au client' : 'Revenir à la liste des documents', action: async () => { await fe.fermer(); await enregistrement; dossier ? ouvrirDossier(dossier.id) : ouvrirFormulaires(); } },
+    surFermeture: () => { clearTimeout(minuteur); enregistrement = sauverBrouillon(); } });
   fe.feuille.classList.add('large', 'saisie-form');
-  let minuteur;
+  let minuteur, enregistrement = Promise.resolve();
   const titreDoc = () => { const nom = modele.blocs.find(b => b.requis); return [modele.nom, nom && rep[nom.id]].filter(Boolean).join(' – '); };
   let touche = false; // un formulaire ouvert puis quitté sans rien saisir ne crée pas de brouillon
   async function sauverBrouillon(pdf = false) {
@@ -4155,7 +4196,7 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null } 
       const l = (prefs.brouillonsForm || []).filter(b => b.id !== id);
       const ancien = (prefs.brouillonsForm || []).find(b => b.id === id);
       l.push({ id, modele: modele.id, modeleNom: modele.nom, titre: titreDoc(), maj: Date.now(), pdf: pdf || ancien?.pdf });
-      prefs.brouillonsForm = l; ecrirePrefs(prefs);
+      prefs.brouillonsForm = l; ecrirePrefs(prefs); majMenu();
     } catch (e) { console.warn('Brouillon non gardé', e); }
   }
   const changer = () => { touche = true; clearTimeout(minuteur); minuteur = setTimeout(sauverBrouillon, 800); majVisibles(); };
@@ -4235,9 +4276,9 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null } 
         const boite = el('div', { class: 'form-signature' });
         const maj = () => {
           const s = r[b.id];
-          boite.replaceChildren(
+          boite.replaceChildren(...[
             s ? el('img', { src: s.png, alt: `Signature : ${b.label}` }) : el('span', { class: 'vide', text: 'Pas encore signé' }),
-            s?.nom ? el('small', { text: `${s.nom}${s.date ? ' · ' + new Date(s.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : ''}${s.geo ? ' · lieu enregistré' : ''}` }) : null);
+            s?.nom ? el('small', { text: `${s.nom}${s.date ? ' · ' + new Date(s.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : ''}${s.geo ? ' · lieu enregistré' : ''}` }) : null].filter(Boolean));
         };
         maj();
         const signer = async () => {
@@ -4584,8 +4625,8 @@ function groupesMenu() {
   if (enEntreprise()) {
     return [
       { items: [{ ...it('Tableau de bord', 'maison', allerEnHaut), page: 'accueil' }] },
-      { groupe: 'Clients', items: [{ ...it('Clients', 'clients', () => ouvrirDossiers(), dossiers().length), page: 'clients' }, it('Pièces à demander', 'horloge', () => ouvrirDossiers('relancer'), aRelancer().length, true)] },
-      { groupe: 'Documents', items: [{ ...it('Rédiger un document', 'formulaire', () => ouvrirFormulaires(), (prefs.brouillonsForm || []).length), page: 'rediger' }, { ...mesDocs, page: 'documents' }] },
+      { groupe: 'Clients', items: [{ ...it('Clients', 'clients', () => ouvrirDossiers(), dossiers().length), page: 'clients' }, it('Pièces à demander', 'horloge', () => ouvrirDossiers('actifs'), dossiers().reduce((n, d) => n + d.pieces.filter(p => p.etat !== 'recu').length, 0), aRelancer().length > 0)] },
+      { groupe: 'Documents', items: [{ ...it('Rédiger un document', 'formulaire', () => ouvrirFormulaires(), (prefs.brouillonsForm || []).filter(b => !b.pdf).length), page: 'rediger' }, { ...mesDocs, page: 'documents' }] },
       { groupe: 'Outils PDF', items: [modifier, signer, outils] },
       { items: [param] }];
   }
@@ -4613,11 +4654,16 @@ function majMenu() {
         : entree({ texte: 'Outils', ico: 'pages', action: allerAuxOutils }, ''),
     el('button', { type: 'button', class: 'creer', onclick: menuCreer }, icone('plus'), el('span', { text: 'Créer' })),
     entree({ texte: 'Documents', ico: 'doc', action: () => ouvrirMesDocuments('documents'), page: 'documents' }, ''),
-    entree({ texte: 'Menu', ico: 'lignes', action: menuComplet }, ''));
+    el('button', { type: 'button', onclick: menuComplet }, icone('lignes'), el('span', { text: 'Menu' })));
   nav.replaceChildren(lateral, bas);
   // Les pages s'arrêtent au-dessus de la barre du bas (téléphone)
-  requestAnimationFrame(() => document.documentElement.style.setProperty('--h-menu-bas', (bas.offsetHeight || 0) + 'px'));
+  requestAnimationFrame(mesurerBarreBas);
 }
+function mesurerBarreBas() {
+  const h = $('.menu-bas')?.offsetHeight;
+  if (h) document.documentElement.style.setProperty('--h-menu-bas', h + 'px');
+}
+addEventListener('resize', () => requestAnimationFrame(mesurerBarreBas));
 /** Bouton « Créer » (téléphone) : les façons de commencer un document. */
 async function menuCreer() {
   const ent = enEntreprise();
@@ -4701,11 +4747,11 @@ function ouvrirDossiers(filtreInitial = 'tous') {
     const q = sansA(recherche.value.trim()), f = filtre.value, relancer = new Set(aRelancer().map(x => x.d.id));
     const liste = tous.filter(d => !q || sansA([nomClient(d.client), d.client.ville, d.client.adresse].join(' ')).includes(q))
       .filter(d => f === 'tous' || (f === 'actifs' && dossierActif(d)) || (f === 'complets' && !dossierActif(d)) || (f === 'relancer' && relancer.has(d.id)));
-    zone.replaceChildren(...(liste.length ? liste.map(d => el('button', { type: 'button', class: 'carte-dossier', onclick: async () => { await fe.fermer(); ouvrirDossier(d.id); } },
+    zone.replaceChildren(...(liste.length ? liste.map(d => el('button', { type: 'button', class: 'carte-dossier', onclick: async () => { await fe.fermer(); ouvrirDossier(d.id, filtre.value); } },
       el('span', { class: 'carte-dossier-tete' }, el('strong', { text: nomClient(d.client) }), el('small', { text: [d.client.ville, listesPieces()[d.liste]?.nom].filter(Boolean).join(' · ') })),
       relancer.has(d.id) ? el('small', { class: 'relance-due', text: 'À relancer' }) : null,
       barreAvancement(d)))
-      : [el('div', { class: 'vide-dossiers' }, el('p', { text: tous.length ? 'Aucun dossier ne correspond à cette recherche ou à ce filtre.' : 'Aucun dossier pour l\'instant. Créez-en un par client : vous verrez d\'un coup d\'œil les pièces reçues et celles qui manquent.' }),
+      : [el('div', { class: 'vide-dossiers' }, (tous.length && (f !== 'tous' || q)) ? bouton('Voir tous les dossiers', { cls: 'btn', onclick: () => { filtre.value = 'tous'; recherche.value = ''; afficher(); } }) : null, el('p', { text: tous.length ? 'Aucun dossier ne correspond à cette recherche ou à ce filtre.' : 'Aucun dossier pour l\'instant. Créez-en un par client : vous verrez d\'un coup d\'œil les pièces reçues et celles qui manquent.' }),
         tous.length ? null : bouton('Créer le premier dossier', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); nouveauDossier(); } }))]));
   };
   recherche.addEventListener('input', afficher);
@@ -4713,7 +4759,7 @@ function ouvrirDossiers(filtreInitial = 'tous') {
     [['tous', 'Tous les dossiers'], ['actifs', 'En cours (pièces manquantes)'], ['relancer', 'À relancer'], ['complets', 'Complets']].map(([v, t]) => el('option', { value: v, text: t })));
   filtre.value = filtreInitial; filtre.addEventListener('change', afficher);
   fe.corps.append(stats,
-    el('div', { class: 'barre-dossiers' },
+    el('div', { class: 'barre-dossiers barre-clients' },
       el('label', { class: 'lib-recherche', for: 'recherche-dossiers' }, icone('zoom'), 'Rechercher'), recherche,
       filtre,
       bouton('Mes listes', { ico: 'vue-liste', label: 'Mes listes de pièces', onclick: async () => { await fe.fermer(); ouvrirMesListes(ouvrirDossiers); } }),
@@ -4731,8 +4777,8 @@ function champsClient(c, prefixe) {
     return [el('label', { class: 'etiquette', for: id }, titre, requis ? el('span', { class: 'requis', text: ' *' }) : null), i];
   });
 }
-function nouveauDossier() {
-  const c = {}, toutes = listesPieces();
+function nouveauDossier(init = {}) {
+  const c = init, toutes = listesPieces();
   const choix = el('select', { class: 'champ', id: 'nd-liste' }, Object.entries(toutes).map(([k, v]) => el('option', { value: k, text: `${v.nom}${v.pieces.length ? ` (${v.pieces.length} pièce${v.pieces.length > 1 ? 's' : ''})` : ''}` })));
   const apercu = el('p', { class: 'note' });
   const majApercu = () => { const l = toutes[choix.value]; apercu.textContent = l.pieces.length ? l.pieces.map(p => p[0]).join(', ') : 'Aucune pièce : vous les ajouterez dans le dossier.'; };
@@ -4740,7 +4786,7 @@ function nouveauDossier() {
   const fe = feuille({ titre: 'Nouveau client', plein: true, page: 'clients', retour: { label: 'Revenir à la liste des clients', action: async () => { await fe.fermer(); ouvrirDossiers(); } } });
   fe.corps.append(el('div', { class: 'form-blocs' }, ...champsClient(c, 'nd-'),
     el('label', { class: 'etiquette', for: 'nd-liste', text: 'Pièces à réunir' }), choix, apercu,
-    el('div', { class: 'rangee-btn' }, bouton('Créer ou modifier mes listes', { ico: 'vue-liste', onclick: async () => { await fe.fermer(); ouvrirMesListes(nouveauDossier); } })),
+    el('div', { class: 'rangee-btn' }, bouton('Créer ou modifier mes listes', { ico: 'vue-liste', onclick: async () => { await fe.fermer(); ouvrirMesListes(() => nouveauDossier(c)); } })),
     el('p', { class: 'note', text: 'Vous pourrez ajouter, renommer ou retirer des pièces ensuite.' })));
   majApercu();
   fe.pied.append(bouton('Annuler', { onclick: () => fe.fermer() }),
@@ -4824,9 +4870,9 @@ function editerListe(l, retour) {
 }
 
 /* ---------- Un dossier ---------- */
-function ouvrirDossier(id) {
+function ouvrirDossier(id, filtre = 'tous') {
   let d = dossiers().find(x => x.id === id); if (!d) { toast('Dossier introuvable.'); return; }
-  const fe = feuille({ titre: nomClient(d.client), plein: true, page: 'clients', rouvrir: () => ouvrirDossier(id), retour: { label: 'Retour à la liste des clients', action: async () => { await fe.fermer(); ouvrirDossiers(); } } });
+  const fe = feuille({ titre: nomClient(d.client), plein: true, page: 'clients', rouvrir: () => ouvrirDossier(id, filtre), retour: { label: 'Retour à la liste des clients', action: async () => { await fe.fermer(); ouvrirDossiers(filtre); } } });
   fe.feuille.classList.add('large', 'fiche-dossier');
   const tete = el('div', { class: 'dossier-tete' }), liste = el('div', { class: 'liste-pieces' }), suivi = el('div', { class: 'dossier-tete' });
   const sauver = () => { ecrireDossier(d); rendre(); };
@@ -4954,7 +5000,7 @@ function ouvrirDossier(id) {
     bouton('', { ico: 'poubelle', cls: 'btn danger', label: `Supprimer le dossier de ${nomClient(d.client)}`, onclick: async () => {
       if (!(await confirmer({ titre: `Supprimer le dossier de ${nomClient(d.client)} ?`, texte: 'La fiche client et les fichiers des pièces seront effacés de cet appareil. Les PDF déjà enregistrés ailleurs ne changent pas.', action: 'Supprimer le dossier' }))) return;
       for (const p of d.pieces) await bdDel('fichiers', 'piece:' + p.id).catch(() => {});
-      prefs.dossiers = dossiers().filter(x => x.id !== d.id); ecrirePrefs(prefs); toast('Dossier supprimé'); await fe.fermer(); ouvrirDossiers();
+      prefs.dossiers = dossiers().filter(x => x.id !== d.id); ecrirePrefs(prefs); majTableauBord(); toast('Dossier supprimé'); await fe.fermer(); ouvrirDossiers(filtre);
     } }),
     bouton('Tout réunir', { ico: 'fusion', cls: 'btn principal', label: 'Tout réunir en un seul PDF', onclick: toutReunir }));
   rendre();
@@ -5596,7 +5642,7 @@ function ouvrirParametres() {
     el('div', { class: 'rangee-btn' }, bouton('Effacer toutes mes données', { ico: 'poubelle', cls: 'btn danger', onclick: async () => {
       const ok = await confirmer({ titre: 'Effacer toutes vos données ?', texte: 'Signatures, tampons, réglages, documents gardés, historique et modèles seront supprimés de cet appareil. Cette action est définitive.', action: 'Tout effacer' });
       if (!ok) return;
-      localStorage.removeItem(CLE_TAMPONS); localStorage.removeItem(CLE_PREFS); prefs = lirePrefs(); majListe();
+      localStorage.removeItem(CLE_TAMPONS); localStorage.removeItem(CLE_PREFS); prefs = lirePrefs(); prefs.mode = 'particulier'; ecrirePrefs(prefs); appliquerMode(); majListe();
       try { (await bd()).close(); } catch {}
       bdPromesse = null; indexedDB.deleteDatabase('atelierpdf');
       majReprendre(); toast('Données effacées');
@@ -6379,7 +6425,7 @@ function ouvrirJournal(doc) {
 
 /** Écran « Mes documents » : Documents, Historique, Modèles. */
 async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
-  const fe = feuille({ titre: 'Mes documents', plein: true, pied: false, page: 'documents', rouvrir: () => ouvrirMesDocuments(onglet) });
+  const fe = feuille({ titre: 'Mes documents', plein: true, pied: false, page: 'documents', rouvrir: () => ouvrirMesDocuments(courant, filtreDoc) });
   const zone = el('div', { class: 'liste-docs' });
   let courant = onglet;
   const onglets = [['documents', 'Documents'], ['historique', 'Historique'], ['modeles', 'Modèles']];
@@ -6507,7 +6553,7 @@ function creerModele() {
     const id = await sauvegarder(D, { modele: true, nom: nom + '.pdf' });
     await fe.fermer();
     if (id && D) { D.creationModele = false; majClassesDoc(); }
-    if (id) toast(`Modèle « ${nom} » enregistré`, { action: 'Voir', onAction: () => ouvrirMesDocuments('modeles') });
+    if (id) toast(`Modèle « ${nom} » enregistré`, { action: 'Voir', onAction: () => naviguer(() => ouvrirMesDocuments('modeles')) });
     else toast('Le modèle n\'a pas pu être enregistré.');
   };
   champ.addEventListener('keydown', e => { if (e.key === 'Enter') valider(); });
@@ -6648,11 +6694,7 @@ async function selecteurDansAppli(choix) {
   await chargerSelecteurGoogle();
   const P = google.picker;
   const DOSSIER = 'application/vnd.google-apps.folder';
-  const vues = choix === 'equipe' ? [
-      new P.DocsView(P.ViewId.DOCS).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes(DOSSIER).setOwnedByMe(false).setLabel('Partagés avec moi'),
-      new P.DocsView(P.ViewId.FOLDERS).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes(DOSSIER).setLabel('Mon Drive'),
-      new P.DocsView().setEnableDrives(true).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes(DOSSIER).setLabel('Drive partagés')]
-    : [choix === 'dossier'
+  const vues = [choix === 'dossier'
       ? new P.DocsView(P.ViewId.FOLDERS).setIncludeFolders(true).setSelectFolderEnabled(true).setMimeTypes(DOSSIER)
       : new P.DocsView(P.ViewId.DOCS).setIncludeFolders(true).setMimeTypes('application/pdf')];
   return new Promise(res => {
@@ -6669,15 +6711,14 @@ async function selecteurDansAppli(choix) {
     };
     document.body.append(secours);
     const b = new P.PickerBuilder().setOAuthToken(jetonDrive).setDeveloperKey(GOOGLE_CLE_API).setAppId(GOOGLE_NUMERO_PROJET)
-      .setLocale('fr').setTitle(choix === 'equipe' ? 'Choisir le dossier partagé à tester' : choix === 'dossier' ? 'Choisir le dossier où enregistrer' : 'Choisir un PDF')
+      .setLocale('fr').setTitle(choix === 'dossier' ? 'Choisir le dossier où enregistrer' : 'Choisir un PDF')
       .setSize(Math.min(1051, innerWidth - 8), Math.min(650, innerHeight - 140)) // (place en haut pour la barre de secours)
       .setCallback(d => {
         if (d[P.Response.ACTION] === P.Action.PICKED) terminer((d[P.Response.DOCUMENTS] || []).map(x => x[P.Document.ID]));
         else if (d[P.Response.ACTION] === P.Action.CANCEL) terminer(null);
       });
     vues.forEach(v => b.addView(v));
-    if (choix === 'equipe') b.enableFeature(P.Feature.SUPPORT_DRIVES);
-    if (choix !== 'dossier' && choix !== 'equipe') b.enableFeature(P.Feature.MULTISELECT_ENABLED);
+    if (choix !== 'dossier') b.enableFeature(P.Feature.MULTISELECT_ENABLED);
     selecteur = b.build(); selecteur.setVisible(true);
   });
 }
@@ -6698,7 +6739,6 @@ async function choisirDansDrive(choix) {
 }
 async function retourChoixDrive(choix, ids, rouvrir) {
   if (!ids.length) { await rouvrir(); toast('Aucun élément choisi dans Google Drive.'); return; }
-  if (choix === 'equipe') { await rouvrir(); return testerDossierEquipe(ids[0]); }
   if (choix === 'dossier') {
     let nom = 'Dossier choisi';
     try { nom = (await (await driveFetch(`${API_DRIVE}/files/${ids[0]}?fields=name`)).json()).name || nom; } catch (e) { console.warn(e); }
@@ -6928,56 +6968,7 @@ function remplirBlocDrive(z) {
       bouton('Changer', { cls: 'btn mini', label: 'Choisir le dossier Google Drive où enregistrer vos PDF', onclick: () => choisirDansDrive('dossier') })),
     el('div', { class: 'rangee-btn' },
       bouton('Synchroniser', { ico: 'pivoter', cls: 'btn principal', label: 'Synchroniser Mes documents avec Google Drive', onclick: () => synchroniserDrive() }),
-      bouton('Se déconnecter', { onclick: deconnecterDrive })),
-    enEntreprise() ? el('div', { class: 'test-equipe' },
-      el('p', { class: 'note', text: 'Test avant le partage en équipe : choisissez un dossier qu\'un collègue vous a partagé, avec un fichier qu\'il y a mis lui-même. L\'appli vérifie si elle peut le voir, le lire et y écrire.' }),
-      bouton('Tester le dossier d\'équipe', { ico: 'clients', onclick: () => choisirDansDrive('equipe') })) : null);
-}
-/** Test du Drive d'équipe : l'accès limité (drive.file) permet-il de voir et lire les fichiers d'un collègue ? */
-async function testerDossierEquipe(id) {
-  const res = { dossier: null, fichiers: [], lecture: null, ecriture: null };
-  const champs = 'id,name,mimeType,owners(displayName,me),lastModifyingUser(displayName,me)';
-  const deMoi = f => f.owners ? f.owners.some(o => o.me) : !!f.lastModifyingUser?.me;
-  occupe('Test du dossier d\'équipe…');
-  try {
-    try { res.dossier = await (await driveFetch(`${API_DRIVE}/files/${id}?supportsAllDrives=true&fields=name,owners(displayName,me),capabilities(canAddChildren)`)).json(); }
-    catch (e) { res.dossier = { erreur: e.message }; }
-    try {
-      const q = encodeURIComponent(`'${id}' in parents and trashed=false`);
-      res.fichiers = (await (await driveFetch(`${API_DRIVE}/files?q=${q}&pageSize=100&supportsAllDrives=true&includeItemsFromAllDrives=true&fields=files(${champs})`)).json()).files || [];
-    } catch (e) { res.liste = e.message; }
-    const collegue = res.fichiers.find(f => f.mimeType !== 'application/vnd.google-apps.folder' && !deMoi(f));
-    if (collegue) {
-      try { const r = await driveFetch(`${API_DRIVE}/files/${collegue.id}?alt=media&supportsAllDrives=true`); res.lecture = { ok: true, nom: collegue.name, taille: (await r.arrayBuffer()).byteLength }; }
-      catch (e) { res.lecture = { ok: false, nom: collegue.name, erreur: e.message }; }
-    }
-    try {
-      const b = 'atelier' + Math.random().toString(36).slice(2);
-      const meta = { name: 'Test Atelier PDF (supprimé tout de suite).txt', mimeType: 'text/plain', parents: [id] };
-      const corps = new Blob([`--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: text/plain\r\n\r\nTest\r\n--${b}--`]);
-      const cree = await (await driveFetch(`${API_ENVOI}/files?uploadType=multipart&supportsAllDrives=true&fields=id`, { method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${b}` }, body: corps })).json();
-      await driveFetch(`${API_DRIVE}/files/${cree.id}?supportsAllDrives=true`, { method: 'DELETE' }).catch(() => {});
-      res.ecriture = { ok: true };
-    } catch (e) { res.ecriture = { ok: false, erreur: e.message }; }
-  } finally { libre(); }
-  console.info('Test dossier d\'équipe', res);
-  // Résultat lisible
-  const ligne = (ok, texte, detail) => el('div', { class: 'ligne-test' + (ok === true ? ' ok' : ok === false ? ' ko' : '') },
-    el('span', { class: 'puce-test', text: ok === true ? '✓' : ok === false ? '✗' : '?' }), el('span', {}, el('strong', { text: texte }), detail ? el('small', { text: detail }) : null));
-  const autres = res.fichiers.filter(f => !deMoi(f));
-  const fe = feuille({ titre: 'Résultat du test' });
-  fe.corps.append(
-    ligne(!res.dossier?.erreur, res.dossier?.erreur ? 'Dossier illisible' : `Dossier « ${res.dossier.name} »`,
-      res.dossier?.erreur || (res.dossier.owners?.length ? 'Propriétaire : ' + (res.dossier.owners[0].me ? 'vous' : res.dossier.owners[0].displayName) : 'Dans un Drive partagé')),
-    ligne(res.liste ? false : autres.length > 0, `${res.fichiers.length} élément${res.fichiers.length > 1 ? 's' : ''} visible${res.fichiers.length > 1 ? 's' : ''} dans le dossier, dont ${autres.length} d'un collègue`,
-      res.liste || res.fichiers.slice(0, 8).map(f => f.name + (deMoi(f) ? ' (vous)' : ' (' + (f.owners?.[0]?.displayName || f.lastModifyingUser?.displayName || 'collègue') + ')')).join(', ') || 'Aucun'),
-    ligne(res.lecture ? res.lecture.ok : null, res.lecture ? (res.lecture.ok ? `Lecture du fichier du collègue : OK` : 'Lecture du fichier du collègue : refusée') : 'Aucun fichier de collègue à lire',
-      res.lecture ? (res.lecture.ok ? `« ${res.lecture.nom} », ${tailleLisible(res.lecture.taille)}` : `« ${res.lecture.nom} » : ${res.lecture.erreur}`) : 'Soit le dossier n\'en contient pas, soit l\'appli ne peut pas les voir.'),
-    ligne(res.ecriture?.ok, res.ecriture?.ok ? 'Écriture dans le dossier : OK' : 'Écriture dans le dossier : refusée', res.ecriture?.ok ? 'Un petit fichier test a été créé puis supprimé.' : res.ecriture?.erreur),
-    el('p', { class: 'note', text: res.lecture?.ok && res.ecriture?.ok
-      ? 'Bonne nouvelle : le partage en équipe est possible avec l\'accès actuel.'
-      : 'Notez ce résultat et envoyez-le-moi : on choisira la suite ensemble.' }));
-  fe.pied.append(bouton('Fermer', { cls: 'btn principal', onclick: () => fe.fermer() }));
+      bouton('Se déconnecter', { onclick: deconnecterDrive })));
 }
 // Retour de Google après la connexion (#access_token=… dans l'adresse)
 if (driveConfigure()) setTimeout(() => traiterRetourGoogle().catch(e => console.error(e)), 0);
@@ -7118,7 +7109,7 @@ $('#btn-photos').addEventListener('click', async () => { const fs = await choisi
 $('#btn-param').addEventListener('click', ouvrirParametres);
 $('#btn-mesdocs').addEventListener('click', () => ouvrirMesDocuments('documents'));
 $('#btn-formulaires').addEventListener('click', ouvrirFormulaires);
-$('#btn-dossiers').addEventListener('click', ouvrirDossiers);
+$('#btn-dossiers').addEventListener('click', () => ouvrirDossiers());
 $('#btn-excel').addEventListener('click', async () => { const [f] = await choisirFichiers({ accept: ACCEPT_TABLEUR }); if (f) convertirTableur(f); });
 $('#btn-modeles').addEventListener('click', () => ouvrirMesDocuments('modeles'));
 appliquerMode();
