@@ -1123,7 +1123,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.26.0';
+const VERSION_APPLI = '1.26.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4583,8 +4583,8 @@ function groupesMenu() {
   }
   return [
     { items: [{ ...it('Accueil', 'maison', allerEnHaut), page: 'accueil' }] },
-    { groupe: 'Documents', items: [modifier, signer, { ...mesDocs, page: 'documents' }] },
-    { groupe: 'Outils', items: [it('Scanner une feuille', 'scanner', () => nouveauScan()), it('Fusionner', 'fusion', () => lancerOutil('fusion')), outils] },
+    // Particulier : l'accueil montre déjà Modifier, Fusionner et tous les outils ; le menu ne garde que ce qui n'y est pas
+    { groupe: 'Documents', items: [{ ...mesDocs, page: 'documents' }, signer] },
     { items: [param] }];
 }
 function majMenu() {
