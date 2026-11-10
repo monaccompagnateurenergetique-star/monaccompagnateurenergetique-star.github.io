@@ -690,6 +690,50 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 .rangee-btn{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .rangee-btn .btn{flex:1 1 140px}
 .pad{width:100%;height:240px;border:1px solid var(--ligne);border-radius:12px;touch-action:none;display:block;background:#fff}
+/* Formulaires à blocs */
+.grille-formulaires{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.carte-form{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:14px;min-height:112px;border:1px solid var(--ligne);border-radius:14px;background:#fff}
+.carte-form:hover{border-color:var(--accent)}
+.carte-form strong{font-size:15px}
+.carte-form span:last-child{font-size:13px;color:var(--doux);line-height:1.35}
+.carte-form.nouveau{border-style:dashed;background:#faf9f6}
+.carte-form-ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--accent-pale);color:var(--accent);margin-bottom:4px}
+.carte-form-modif{position:absolute;top:8px;right:8px}
+.case-form{position:relative}
+.conseil-ent{padding:12px 14px;border-radius:12px;background:#fdf6e3;border:1px solid #f1dfae;margin-bottom:6px}
+.conseil-ent p{margin:0 0 8px}
+.form-blocs{max-width:720px;margin:0 auto}
+.form-titre{font-size:20px;margin:6px 0 4px;text-align:center}
+.form-section{font-size:15px;color:var(--accent);margin:22px 0 2px;padding-bottom:6px;border-bottom:1px solid var(--ligne)}
+.form-para{margin:10px 0;color:var(--doux)}
+.form-liste{margin:8px 0;padding-left:20px;color:var(--doux);font-size:14px}
+.form-liste li{margin:3px 0}
+.requis{color:#c62828}
+.segments-form{flex-wrap:wrap}
+.form-duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.defile-x{overflow-x:auto}
+.form-grille{border-collapse:collapse;width:100%;table-layout:fixed;font-size:14px;margin-top:8px}
+.form-grille thead th:first-child{width:40%}
+.form-grille tbody th{word-break:break-word;hyphens:auto}
+.form-grille th,.form-grille td{border:1px solid var(--ligne);padding:0}
+.form-grille thead th{padding:6px;font-weight:700}
+.form-grille tbody th{text-align:left;padding:6px 8px;font-weight:600;background:#faf9f6}
+.form-grille td label{display:grid;place-items:center;min-height:44px;cursor:pointer}
+.form-grille input{width:20px;height:20px;accent-color:var(--accent)}
+.form-photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:4px}
+.form-photos figure{margin:0;display:flex;flex-direction:column;gap:4px;position:relative}
+.form-photos img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;background:#eee}
+.form-photos .btn-icone{position:absolute;top:4px;right:4px;background:rgba(255,255,255,.92);border-radius:50%}
+.form-signature{min-height:90px;border:1px dashed #c9c5bb;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;background:#fff}
+.form-signature img{max-height:80px;max-width:100%}
+.form-signature small{color:var(--doux);font-size:12px}
+.form-carte{border:1px solid var(--ligne);border-radius:12px;padding:4px 12px 12px;margin-top:10px;background:#faf9f6}
+.form-carte-tete{display:flex;align-items:center;justify-content:space-between;min-height:44px}
+.fm-liste{display:flex;flex-direction:column;gap:10px}
+.fm-bloc{border:1px solid var(--ligne);border-radius:12px;padding:6px 12px 12px;background:#fff}
+.fm-bloc-tete{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
+.fm-actions{display:flex;gap:2px}
+@media (max-width:520px){.form-duo{grid-template-columns:1fr}.form-grille{font-size:12.5px}.form-grille tbody th{padding:6px 5px}}
 /* Signature du client : plein écran, une grande zone, deux boutons */
 .ecran-signature{position:fixed;inset:0;z-index:5000;background:#fff;display:flex;flex-direction:column;gap:10px;padding:max(12px,env(safe-area-inset-top)) 16px max(12px,env(safe-area-inset-bottom))}
 .sig-tete{display:flex;flex-direction:column;gap:2px;padding-right:52px}
@@ -792,6 +836,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   <symbol id="i-horloge" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
   <symbol id="i-rogner" viewBox="0 0 24 24"><path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M2 6h14a2 2 0 0 1 2 2v14"/></symbol>
   <symbol id="i-vue-liste" viewBox="0 0 24 24"><path d="M9 6.5h11M9 12h11M9 17.5h11"/><rect x="3.5" y="5" width="3" height="3" rx=".8"/><rect x="3.5" y="10.5" width="3" height="3" rx=".8"/><rect x="3.5" y="16" width="3" height="3" rx=".8"/></symbol>
+  <symbol id="i-formulaire" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1"/><path d="M8.5 10.5l1.5 1.5 3-3M8.5 16h7"/></symbol>
   <symbol id="i-vue-lignes" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="4" rx="1"/><rect x="3.5" y="10" width="17" height="4" rx="1"/><rect x="3.5" y="15.5" width="17" height="4" rx="1"/></symbol>
   <symbol id="i-vue-cartes" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></symbol>
   <symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5M11 8v6M8 11h6"/></symbol>
@@ -846,6 +891,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
     </div>
     <h2 class="titre-section">En plus</h2>
     <div class="grille-outils outils-plus">
+      <button class="tuile" id="btn-formulaires"><svg class="ico"><use href="#i-formulaire"/></svg><strong>Formulaires</strong><span>PV de réception, visite, attestation…</span></button>
       <button class="tuile" id="btn-remplir"><svg class="ico"><use href="#i-texte"/></svg><strong>Remplir un formulaire</strong><span>Cerfa, mandat, contrat…</span></button>
       <button class="tuile" id="btn-signer"><svg class="ico"><use href="#i-signature"/></svg><strong>Signer un PDF</strong><span>Signature et tampon</span></button>
       <button class="tuile" id="btn-mesdocs"><svg class="ico"><use href="#i-dossier"/></svg><strong>Mes documents</strong><span>En cours et historique</span></button>
@@ -928,7 +974,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.18.0';
+const VERSION_APPLI = '1.19.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -3479,12 +3525,13 @@ async function adresseDuLieu(lat, lon) {
 }
 
 /** Écran de signature du client. Rend { canvas, nom, mention, geo, date } ou null (annulé). */
-function signatureClient({ nomDocument = '' } = {}) {
+function signatureClient({ nomDocument = '', nomDefaut = '' } = {}) {
   return new Promise(res => {
     let resultat = null, geoPromesse = null;
     // Étape 1 (pour l'utilisateur) : qui signe, et quelles preuves ajouter
     const fe = feuille({ titre: 'Faire signer le client', surFermeture: () => { if (!resultat) res(null); } });
     const nom = el('input', { class: 'champ', id: 'nom-signataire', autocomplete: 'off', placeholder: 'Ex. : Marie Dupont', maxlength: 60 });
+    nom.value = nomDefaut;
     const caseOption = (id, titre, aide, coche) => {
       const c = el('input', { type: 'checkbox', id }); c.checked = coche;
       return [c, el('label', { class: 'case-option', for: id }, c, el('span', { class: 'texte' }, el('strong', { text: titre }), el('small', { text: aide })))];
@@ -3591,9 +3638,13 @@ async function poserSignatureClient(pageId, x, y, avant) {
 
 /** Termine le PDF : si des clients ont signé, on ajoute la page « Certificat de signature ». */
 async function finaliserPdf(out) {
-  const certs = (D?.certificats || []).filter(c => D.items.some(it => it.id === c.item));
+  const certs = (D?.certificats || []).filter(c => D.items.some(it => it.id === c.item))
+    .map(c => ({ ...c, png: D.images[D.items.find(it => it.id === c.item).img] }));
   if (!certs.length) return out.save();
-  const octets = await out.save();
+  return ajouterCertificat(await out.save(), certs, D.nom);
+}
+/** Ajoute la page « Certificat de signature » à un PDF. certs : [{ nom, date, fuseau, geo, adresse, carte, mention, png }] */
+async function ajouterCertificat(octets, certs, nomDoc) {
   const empreinte = [...new Uint8Array(await crypto.subtle.digest('SHA-256', octets))].map(o => o.toString(16).padStart(2, '0')).join('');
   const doc = await PDFDocument.load(octets, { updateMetadata: false });
   const nbPages = doc.getPageCount();
@@ -3616,7 +3667,7 @@ async function finaliserPdf(out) {
   };
   page.drawRectangle({ x: 0, y: H - 8, width: W, height: 8, color: vert });
   ecrire('Certificat de signature', { taille: 20, police: gras }); y -= 6;
-  ecrire(`Document : ${D.nom}`, { taille: 11 });
+  ecrire(`Document : ${nomDoc}`, { taille: 11 });
   ecrire(`Pages signées : ${nbPages} page${nbPages > 1 ? 's' : ''} (ce certificat est ajouté à la suite)`, { taille: 11, couleur: doux }); y -= 10;
   for (const c of certs) {
     if (y < 330) nouvellePage();
@@ -3630,7 +3681,7 @@ async function finaliserPdf(out) {
       ecrire(`Voir sur une carte : https://www.openstreetmap.org/?mlat=${c.geo.lat.toFixed(6)}&mlon=${c.geo.lon.toFixed(6)}#map=18/${c.geo.lat.toFixed(5)}/${c.geo.lon.toFixed(5)}`, { taille: 8, couleur: doux });
     } else ecrire('Lieu : non enregistré (position refusée, indisponible, ou option désactivée).', { couleur: doux });
     y -= 6;
-    const it = D.items.find(t => t.id === c.item), sig = it && D.images[it.img];
+    const sig = c.png;
     const imgs = [];
     if (sig) imgs.push({ img: await doc.embedPng(dataUrlVersOctets(sig)), titre: 'Signature' });
     if (c.carte) imgs.push({ img: await doc.embedJpg(dataUrlVersOctets(c.carte)), titre: 'Lieu de la signature' });
@@ -3654,6 +3705,577 @@ async function finaliserPdf(out) {
   ecrire('Ce certificat est établi par l\'application Atelier PDF à partir des informations de l\'appareil au moment de la signature : la date et l\'heure sont celles du téléphone, le lieu est la position GPS donnée par le téléphone (si la personne l\'a autorisée). La signature a été tracée au doigt sur l\'écran : c\'est une signature électronique simple. Ces informations sont des éléments de preuve ; elles ne remplacent pas une signature électronique certifiée par un prestataire de confiance.', { taille: 8.5, couleur: doux });
   journaliser(`Certificat de signature joint (${certs.length} signataire${certs.length > 1 ? 's' : ''})`);
   return doc.save();
+}
+
+/* =========================================================
+   PROFIL ENTREPRISE : saisi une fois (Paramètres → Entreprise), repris dans l'en-tête, le pied de page
+   et les champs « entreprise » des formulaires.
+   ========================================================= */
+const CHAMPS_ENTREPRISE = [
+  ['nom', 'Nom de l\'entreprise', 'Ex. : SAS Martin Rénovation'],
+  ['adresse', 'Adresse', 'Ex. : 12 rue des Lilas'],
+  ['cpVille', 'Code postal et ville', 'Ex. : 57000 Metz'],
+  ['tel', 'Téléphone', ''],
+  ['email', 'E-mail', ''],
+  ['site', 'Site internet', ''],
+  ['siret', 'SIRET', '14 chiffres'],
+  ['representant', 'Représentant (nom et prénom)', 'Ex. : Jean Martin'],
+  ['qualite', 'Qualité du représentant', 'Ex. : Président, Gérant'],
+  ['mentions', 'Mentions en bas de page', 'Capital, APE, TVA, assurance décennale, RGE / Qualibat…']
+];
+const entreprise = () => prefs.entreprise || {};
+function blocEntreprise() {
+  const e = { ...entreprise() };
+  let attente;
+  const sauver = () => { clearTimeout(attente); attente = setTimeout(() => { prefs.entreprise = e; ecrirePrefs(prefs); }, 400); };
+  const champs = CHAMPS_ENTREPRISE.map(([cle, titre, aide]) => {
+    const id = 'ent-' + cle;
+    const c = cle === 'mentions'
+      ? el('textarea', { class: 'champ', id, rows: 3, placeholder: aide })
+      : el('input', { class: 'champ', id, placeholder: aide, autocomplete: 'off', inputmode: cle === 'tel' ? 'tel' : cle === 'siret' ? 'numeric' : cle === 'email' ? 'email' : null });
+    c.value = e[cle] || '';
+    c.addEventListener('input', () => { e[cle] = c.value; sauver(); });
+    c.addEventListener('blur', () => { clearTimeout(attente); prefs.entreprise = e; ecrirePrefs(prefs); });
+    return [el('label', { class: 'etiquette', for: id, text: titre }), c];
+  });
+  // Logo, signature et tampon de l'entreprise : choisis parmi ceux déjà enregistrés
+  const choixImage = (cle, type, titre) => {
+    const liste = lireTampons().filter(t => t.type === type);
+    const s = el('select', { class: 'champ', id: 'ent-' + cle });
+    s.append(el('option', { value: '', text: liste.length ? '— Aucun —' : `— Aucun ${type === 'logo' ? 'logo' : type === 'signature' ? 'signature' : 'tampon'} enregistré —` }));
+    liste.forEach(t => s.append(el('option', { value: t.id, text: t.nom, selected: e[cle] === t.id })));
+    s.addEventListener('change', () => { e[cle] = s.value; prefs.entreprise = e; ecrirePrefs(prefs); toast('Réglage enregistré'); });
+    return [el('label', { class: 'etiquette', for: 'ent-' + cle, text: titre }), s];
+  };
+  return el('div', {},
+    el('h3', { class: 'titre-section', text: 'Mon entreprise' }),
+    el('div', { class: 'groupe-reglage' },
+      el('h4', { class: 'titre-groupe' }, el('span', { class: 'pastille-groupe' }, icone('doc')), 'Coordonnées'),
+      el('p', { class: 'note', text: 'Saisies une seule fois : elles remplissent automatiquement l\'en-tête, le pied de page et les champs « entreprise » de vos formulaires.' }),
+      ...champs.flat()),
+    el('div', { class: 'groupe-reglage' },
+      el('h4', { class: 'titre-groupe' }, el('span', { class: 'pastille-groupe' }, icone('image')), 'Logo, signature et tampon'),
+      el('p', { class: 'note', text: 'Ajoutez-les d\'abord dans les rubriques Signatures et Tampons, puis choisissez-les ici.' }),
+      ...choixImage('logoId', 'logo', 'Logo de l\'entreprise'),
+      ...choixImage('signatureId', 'signature', 'Signature du représentant'),
+      ...choixImage('tamponId', 'tampon', 'Tampon de l\'entreprise')));
+}
+
+/* =========================================================
+   FORMULAIRES À BLOCS : on répond à un formulaire simple, l'appli fabrique un PDF propre.
+   Types de blocs :
+   titre · para (texte fixe, avec {variables}) · section · champ · zone (plusieurs lignes) · date · case · choix
+   liste (puces fixes) · grille (tableau d'avis) · photos · signature (client | entreprise) · faitA (« Fait à … le … »)
+   Un bloc peut n'apparaître que selon une réponse : si: ['idDuChamp', 'valeur'].
+   ========================================================= */
+const MODELES_FORMULAIRES = [
+  { id: 'aft', nom: 'Attestation de fin de travaux', resume: 'Le client atteste l\'achèvement et donne son avis', blocs: [
+    { t: 'titre', texte: 'Attestation de fin de travaux' },
+    { t: 'section', texte: 'Je soussigné(e)' },
+    { t: 'champ', id: 'nom', label: 'Nom', requis: true, client: 'nom' },
+    { t: 'champ', id: 'prenom', label: 'Prénom', client: 'prenom' },
+    { t: 'champ', id: 'tel', label: 'Téléphone', clavier: 'tel', client: 'tel' },
+    { t: 'champ', id: 'adresse', label: 'Adresse des travaux', client: 'adresse' },
+    { t: 'champ', id: 'cp', label: 'Code postal', clavier: 'numeric', client: 'cp' },
+    { t: 'champ', id: 'ville', label: 'Ville', client: 'ville' },
+    { t: 'section', texte: 'J\'atteste' },
+    { t: 'liste', items: ['de l\'achèvement total des travaux ;', 'de la réception du devis et du cadre de contribution avant l\'engagement des travaux ;', 'de la réception de la facture ;', 'que les informations indiquées dans le dossier sont correctes ;', 'que les travaux peuvent faire l\'objet d\'un éventuel contrôle par un organisme accrédité. En cas de demande, j\'autorise l\'accès aux travaux ;'] },
+    { t: 'champ', id: 'chauffage', label: 'Mon mode de chauffage principal est le suivant' },
+    { t: 'zone', id: 'materiaux', label: 'Les matériaux suivants ont été posés' },
+    { t: 'choix', id: 'reserve', label: 'La réception est prononcée', options: ['sans réserve', 'avec réserves'], defaut: 'sans réserve' },
+    { t: 'zone', id: 'reserves', label: 'Réserves', si: ['reserve', 'avec réserves'] },
+    { t: 'section', texte: 'Mon avis sur la qualité de la prestation' },
+    { t: 'grille', id: 'avis', colonnes: ['++', '+', '-', '--'], couleurs: ['#1aa64a', '#8fd14f', '#f28b82', '#e8352b'], lignes: ['L\'équipe', 'L\'installation (matériaux, pose)', 'La propreté après le chantier', 'La durée des travaux', 'Impression générale'] },
+    { t: 'zone', id: 'commentaires', label: 'Commentaires' },
+    { t: 'faitA', id: 'fait' },
+    { t: 'signature', id: 'sig-client', label: 'Signature du déclarant', qui: 'client' }
+  ] },
+  { id: 'pv', nom: 'PV de réception des travaux', resume: 'Réception avec ou sans réserves, photos, signatures', blocs: [
+    { t: 'titre', texte: 'Procès-verbal de réception des travaux' },
+    { t: 'section', texte: 'Le maître d\'ouvrage (client)' },
+    { t: 'champ', id: 'client', label: 'Nom et prénom', requis: true, client: 'nomComplet' },
+    { t: 'champ', id: 'adresse', label: 'Adresse du chantier', client: 'adresseComplete' },
+    { t: 'section', texte: 'L\'entreprise' },
+    { t: 'para', texte: '{E.nom}, {E.adresse} {E.cpVille}, représentée par {E.representant}.' },
+    { t: 'champ', id: 'devis', label: 'Référence du devis ou du marché' },
+    { t: 'zone', id: 'travaux', label: 'Travaux réalisés' },
+    { t: 'date', id: 'dateFin', label: 'Date d\'achèvement des travaux' },
+    { t: 'section', texte: 'Décision' },
+    { t: 'para', texte: 'Après visite contradictoire des travaux, le maître d\'ouvrage déclare :' },
+    { t: 'choix', id: 'decision', label: 'La réception', options: ['est prononcée sans réserve', 'est prononcée avec les réserves ci-dessous', 'est refusée pour les motifs ci-dessous'], defaut: 'est prononcée sans réserve' },
+    { t: 'zone', id: 'reserves', label: 'Réserves ou motifs', si: ['decision', '!est prononcée sans réserve'] },
+    { t: 'date', id: 'levee', label: 'Date prévue pour la levée des réserves', si: ['decision', 'est prononcée avec les réserves ci-dessous'] },
+    { t: 'photos', id: 'photos', label: 'Photos (réserves, travaux terminés)' },
+    { t: 'faitA', id: 'fait' },
+    { t: 'signature', id: 'sig-client', label: 'Le maître d\'ouvrage', qui: 'client' },
+    { t: 'signature', id: 'sig-ent', label: 'L\'entreprise', qui: 'entreprise' }
+  ] },
+  { id: 'visite', nom: 'Visite technique', resume: 'Relevés, état existant, photos du logement', blocs: [
+    { t: 'titre', texte: 'Compte rendu de visite technique' },
+    { t: 'section', texte: 'Client et logement' },
+    { t: 'champ', id: 'client', label: 'Client', requis: true, client: 'nomComplet' },
+    { t: 'champ', id: 'adresse', label: 'Adresse du logement', client: 'adresseComplete' },
+    { t: 'champ', id: 'tel', label: 'Téléphone', clavier: 'tel', client: 'tel' },
+    { t: 'date', id: 'date', label: 'Date de la visite', auto: true },
+    { t: 'choix', id: 'type', label: 'Type de logement', options: ['Maison', 'Appartement'] },
+    { t: 'champ', id: 'annee', label: 'Année de construction', clavier: 'numeric' },
+    { t: 'champ', id: 'surface', label: 'Surface habitable (m²)', clavier: 'decimal' },
+    { t: 'section', texte: 'Existant' },
+    { t: 'choix', id: 'chauffage', label: 'Chauffage principal', options: ['Fioul', 'Gaz', 'Électrique', 'Bois', 'Pompe à chaleur', 'Autre'] },
+    { t: 'champ', id: 'chauffageDetail', label: 'Précisions sur le chauffage (marque, âge…)' },
+    { t: 'zone', id: 'isolation', label: 'Isolation (combles, murs, planchers)' },
+    { t: 'zone', id: 'menuiseries', label: 'Menuiseries et ventilation' },
+    { t: 'photos', id: 'photosFacade', label: 'Photos de la façade' },
+    { t: 'photos', id: 'photosInt', label: 'Photos intérieures et équipements' },
+    { t: 'section', texte: 'Préconisations' },
+    { t: 'zone', id: 'travaux', label: 'Travaux préconisés' },
+    { t: 'zone', id: 'remarques', label: 'Remarques' },
+    { t: 'signature', id: 'sig-ent', label: 'Le technicien', qui: 'entreprise' }
+  ] },
+  { id: 'edl', nom: 'État des lieux', resume: 'Pièce par pièce, avec photos', blocs: [
+    { t: 'titre', texte: 'État des lieux' },
+    { t: 'choix', id: 'moment', label: 'Type', options: ['Avant travaux', 'Après travaux', 'Entrée', 'Sortie'] },
+    { t: 'champ', id: 'client', label: 'Client / occupant', requis: true, client: 'nomComplet' },
+    { t: 'champ', id: 'adresse', label: 'Adresse', client: 'adresseComplete' },
+    { t: 'date', id: 'date', label: 'Date', auto: true },
+    { t: 'repeter', id: 'pieces', label: 'Pièce', ajout: 'Ajouter une pièce', blocs: [
+      { t: 'champ', id: 'nom', label: 'Pièce (ex. : séjour, cuisine)' },
+      { t: 'choix', id: 'etat', label: 'État général', options: ['Neuf', 'Bon', 'Usagé', 'Mauvais'] },
+      { t: 'zone', id: 'obs', label: 'Observations' },
+      { t: 'photos', id: 'photos', label: 'Photos' }
+    ] },
+    { t: 'zone', id: 'remarques', label: 'Remarques générales' },
+    { t: 'faitA', id: 'fait' },
+    { t: 'signature', id: 'sig-client', label: 'Le client', qui: 'client' },
+    { t: 'signature', id: 'sig-ent', label: 'L\'entreprise', qui: 'entreprise' }
+  ] }
+];
+const tousLesModeles = () => [...MODELES_FORMULAIRES, ...(prefs.formulairesPerso || [])];
+const visible = (b, rep) => {
+  if (!b.si) return true;
+  const [id, val] = b.si, v = rep[id] ?? '';
+  return val.startsWith('!') ? v !== val.slice(1) : v === val;
+};
+/** Remplace {E.nom}, {E.adresse}… (entreprise) et {idDuChamp} (réponses). */
+const remplacerVariables = (t, rep = {}) => String(t || '').replace(/\{(E\.)?([\w-]+)\}/g, (_, e, k) => e ? (entreprise()[k] || '') : (typeof rep[k] === 'string' ? rep[k] : ''));
+const dateFr = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('fr-FR') : '';
+const aujourdhuiIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
+/* ---------- Liste des formulaires et des brouillons ---------- */
+async function ouvrirFormulaires() {
+  const fe = feuille({ titre: 'Formulaires', plein: true, pied: false });
+  fe.feuille.classList.add('large');
+  const brouillons = (prefs.brouillonsForm || []).slice().sort((a, b) => b.maj - a.maj);
+  const e = entreprise();
+  if (!e.nom) fe.corps.append(el('div', { class: 'conseil-ent' },
+    el('p', { text: 'Conseil : renseignez d\'abord votre entreprise (nom, adresse, logo, signature…). Elle sera reprise automatiquement dans tous vos documents.' }),
+    bouton('Renseigner mon entreprise', { ico: 'reglages', onclick: async () => { prefs.ongletParametres = 'p-entreprise'; ecrirePrefs(prefs); await fe.fermer(); ouvrirParametres(); } })));
+  if (brouillons.length) fe.corps.append(el('h3', { class: 'titre-section', text: 'En cours' }),
+    el('div', { class: 'liste-docs' }, brouillons.map(b => el('div', { class: 'ligne-doc' },
+      el('button', { type: 'button', class: 'ligne-doc-principal', onclick: async () => { const d = await bdGet('fichiers', 'brouillon:' + b.id).catch(() => null); const m = tousLesModeles().find(x => x.id === b.modele); if (!d || !m) { toast('Ce brouillon est introuvable.'); return; } await fe.fermer(); saisirFormulaire(m, { id: b.id, rep: d.rep }); } },
+        el('span', { class: 'ligne-doc-ico' }, icone('texte')),
+        el('span', { class: 'texte' }, el('strong', { text: b.titre }), el('small', { text: `${b.modeleNom} · modifié ${new Date(b.maj).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}${b.pdf ? ' · PDF créé' : ''}` }))),
+      bouton('', { ico: 'poubelle', cls: 'btn-icone', label: `Supprimer le brouillon « ${b.titre} »`, onclick: async () => {
+        if (!(await confirmer({ titre: `Supprimer le brouillon « ${b.titre} » ?`, texte: 'Les réponses et les photos de ce formulaire seront effacées. Les PDF déjà créés ne changent pas.', action: 'Supprimer le brouillon' }))) return;
+        await supprimerBrouillon(b.id); await fe.fermer(); ouvrirFormulaires();
+      } })))));
+  fe.corps.append(el('h3', { class: 'titre-section', text: 'Nouveau document' }),
+    el('div', { class: 'grille-formulaires' }, tousLesModeles().map(m => el('div', { class: 'case-form' },
+      el('button', { type: 'button', class: 'carte-form', onclick: async () => { await fe.fermer(); saisirFormulaire(m); } },
+        el('span', { class: 'carte-form-ico' }, icone(m.perso ? 'copier' : 'formulaire')), el('strong', { text: m.nom }), el('span', { text: m.resume || (m.perso ? 'Mon modèle' : '') })),
+      m.perso ? bouton('', { ico: 'crayon', cls: 'btn-icone carte-form-modif', label: `Modifier le modèle « ${m.nom} »`, onclick: async () => { await fe.fermer(); editerModeleFormulaire(m); } }) : null)),
+      el('button', { type: 'button', class: 'carte-form nouveau', onclick: async () => { await fe.fermer(); editerModeleFormulaire(); } },
+        el('span', { class: 'carte-form-ico' }, icone('plus')), el('strong', { text: 'Créer mon modèle' }), el('span', { text: 'À partir de zéro ou d\'un modèle existant' }))));
+}
+async function supprimerBrouillon(id) {
+  prefs.brouillonsForm = (prefs.brouillonsForm || []).filter(b => b.id !== id); ecrirePrefs(prefs);
+  await bdDel('fichiers', 'brouillon:' + id).catch(() => {});
+}
+
+/* ---------- Saisie ---------- */
+function saisirFormulaire(modele, { id = idUnique(), rep = {} } = {}) {
+  rep = JSON.parse(JSON.stringify(rep));
+  // Valeurs par défaut : date du jour, ville de l'entreprise pour « Fait à », choix par défaut
+  const initialiser = (blocs, r) => blocs.forEach(b => {
+    if (b.t === 'date' && b.auto && !r[b.id]) r[b.id] = aujourdhuiIso();
+    if (b.t === 'faitA' && !r[b.id]) r[b.id] = { lieu: '', date: aujourdhuiIso() };
+    if (b.t === 'choix' && b.defaut && r[b.id] == null) r[b.id] = b.defaut;
+    if (b.t === 'repeter' && !Array.isArray(r[b.id])) r[b.id] = [{}];
+  });
+  initialiser(modele.blocs, rep);
+  const fe = feuille({ titre: modele.nom, plein: true, surFermeture: () => { clearTimeout(minuteur); sauverBrouillon(); } });
+  fe.feuille.classList.add('large', 'saisie-form');
+  let minuteur;
+  const titreDoc = () => { const nom = modele.blocs.find(b => b.requis); return [modele.nom, nom && rep[nom.id]].filter(Boolean).join(' – '); };
+  async function sauverBrouillon(pdf = false) {
+    const vide = !Object.entries(rep).some(([k, v]) => v && (typeof v === 'string' ? v.trim() && !/^\d{4}-\d{2}-\d{2}$/.test(v) : typeof v === 'object' && !(v.date && !v.lieu) && JSON.stringify(v) !== '[{}]'));
+    if (vide) return;
+    try {
+      await bdPut('fichiers', { modele: modele.id, rep }, 'brouillon:' + id);
+      const l = (prefs.brouillonsForm || []).filter(b => b.id !== id);
+      const ancien = (prefs.brouillonsForm || []).find(b => b.id === id);
+      l.push({ id, modele: modele.id, modeleNom: modele.nom, titre: titreDoc(), maj: Date.now(), pdf: pdf || ancien?.pdf });
+      prefs.brouillonsForm = l; ecrirePrefs(prefs);
+    } catch (e) { console.warn('Brouillon non gardé', e); }
+  }
+  const changer = () => { clearTimeout(minuteur); minuteur = setTimeout(sauverBrouillon, 800); majVisibles(); };
+  const zone = el('div', { class: 'form-blocs' });
+  const blocsEls = [];
+  function rendreBlocs(blocs, r, parent, prefixe = '') {
+    for (const b of blocs) {
+      const n = rendreBloc(b, r, prefixe);
+      if (!n) continue;
+      parent.append(n);
+      blocsEls.push({ b, r, n });
+    }
+  }
+  function majVisibles() { blocsEls.forEach(({ b, r, n }) => { n.hidden = !visible(b, r); }); }
+  function rendreBloc(b, r, prefixe) {
+    const fid = 'f-' + prefixe + (b.id || idUnique());
+    const lab = (texte, requis) => el('label', { class: 'etiquette', for: fid }, texte, requis ? el('span', { class: 'requis', text: ' *', 'aria-hidden': 'true' }) : null);
+    switch (b.t) {
+      case 'titre': return el('h3', { class: 'form-titre', text: remplacerVariables(b.texte, r) });
+      case 'section': return el('h4', { class: 'form-section', text: b.texte });
+      case 'para': return el('p', { class: 'form-para', text: remplacerVariables(b.texte, r) || '(coordonnées de l\'entreprise : à renseigner dans Paramètres → Entreprise)' });
+      case 'liste': return el('ul', { class: 'form-liste' }, b.items.map(t => el('li', { text: remplacerVariables(t, r) })));
+      case 'champ': case 'zone': case 'date': {
+        const c = b.t === 'zone' ? el('textarea', { class: 'champ', id: fid, rows: 3 }) : el('input', { class: 'champ', id: fid, type: b.t === 'date' ? 'date' : 'text', inputmode: b.clavier || null, autocomplete: 'off' });
+        c.value = r[b.id] || '';
+        c.addEventListener('input', () => { r[b.id] = c.value; changer(); });
+        return el('div', { class: 'form-bloc' }, lab(b.label, b.requis), c);
+      }
+      case 'case': {
+        const c = el('input', { type: 'checkbox', id: fid }); c.checked = !!r[b.id];
+        c.addEventListener('change', () => { r[b.id] = c.checked; changer(); });
+        return el('label', { class: 'case-option', for: fid }, c, el('span', { class: 'texte' }, el('strong', { text: b.label })));
+      }
+      case 'choix': {
+        const s = segments(fid, b.options.map(o => [o, o]), r[b.id] || '', v => { r[b.id] = v; changer(); });
+        s.classList.add('segments-form');
+        return el('div', { class: 'form-bloc' }, el('div', { class: 'etiquette', text: b.label }), s);
+      }
+      case 'grille': {
+        r[b.id] ||= {};
+        const t = el('table', { class: 'form-grille' },
+          el('thead', {}, el('tr', {}, el('th', { text: '' }), b.colonnes.map((c, i) => el('th', { text: c, style: { background: b.couleurs?.[i] || '#eee' } })))),
+          el('tbody', {}, b.lignes.map((l, li) => el('tr', {}, el('th', { text: l, scope: 'row' }), b.colonnes.map((c, ci) => {
+            const radio = el('input', { type: 'radio', name: fid + '-' + li, 'aria-label': `${l} : ${c}`, checked: r[b.id][li] === ci, onchange: () => { r[b.id][li] = ci; changer(); } });
+            return el('td', {}, el('label', {}, radio));
+          })))));
+        return el('div', { class: 'form-bloc' }, el('div', { class: 'defile-x' }, t));
+      }
+      case 'faitA': {
+        const v = r[b.id] ||= { lieu: '', date: aujourdhuiIso() };
+        const lieu = el('input', { class: 'champ', id: fid, autocomplete: 'off', placeholder: 'Ville' }); lieu.value = v.lieu || '';
+        const date = el('input', { class: 'champ', id: fid + '-d', type: 'date' }); date.value = v.date || '';
+        lieu.addEventListener('input', () => { v.lieu = lieu.value; changer(); });
+        date.addEventListener('input', () => { v.date = date.value; changer(); });
+        return el('div', { class: 'form-bloc form-duo' }, el('div', {}, lab('Fait à'), lieu), el('div', {}, el('label', { class: 'etiquette', for: fid + '-d', text: 'Le' }), date));
+      }
+      case 'photos': {
+        const liste = r[b.id] ||= [];
+        const grille = el('div', { class: 'form-photos' });
+        const majPhotos = () => grille.replaceChildren(...liste.map((p, i) => el('figure', {},
+          el('img', { src: p.url, alt: p.legende || `Photo ${i + 1}` }),
+          (() => { const lg = el('input', { class: 'champ mini', placeholder: 'Légende (facultatif)', 'aria-label': `Légende de la photo ${i + 1}` }); lg.value = p.legende || ''; lg.addEventListener('input', () => { p.legende = lg.value; changer(); }); return lg; })(),
+          bouton('', { ico: 'poubelle', cls: 'btn-icone', label: `Retirer la photo ${i + 1}`, onclick: () => { liste.splice(i, 1); majPhotos(); changer(); } }))));
+        const ajouter = async camera => {
+          const fs = await choisirFichiers({ accept: 'image/*', multiple: !camera, capture: camera ? 'environment' : undefined });
+          if (!fs.length) return;
+          occupe('Préparation des photos…');
+          try { for (const f of fs) { try { const c = await chargerImage(f, 1400); liste.push({ url: c.toDataURL('image/jpeg', 0.8), legende: '' }); } catch { toast(`« ${f.name} » : format d'image non pris en charge.`); } } }
+          finally { libre(); }
+          majPhotos(); changer();
+        };
+        majPhotos();
+        return el('div', { class: 'form-bloc' }, el('div', { class: 'etiquette', text: b.label }), grille,
+          el('div', { class: 'rangee-btn' }, bouton('Prendre une photo', { ico: 'camera', cls: 'btn', onclick: () => ajouter(true) }), bouton('Galerie', { ico: 'image', cls: 'btn', onclick: () => ajouter(false) })));
+      }
+      case 'signature': {
+        const boite = el('div', { class: 'form-signature' });
+        const maj = () => {
+          const s = r[b.id];
+          boite.replaceChildren(
+            s ? el('img', { src: s.png, alt: `Signature : ${b.label}` }) : el('span', { class: 'vide', text: 'Pas encore signé' }),
+            s?.nom ? el('small', { text: `${s.nom}${s.date ? ' · ' + new Date(s.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : ''}${s.geo ? ' · lieu enregistré' : ''}` }) : null);
+        };
+        maj();
+        const signer = async () => {
+          if (b.qui === 'client') {
+            const nomDefaut = [r.prenom, r.nom].filter(Boolean).join(' ') || r.client || '';
+            const s = await signatureClient({ nomDocument: titreDoc(), nomDefaut });
+            if (s) { r[b.id] = { png: s.canvas.toDataURL('image/png'), nom: s.nom, date: s.date, geo: s.geo, carte: s.carte, adresse: s.adresse, mention: s.mention, fuseau: fuseau(s.date), client: true }; maj(); changer(); }
+          } else {
+            // Entreprise : signature et tampon du profil, sinon on en choisit une
+            const e = entreprise(), tous = lireTampons();
+            let sig = tous.find(t => t.id === e.signatureId);
+            if (!sig) sig = await choisirTampon('signature');
+            if (!sig || sig.rapide) return;
+            const tam = tous.find(t => t.id === e.tamponId);
+            r[b.id] = { png: sig.png, tampon: tam?.png || null, nom: [e.representant, e.nom].filter(Boolean).join(' – '), date: Date.now() }; maj(); changer();
+          }
+        };
+        return el('div', { class: 'form-bloc' }, el('div', { class: 'etiquette', text: b.label }), boite,
+          el('div', { class: 'rangee-btn' },
+            bouton(b.qui === 'client' ? 'Faire signer' : 'Signer (entreprise)', { ico: 'signature', cls: 'btn', onclick: signer }),
+            bouton('Effacer', { ico: 'poubelle', cls: 'btn', onclick: () => { delete r[b.id]; maj(); changer(); } })));
+      }
+      case 'repeter': {
+        const conteneur = el('div', { class: 'form-repeter' });
+        const majRep = () => {
+          conteneur.replaceChildren();
+          r[b.id].forEach((sous, i) => {
+            const carte = el('div', { class: 'form-carte' }, el('div', { class: 'form-carte-tete' }, el('strong', { text: `${b.label} ${i + 1}` }),
+              r[b.id].length > 1 ? bouton('', { ico: 'poubelle', cls: 'btn-icone', label: `Retirer ${b.label} ${i + 1}`, onclick: () => { r[b.id].splice(i, 1); majRep(); changer(); } }) : null));
+            for (const sb of b.blocs) { const n = rendreBloc(sb, sous, `${b.id}-${i}-`); if (n) carte.append(n); }
+            conteneur.append(carte);
+          });
+        };
+        majRep();
+        return el('div', { class: 'form-bloc' }, conteneur, bouton(b.ajout || 'Ajouter', { ico: 'plus', cls: 'btn', onclick: () => { r[b.id].push({}); majRep(); changer(); } }));
+      }
+    }
+    return null;
+  }
+  rendreBlocs(modele.blocs, rep, zone);
+  majVisibles();
+  fe.corps.append(zone);
+  fe.pied.append(
+    bouton('Fermer', { onclick: () => fe.fermer() }),
+    bouton('Créer le PDF', { ico: 'valider', cls: 'btn principal', onclick: async () => {
+      const manque = modele.blocs.find(b => b.requis && visible(b, rep) && !String(rep[b.id] || '').trim());
+      if (manque) { toast(`Renseignez « ${manque.label} » avant de créer le PDF.`); $('#f-' + manque.id)?.focus(); return; }
+      occupe('Création du PDF…');
+      let octets;
+      try { octets = await genererPdfFormulaire(modele, rep); }
+      catch (e) { console.error(e); toast('Le PDF n\'a pas pu être créé. Réessayez.'); return; }
+      finally { libre(); }
+      await sauverBrouillon(true);
+      await fe.fermer();
+      const nom = titreDoc().replace(/[\\/:*?"<>|]+/g, ' ').trim() + '.pdf';
+      await ouvrirPdf(octets, nom);
+      if (D) { D.modifie = true; journaliser(`Créé depuis le formulaire « ${modele.nom} »`); }
+      toast('PDF créé : enregistrez-le ou partagez-le avec les boutons en haut.', 5000);
+    } }));
+}
+
+/* ---------- Fabrication du PDF ---------- */
+async function genererPdfFormulaire(modele, rep) {
+  const doc = await PDFDocument.create(); doc.setProducer('Atelier PDF'); doc.setTitle(modele.nom);
+  const [W, H] = A4, mg = 46, e = entreprise();
+  const pol = await doc.embedFont(StandardFonts.Helvetica), gras = await doc.embedFont(StandardFonts.HelveticaBold), ital = await doc.embedFont(StandardFonts.HelveticaOblique);
+  const encre = rgb(0.11, 0.13, 0.19), doux = rgb(0.38, 0.42, 0.48), trait = rgb(0.82, 0.81, 0.77), accent = rgb(0.05, 0.42, 0.31);
+  const hex = h => { const n = parseInt(h.slice(1), 16); return rgb((n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255); };
+  const cacheImg = new Map();
+  const image = async url => { if (!cacheImg.has(url)) cacheImg.set(url, url.startsWith('data:image/png') ? await doc.embedPng(dataUrlVersOctets(url)) : await doc.embedJpg(dataUrlVersOctets(url))); return cacheImg.get(url); };
+  const logo = lireTampons().find(t => t.id === e.logoId);
+  const mentions = versWinAnsi([[e.nom, e.adresse, e.cpVille, e.tel, e.email, e.site].filter(Boolean).join(' - '), [e.siret ? 'SIRET ' + e.siret : '', e.representant ? `Représentée par ${e.representant}${e.qualite ? ' (' + e.qualite + ')' : ''}` : ''].filter(Boolean).join(' - '), e.mentions || ''].filter(Boolean).join('\n'));
+  const lignesMentions = [];
+  for (const para of mentions.split('\n')) { let l = ''; for (const m of para.split(' ')) { const s = l ? l + ' ' + m : m; if (pol.widthOfTextAtSize(s, 7) > W - 2 * mg && l) { lignesMentions.push(l); l = m; } else l = s; } if (l) lignesMentions.push(l); }
+  const bas = mg + lignesMentions.length * 9 + 14;
+  let page, y;
+  async function nouvellePage() {
+    page = doc.addPage([W, H]); y = H - mg;
+    // En-tête : logo à gauche
+    if (logo) { const img = await image(logo.png), k = Math.min(120 / img.width, 48 / img.height); page.drawImage(img, { x: mg, y: y - img.height * k, width: img.width * k, height: img.height * k }); y -= 48 + 16; }
+    else if (e.nom) { page.drawText(versWinAnsi(e.nom), { x: mg, y: y - 14, size: 14, font: gras, color: accent }); y -= 14 + 18; }
+  }
+  const place = async h => { if (y - h < bas) await nouvellePage(); };
+  const couper = (texte, police, taille, largeur) => {
+    const res = [];
+    for (const para of versWinAnsi(texte).split('\n')) { let l = ''; for (const m of para.split(' ')) { const s = l ? l + ' ' + m : m; if (police.widthOfTextAtSize(s, taille) > largeur && l) { res.push(l); l = m; } else l = s; } res.push(l); }
+    return res;
+  };
+  const ecrire = async (texte, { taille = 10.5, police = pol, couleur = encre, x = mg, largeur = W - 2 * mg, inter = 1.3, centre = false } = {}) => {
+    for (const l of couper(texte, police, taille, largeur)) {
+      await place(taille * inter);
+      const lx = centre ? (W - police.widthOfTextAtSize(l, taille)) / 2 : x;
+      y -= taille; page.drawText(l, { x: lx, y, size: taille, font: police, color: couleur }); y -= taille * (inter - 1);
+    }
+  };
+  // « Libellé : valeur » sur une ligne si ça tient, sinon la valeur dessous
+  const ligneValeur = async (label, valeur) => {
+    const lw = 150, v = valeur || '';
+    if (gras.widthOfTextAtSize(versWinAnsi(label + ' :'), 10.5) < lw - 8 && !v.includes('\n')) {
+      const lignes = couper(v || ' ', gras, 10.5, W - 2 * mg - lw);
+      await place(15);
+      page.drawText(versWinAnsi(label + ' :'), { x: mg, y: y - 10.5, size: 10.5, font: pol, color: encre });
+      for (const [i, l] of lignes.entries()) { if (i) await place(13.5); page.drawText(l, { x: mg + lw, y: y - 10.5, size: 10.5, font: gras, color: encre }); y -= 13.5; }
+    } else { await ecrire(label + ' :'); await ecrire(v || '—', { police: gras }); }
+  };
+  const caseCochee = (x, yy, coche) => {
+    page.drawRectangle({ x, y: yy, width: 9, height: 9, borderColor: encre, borderWidth: 0.8 });
+    if (coche) { page.drawLine({ start: { x: x + 1.8, y: yy + 4.6 }, end: { x: x + 3.8, y: yy + 2 }, thickness: 1.3, color: encre }); page.drawLine({ start: { x: x + 3.8, y: yy + 2 }, end: { x: x + 7.6, y: yy + 7.6 }, thickness: 1.3, color: encre }); }
+  };
+  const signatures = [];
+  async function dessiner(blocs, r) {
+    for (const b of blocs) {
+      if (!visible(b, r)) continue;
+      switch (b.t) {
+        case 'titre': y -= 4; await ecrire(remplacerVariables(b.texte, r), { taille: 16, police: gras, centre: true }); {
+          const t = versWinAnsi(remplacerVariables(b.texte, r)), tw = gras.widthOfTextAtSize(t, 16); page.drawLine({ start: { x: (W - tw) / 2, y: y + 2 }, end: { x: (W + tw) / 2, y: y + 2 }, thickness: 0.8, color: encre }); }
+          y -= 12; break;
+        case 'section': y -= 6; await place(40); await ecrire(b.texte, { taille: 11, police: gras, couleur: accent }); y -= 2; break;
+        case 'para': await ecrire(remplacerVariables(b.texte, r)); y -= 4; break;
+        case 'liste': for (const t of b.items) { const l = couper(remplacerVariables(t, r), pol, 10, W - 2 * mg - 14); await place(14); page.drawCircle({ x: mg + 4, y: y - 6.8, size: 1.6, color: encre }); for (const s of l) { await place(13); page.drawText(s, { x: mg + 14, y: y - 10, size: 10, font: pol, color: encre }); y -= 13; } } y -= 4; break;
+        case 'champ': await ligneValeur(b.label, r[b.id]); break;
+        case 'date': await ligneValeur(b.label, dateFr(r[b.id])); break;
+        case 'zone': await ecrire(b.label + ' :'); await ecrire((r[b.id] || '').trim() || '—', { police: gras }); y -= 4; break;
+        case 'case': await place(16); caseCochee(mg, y - 10, !!r[b.id]); page.drawText(versWinAnsi(b.label), { x: mg + 16, y: y - 9, size: 10.5, font: pol, color: encre }); y -= 16; break;
+        case 'choix': {
+          // Toutes les options, celle choisie cochée (lisible même imprimé)
+          await ecrire(b.label + ' :');
+          for (const o of b.options) { await place(15); caseCochee(mg + 8, y - 10, r[b.id] === o); page.drawText(versWinAnsi(o), { x: mg + 24, y: y - 9, size: 10.5, font: r[b.id] === o ? gras : pol, color: encre }); y -= 15; }
+          y -= 4; break;
+        }
+        case 'grille': {
+          const col1 = 190, cw = (W - 2 * mg - col1) / b.colonnes.length, rh = 17;
+          await place(rh * (b.lignes.length + 1));
+          b.colonnes.forEach((c, i) => { const x = mg + col1 + i * cw; page.drawRectangle({ x, y: y - rh, width: cw, height: rh, color: b.couleurs ? hex(b.couleurs[i]) : rgb(0.93, 0.93, 0.93), borderColor: encre, borderWidth: 0.6 }); const t = versWinAnsi(c); page.drawText(t, { x: x + (cw - gras.widthOfTextAtSize(t, 10)) / 2, y: y - 12.5, size: 10, font: gras, color: encre }); });
+          y -= rh;
+          const v = r[b.id] || {};
+          b.lignes.forEach((l, li) => {
+            page.drawRectangle({ x: mg, y: y - rh, width: col1, height: rh, borderColor: encre, borderWidth: 0.6 });
+            page.drawText(versWinAnsi(l), { x: mg + 5, y: y - 12, size: 9.5, font: gras, color: encre });
+            b.colonnes.forEach((c, ci) => { const x = mg + col1 + ci * cw; page.drawRectangle({ x, y: y - rh, width: cw, height: rh, borderColor: encre, borderWidth: 0.6 }); if (v[li] === ci) { const cx = x + cw / 2, cy = y - rh / 2; page.drawLine({ start: { x: cx - 5, y: cy }, end: { x: cx - 1.5, y: cy - 4 }, thickness: 1.6, color: encre }); page.drawLine({ start: { x: cx - 1.5, y: cy - 4 }, end: { x: cx + 6, y: cy + 5 }, thickness: 1.6, color: encre }); } });
+            y -= rh;
+          });
+          y -= 10; break;
+        }
+        case 'photos': {
+          const liste = r[b.id] || []; if (!liste.length) break;
+          await ecrire(b.label + ' :'); y -= 2;
+          const cw = (W - 2 * mg - 12) / 2, chMax = 190;
+          for (let i = 0; i < liste.length; i += 2) {
+            const duo = liste.slice(i, i + 2), imgs = await Promise.all(duo.map(p => image(p.url)));
+            const h = Math.max(...imgs.map(im => Math.min(chMax, im.height * cw / im.width)));
+            const leg = duo.some(p => p.legende) ? 14 : 0;
+            await place(h + leg + 10);
+            imgs.forEach((im, j) => { const k = Math.min(cw / im.width, chMax / im.height), w = im.width * k, hh = im.height * k, x = mg + j * (cw + 12); page.drawImage(im, { x: x + (cw - w) / 2, y: y - hh, width: w, height: hh }); if (duo[j].legende) page.drawText(versWinAnsi(duo[j].legende).slice(0, 80), { x, y: y - h - 11, size: 8.5, font: ital, color: doux }); });
+            y -= h + leg + 10;
+          }
+          break;
+        }
+        case 'faitA': { const v = r[b.id] || {}; y -= 2; await ecrire(`Fait à : ${v.lieu || '……………………'}`); await ecrire(`Le : ${dateFr(v.date) || '……………………'}`); y -= 4; break; }
+        case 'signature': signatures.push({ b, s: r[b.id] }); break;
+        case 'repeter': for (const [i, sous] of (r[b.id] || []).entries()) { y -= 6; await place(50); await ecrire(`${b.label} ${i + 1}${sous.nom ? ' : ' + sous.nom : ''}`, { taille: 11, police: gras, couleur: accent }); await dessiner(b.blocs.filter(sb => !(sb.id === 'nom' && sb.t === 'champ')), sous); } break;
+      }
+    }
+  }
+  await nouvellePage();
+  await dessiner(modele.blocs, rep);
+  // Signatures côte à côte (deux par ligne)
+  if (signatures.length) {
+    y -= 4;
+    const cw = (W - 2 * mg - 20) / 2, hb = 64;
+    for (let i = 0; i < signatures.length; i += 2) {
+      await place(hb + 22);
+      for (const [j, { b, s }] of signatures.slice(i, i + 2).entries()) {
+        const x = mg + j * (cw + 20);
+        page.drawText(versWinAnsi(b.label), { x, y: y - 10, size: 10, font: gras, color: encre });
+        page.drawRectangle({ x, y: y - 16 - hb, width: cw, height: hb, borderColor: trait, borderWidth: 0.7 });
+        if (s?.tampon) { const t = await image(s.tampon), k = Math.min((cw - 10) / t.width, (hb - 10) / t.height) * 0.9; page.drawImage(t, { x: x + cw - t.width * k - 6, y: y - 16 - hb + 5, width: t.width * k, height: t.height * k }); }
+        if (s?.png) { const im = await image(s.png), k = Math.min((cw - 20) / im.width, (hb - 22) / im.height, 1); page.drawImage(im, { x: x + 10, y: y - 16 - hb + 16, width: im.width * k, height: im.height * k }); }
+        if (s?.nom) page.drawText(versWinAnsi(`${s.mention ? 'Lu et approuvé - ' : ''}${s.nom}${s.client ? ' - ' + new Date(s.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : ''}`).slice(0, 70), { x: x + 6, y: y - 16 - hb + 5, size: 7.5, font: pol, color: doux });
+      }
+      y -= hb + 28;
+    }
+  }
+  // Pied de page : mentions de l'entreprise et numéro de page, sur chaque page
+  const pages = doc.getPages();
+  pages.forEach((p, i) => {
+    lignesMentions.forEach((l, k) => { const t = l; p.drawText(t, { x: (W - pol.widthOfTextAtSize(t, 7)) / 2, y: mg - 10 + (lignesMentions.length - 1 - k) * 9, size: 7, font: k === 0 && e.nom ? gras : pol, color: doux }); });
+    const num = `${i + 1}/${pages.length}`; p.drawText(num, { x: W - mg - pol.widthOfTextAtSize(num, 8) + 20, y: mg - 10, size: 8, font: pol, color: doux });
+  });
+  const octets = await doc.save();
+  // Clients qui ont signé : certificat (date, heure, lieu, empreinte) en dernière page
+  const certs = signatures.filter(x => x.s?.client).map(({ s }) => ({ nom: s.nom, date: s.date, fuseau: s.fuseau || fuseau(s.date), geo: s.geo, adresse: s.adresse, carte: s.carte, mention: s.mention, png: s.png }));
+  return certs.length ? ajouterCertificat(octets, certs, `${modele.nom}${rep.nom || rep.client ? ' - ' + [rep.nom, rep.prenom].filter(Boolean).join(' ') || rep.client : ''}`) : octets;
+}
+
+/* ---------- Éditeur de modèles : on empile des blocs, sans rien dessiner ---------- */
+const TYPES_BLOCS = [
+  ['titre', 'Titre du document', 'texte'], ['section', 'Intertitre', 'texte'], ['para', 'Texte fixe', 'texte'], ['liste', 'Liste à puces (fixe)', 'menu'],
+  ['champ', 'Champ texte (une ligne)', 'texte'], ['zone', 'Champ texte (plusieurs lignes)', 'texte'], ['date', 'Date', 'horloge'],
+  ['case', 'Case à cocher', 'valider'], ['choix', 'Choix (une réponse)', 'menu'], ['grille', 'Tableau d\'avis', 'pages'],
+  ['photos', 'Photos', 'camera'], ['faitA', '« Fait à … le … »', 'texte'], ['signature', 'Signature', 'signature']
+];
+const nomType = t => (TYPES_BLOCS.find(x => x[0] === t) || [t, t === 'repeter' ? 'Groupe répétable' : t])[1];
+function editerModeleFormulaire(existant = null) {
+  const m = existant ? JSON.parse(JSON.stringify(existant)) : { id: 'perso-' + idUnique(), nom: '', resume: '', perso: true, blocs: [{ t: 'titre', texte: 'Titre du document' }] };
+  const fe = feuille({ titre: existant ? 'Modifier mon modèle' : 'Créer mon modèle', plein: true });
+  fe.feuille.classList.add('large', 'editeur-form');
+  const nom = el('input', { class: 'champ', id: 'fm-nom', placeholder: 'Ex. : Bon d\'intervention', maxlength: 60 }); nom.value = m.nom;
+  const resume = el('input', { class: 'champ', id: 'fm-resume', placeholder: 'Une phrase pour le reconnaître (facultatif)', maxlength: 80 }); resume.value = m.resume || '';
+  const depart = el('select', { class: 'champ', id: 'fm-depart' }, el('option', { value: '', text: '— Choisir pour copier ses blocs —' }), tousLesModeles().filter(x => x.id !== m.id).map(x => el('option', { value: x.id, text: x.nom })));
+  depart.addEventListener('change', async () => {
+    const src = tousLesModeles().find(x => x.id === depart.value); if (!src) return;
+    if (m.blocs.length > 1 && !(await confirmer({ titre: `Remplacer les blocs par ceux de « ${src.nom} » ?`, texte: 'Les blocs déjà ajoutés à ce modèle seront remplacés.', action: 'Remplacer les blocs' }))) { depart.value = ''; return; }
+    m.blocs = JSON.parse(JSON.stringify(src.blocs)); if (!nom.value.trim()) nom.value = src.nom + ' (ma version)'; rendre(); depart.value = '';
+  });
+  const liste = el('div', { class: 'fm-liste' });
+  const champTexte = (b, cle, etiquette, multi = false) => {
+    const id = 'fm-' + idUnique();
+    const c = multi ? el('textarea', { class: 'champ', id, rows: 3 }) : el('input', { class: 'champ', id });
+    c.value = Array.isArray(b[cle]) ? b[cle].join('\n') : (b[cle] || '');
+    c.addEventListener('input', () => { b[cle] = multi ? c.value.split('\n').map(s => s.trim()).filter(Boolean) : c.value; });
+    return [el('label', { class: 'etiquette', for: id, text: etiquette }), c];
+  };
+  function rendre() {
+    liste.replaceChildren(...m.blocs.map((b, i) => {
+      const reglages = [];
+      if (['titre', 'section', 'para'].includes(b.t)) reglages.push(...champTexte(b, 'texte', b.t === 'para' ? 'Texte (vous pouvez écrire {E.nom}, {E.adresse}, {E.siret}… pour reprendre votre entreprise)' : 'Texte', b.t === 'para'));
+      if (b.t === 'liste') reglages.push(...champTexte(b, 'items', 'Une ligne par puce', true));
+      if (['champ', 'zone', 'date', 'case', 'choix', 'photos', 'signature'].includes(b.t)) reglages.push(...champTexte(b, 'label', 'Question / libellé'));
+      if (b.t === 'choix') reglages.push(...champTexte(b, 'options', 'Réponses possibles (une par ligne)', true));
+      if (b.t === 'grille') reglages.push(...champTexte(b, 'lignes', 'Lignes du tableau (une par ligne)', true), ...champTexte(b, 'colonnes', 'Colonnes (une par ligne)', true));
+      if (b.t === 'signature') reglages.push(el('div', { class: 'etiquette', text: 'Qui signe ?' }), segments('fm-qui-' + i, [['client', 'Le client (plein écran + certificat)'], ['entreprise', 'L\'entreprise']], b.qui || 'client', v => { b.qui = v; }));
+      if (b.t === 'date') { const c = el('input', { type: 'checkbox', id: 'fm-auto-' + i }); c.checked = !!b.auto; c.addEventListener('change', () => { b.auto = c.checked; }); reglages.push(el('label', { class: 'case-option', for: 'fm-auto-' + i }, c, el('span', { class: 'texte' }, el('strong', { text: 'Date du jour par défaut' })))); }
+      if (['champ', 'zone'].includes(b.t)) { const c = el('input', { type: 'checkbox', id: 'fm-req-' + i }); c.checked = !!b.requis; c.addEventListener('change', () => { b.requis = c.checked; }); reglages.push(el('label', { class: 'case-option', for: 'fm-req-' + i }, c, el('span', { class: 'texte' }, el('strong', { text: 'Obligatoire' }), el('small', { text: 'Le premier champ obligatoire sert aussi à nommer le PDF (ex. : nom du client).' })))); }
+      if (b.t === 'repeter') reglages.push(el('p', { class: 'note', text: `Groupe « ${b.label} » répétable, ${b.blocs.length} bloc${b.blocs.length > 1 ? 's' : ''} (copié d'un modèle).` }));
+      const deplacer = d => { const j = i + d; if (j < 0 || j >= m.blocs.length) return; [m.blocs[i], m.blocs[j]] = [m.blocs[j], m.blocs[i]]; rendre(); };
+      return el('div', { class: 'fm-bloc' },
+        el('div', { class: 'fm-bloc-tete' }, el('strong', { text: `${i + 1}. ${nomType(b.t)}` }),
+          el('span', { class: 'fm-actions' },
+            bouton('', { ico: 'haut', cls: 'btn-icone', label: `Monter le bloc ${i + 1}`, onclick: () => deplacer(-1) }),
+            bouton('', { ico: 'bas', cls: 'btn-icone', label: `Descendre le bloc ${i + 1}`, onclick: () => deplacer(1) }),
+            bouton('', { ico: 'poubelle', cls: 'btn-icone', label: `Supprimer le bloc ${i + 1}`, onclick: () => { m.blocs.splice(i, 1); rendre(); } }))),
+        ...reglages);
+    }));
+  }
+  rendre();
+  const ajouter = async () => {
+    const t = await demanderChoix('Ajouter un bloc', TYPES_BLOCS.map(([v, texte, ico]) => ({ valeur: v, texte, ico })));
+    if (!t) return;
+    const n = { t, id: t + '-' + idUnique() };
+    if (t === 'titre') n.texte = 'Titre'; if (t === 'section') n.texte = 'Intertitre'; if (t === 'para') n.texte = '';
+    if (t === 'liste') n.items = []; if (['champ', 'zone', 'date', 'case', 'photos'].includes(t)) n.label = '';
+    if (t === 'choix') { n.label = ''; n.options = ['Oui', 'Non']; }
+    if (t === 'grille') { n.lignes = ['Critère 1']; n.colonnes = ['++', '+', '-', '--']; n.couleurs = ['#1aa64a', '#8fd14f', '#f28b82', '#e8352b']; }
+    if (t === 'signature') { n.label = 'Signature du client'; n.qui = 'client'; }
+    if (t === 'date') n.auto = true;
+    m.blocs.push(n); rendre();
+    requestAnimationFrame(() => liste.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+  };
+  fe.corps.append(
+    el('label', { class: 'etiquette', for: 'fm-nom', text: 'Nom du modèle' }), nom,
+    el('label', { class: 'etiquette', for: 'fm-resume', text: 'Description' }), resume,
+    el('label', { class: 'etiquette', for: 'fm-depart', text: 'Partir d\'un modèle existant' }), depart,
+    el('h3', { class: 'titre-section', text: 'Blocs du document, dans l\'ordre' }), liste,
+    el('div', { class: 'rangee-btn' }, bouton('Ajouter un bloc', { ico: 'plus', cls: 'btn', onclick: ajouter })));
+  fe.pied.append(
+    existant ? bouton('', { ico: 'poubelle', cls: 'btn danger', label: `Supprimer le modèle « ${m.nom} »`, onclick: async () => {
+      if (!(await confirmer({ titre: `Supprimer le modèle « ${m.nom} » ?`, texte: 'Le modèle disparaît de la liste. Les PDF déjà créés ne changent pas.', action: 'Supprimer le modèle' }))) return;
+      prefs.formulairesPerso = (prefs.formulairesPerso || []).filter(x => x.id !== m.id); ecrirePrefs(prefs); toast('Modèle supprimé'); await fe.fermer(); ouvrirFormulaires();
+    } }) : null,
+    bouton('Essayer', { ico: 'oeil', onclick: () => { m.nom = nom.value.trim() || 'Essai'; saisirFormulaire(m, { id: 'essai-' + idUnique() }); } }),
+    bouton('Enregistrer le modèle', { ico: 'valider', cls: 'btn principal', onclick: async () => {
+      m.nom = nom.value.trim(); m.resume = resume.value.trim();
+      if (!m.nom) { toast('Donnez un nom au modèle.'); nom.focus(); return; }
+      if (!m.blocs.some(b => !['titre', 'section', 'para', 'liste'].includes(b.t))) { toast('Ajoutez au moins une question (champ, date, photo, signature…).'); return; }
+      const l = (prefs.formulairesPerso || []).filter(x => x.id !== m.id); l.push(m);
+      prefs.formulairesPerso = l; ecrirePrefs(prefs); toast('Modèle enregistré'); await fe.fermer(); ouvrirFormulaires();
+    } }));
 }
 
 /** Choisir un logo puis le poser là où on touche (déplaçable et redimensionnable ensuite, comme un tampon). */
@@ -4130,10 +4752,10 @@ function ouvrirParametres() {
   // Les réglages sont rangés en blocs thématiques, chacun avec son icône
   const groupe = (ico, nom, ...lignes) => el('div', { class: 'groupe-reglage' }, el('h4', { class: 'titre-groupe' }, el('span', { class: 'pastille-groupe' }, icone(ico)), nom), ...lignes);
   // Sommaire : on saute directement à la rubrique voulue
-  const rubriques = [['p-drive', 'Google Drive', 'dossier'], ['p-signatures', 'Signatures', 'signature'], ['p-tampons', 'Tampons', 'tampon'], ['p-reglages', 'Réglages', 'reglages'], ['p-stockage', 'Stockage', 'doc'], ['p-apropos', 'À propos', 'info']].filter(([id]) => id !== 'p-drive' || driveConfigure());
+  const rubriques = [['p-drive', 'Google Drive', 'dossier'], ['p-entreprise', 'Entreprise', 'doc'], ['p-signatures', 'Signatures', 'signature'], ['p-tampons', 'Tampons', 'tampon'], ['p-reglages', 'Réglages', 'reglages'], ['p-stockage', 'Stockage', 'doc'], ['p-apropos', 'À propos', 'info']].filter(([id]) => id !== 'p-drive' || driveConfigure());
   const titre = (id, texte) => el('h3', { class: 'titre-section', id, text: texte });
   // Sous-menus (onglets), comme dans « Mes documents » : une rubrique à la fois, sans faire défiler la page
-  const COURTS = { 'p-drive': 'Drive', 'p-signatures': 'Signatures', 'p-tampons': 'Tampons', 'p-reglages': 'Réglages', 'p-stockage': 'Stockage', 'p-apropos': 'À propos' };
+  const COURTS = { 'p-drive': 'Drive', 'p-entreprise': 'Entreprise', 'p-signatures': 'Signatures', 'p-tampons': 'Tampons', 'p-reglages': 'Réglages', 'p-stockage': 'Stockage', 'p-apropos': 'À propos' };
   let rubrique = rubriques.some(([id]) => id === prefs.ongletParametres) ? prefs.ongletParametres : (rubriques.find(([id]) => id === 'p-signatures') || rubriques[0])[0];
   const sommaire = segments('param-onglet', rubriques.map(([id]) => [id, COURTS[id]]), rubrique, v => { rubrique = v; prefs.ongletParametres = v; ecrirePrefs(prefs); montrerRubrique(); });
   sommaire.classList.add('onglets', 'onglets-param');
@@ -4147,6 +4769,7 @@ function ouvrirParametres() {
     sommaire,
     el('div', { class: 'param-contenu' },
     ...(driveConfigure() ? [carte(titre('p-drive', 'Google Drive'), blocDrive())] : []),
+    carte(el('div', { id: 'p-entreprise' }, blocEntreprise())),
     carte(el('div', { id: 'p-signatures' }, sectionSig)),
     carte(el('div', { id: 'p-tampons' }, sectionTam, sectionLogo)),
     carte(titre('p-reglages', 'Réglages'),
@@ -5633,6 +6256,7 @@ $('#btn-scanner').addEventListener('click', () => nouveauScan());
 $('#btn-photos').addEventListener('click', async () => { const fs = await choisirFichiers({ accept: 'image/*', multiple: true }); if (fs.length) outilPhotos({ fichiers: fs }); });
 $('#btn-param').addEventListener('click', ouvrirParametres);
 $('#btn-mesdocs').addEventListener('click', () => ouvrirMesDocuments('documents'));
+$('#btn-formulaires').addEventListener('click', ouvrirFormulaires);
 $('#btn-excel').addEventListener('click', async () => { const [f] = await choisirFichiers({ accept: ACCEPT_TABLEUR }); if (f) convertirTableur(f); });
 $('#btn-modeles').addEventListener('click', () => ouvrirMesDocuments('modeles'));
 $('#btn-creer-tampon').addEventListener('click', async () => { const t = await tamponTexte(); if (t) toast('Votre tampon est prêt : touchez « Tampon » dans un document pour le poser'); });
