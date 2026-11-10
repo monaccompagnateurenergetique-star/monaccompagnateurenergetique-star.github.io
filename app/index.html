@@ -73,7 +73,10 @@ a{color:var(--accent)}
 .etapes-install{list-style:none;margin:8px 0 12px;padding:0;display:grid;gap:10px}
 .etape-install{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--ligne);border-radius:14px;padding:12px 14px;line-height:1.4}
 .etape-install .num{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:14px}
-@media (min-width:1000px){.carte-installer #btn-installer{order:0;flex:0 0 auto;margin:0}.carte-installer{grid-column:1/-1;flex-wrap:nowrap}}
+@media (min-width:1000px){.carte-installer #btn-installer{order:0;flex:0 0 auto;margin:0}.carte-installer{grid-column:1/-1;flex-wrap:nowrap;margin:16px 0 4px}
+  #tableau-bord{grid-column:1/-1;grid-row:1;margin-bottom:16px}
+  body.mode-entreprise #btn-ouvrir,body.mode-entreprise #btn-ouvrir-drive,body.mode-entreprise .col-outils .duo{grid-row:2}
+  body.mode-entreprise #reprendre{grid-row:3}}
 .carte-ouvrir{width:100%;display:flex;align-items:center;gap:16px;padding:20px;border:0;border-radius:18px;background:var(--accent);color:#fff;text-align:left;box-shadow:var(--ombre)}
 .carte-ouvrir:active{background:var(--accent-fort)}
 .carte-ouvrir .ico{width:34px;height:34px}
@@ -690,6 +693,47 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 .rangee-btn{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .rangee-btn .btn{flex:1 1 140px}
 .pad{width:100%;height:240px;border:1px solid var(--ligne);border-radius:12px;touch-action:none;display:block;background:#fff}
+/* Modes Particulier / Entreprise */
+body:not(.mode-entreprise) .seul-entreprise{display:none!important}
+body.mode-entreprise .seul-particulier{display:none!important}
+.tableau-bord{background:#1b2130;color:#fff;border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:12px;margin-bottom:14px}
+.tb-tete{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.tb-tete h2{margin:0;font-size:18px;color:#fff}
+.tb-tete small{display:block;color:#b9c0cf;font-size:13px;font-weight:400}
+.tb-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tb-stat{background:rgba(255,255,255,.07);border:0;border-radius:12px;padding:10px;display:flex;flex-direction:column;text-align:left;color:#fff;min-height:40px}
+.tb-stat strong{font-size:22px;line-height:1.1}
+.tb-stat span{font-size:12.5px;color:#b9c0cf}
+.tb-stat.alerte strong{color:#f4b740}
+.tb-stat.ok strong{color:#5fd3a2}
+.tb-relances{display:flex;flex-direction:column;gap:6px}
+.tb-relances h3{margin:2px 0 0;font-size:14px;color:#b9c0cf;font-weight:600}
+.tb-relance{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 12px;border:0;border-radius:12px;background:rgba(255,255,255,.07);color:#fff;text-align:left}
+.tb-relance span{flex:1;display:flex;flex-direction:column}
+.tb-relance small{color:#b9c0cf;font-size:12.5px}
+.tb-relance:hover,.tb-stat:hover{background:rgba(255,255,255,.13)}
+.tb-actions{display:flex;gap:8px;flex-wrap:wrap}
+.tb-actions .btn{flex:1 1 140px;background:rgba(255,255,255,.1);color:#fff;border-color:transparent}
+.tb-actions .btn.principal{background:#0d6b4f}
+.tb-vide{margin:0;color:#b9c0cf;font-size:14px}
+@media (max-width:520px){.tb-stats{grid-template-columns:repeat(2,1fr)}}
+.etape{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:99px;background:#eef1f6;color:#3b4457}
+.etape.signe,.etape.travaux{background:#e6f3ee;color:#0d6b4f}
+.etape.termine{background:#0d6b4f;color:#fff}
+.etape.perdu{background:#f6e7e7;color:#9b2c2c}
+.etape.devis{background:#fdf3dc;color:#8a5a00}
+.suivi-client{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.suivi-client>div{display:flex;flex-direction:column;gap:4px}
+@media (max-width:520px){.suivi-client{grid-template-columns:1fr}}
+.notes-client{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.note-client{padding:8px 12px;border-radius:10px;background:#f6f5f1;font-size:14px}
+.note-client small{display:block;color:var(--doux);font-size:12px}
+.relance-due{color:#9b2c2c;font-weight:600}
+.carte-offre{display:flex;flex-direction:column;gap:6px}
+.carte-offre strong{font-size:15px}
+.jauge{height:8px;border-radius:99px;background:#e9e6df;overflow:hidden}
+.jauge span{display:block;height:100%;background:var(--accent);border-radius:99px}
+.jauge.pleine span{background:#c0392b}
 /* Dossiers clients */
 .stats-dossiers{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
 .stat{background:#fff;border:1px solid var(--ligne);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column}
@@ -899,6 +943,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
       <button class="btn-icone" id="btn-masquer-install" aria-label="Plus tard (masquer 7 jours)" title="Plus tard"><svg class="ico"><use href="#i-fermer"/></svg></button>
     </div>
     <div class="col-principale">
+    <section id="tableau-bord" class="tableau-bord seul-entreprise" aria-label="Tableau de bord"></section>
     <button class="carte-ouvrir" id="btn-ouvrir">
       <svg class="ico"><use href="#i-crayon"/></svg>
       <div><strong>Modifier un PDF</strong><span>Ouvrir, ajouter du texte, corriger, réorganiser</span></div>
@@ -924,16 +969,16 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
       <button class="tuile" id="btn-scanner"><svg class="ico"><use href="#i-scanner"/></svg><strong>Scanner</strong><span>Une feuille papier en PDF</span></button>
       <button class="tuile" data-outil="numeros"><svg class="ico"><use href="#i-numero"/></svg><strong>Numéroter</strong><span>Ajouter les numéros de page</span></button>
       <button class="tuile" data-outil="filigrane"><svg class="ico"><use href="#i-filigrane"/></svg><strong>Filigrane</strong><span>« COPIE », « CONFIDENTIEL »…</span></button>
-      <button class="tuile" id="btn-creer-tampon"><svg class="ico"><use href="#i-tampon"/></svg><strong>Créer un tampon</strong><span>Votre société, signé dessus</span></button>
+      <button class="tuile seul-entreprise" id="btn-creer-tampon"><svg class="ico"><use href="#i-tampon"/></svg><strong>Créer un tampon</strong><span>Votre société, signé dessus</span></button>
     </div>
     <h2 class="titre-section">En plus</h2>
     <div class="grille-outils outils-plus">
-      <button class="tuile" id="btn-dossiers"><svg class="ico"><use href="#i-dossier"/></svg><strong>Dossiers clients</strong><span>Pièces reçues, manquantes, dossier complet</span></button>
-      <button class="tuile" id="btn-formulaires"><svg class="ico"><use href="#i-formulaire"/></svg><strong>Formulaires</strong><span>PV de réception, visite, attestation…</span></button>
+      <button class="tuile seul-entreprise" id="btn-dossiers"><svg class="ico"><use href="#i-dossier"/></svg><strong>Dossiers clients</strong><span>Pièces reçues, manquantes, dossier complet</span></button>
+      <button class="tuile seul-entreprise" id="btn-formulaires"><svg class="ico"><use href="#i-formulaire"/></svg><strong>Formulaires</strong><span>PV de réception, visite, attestation…</span></button>
       <button class="tuile" id="btn-remplir"><svg class="ico"><use href="#i-texte"/></svg><strong>Remplir un formulaire</strong><span>Cerfa, mandat, contrat…</span></button>
       <button class="tuile" id="btn-signer"><svg class="ico"><use href="#i-signature"/></svg><strong>Signer un PDF</strong><span>Signature et tampon</span></button>
       <button class="tuile" id="btn-mesdocs"><svg class="ico"><use href="#i-dossier"/></svg><strong>Mes documents</strong><span>En cours et historique</span></button>
-      <button class="tuile" id="btn-modeles"><svg class="ico"><use href="#i-copier"/></svg><strong>Modèles</strong><span>Prêts à réutiliser</span></button>
+      <button class="tuile seul-entreprise" id="btn-modeles"><svg class="ico"><use href="#i-copier"/></svg><strong>Modèles</strong><span>Prêts à réutiliser</span></button>
     </div>
     </div>
   </main>
@@ -1012,7 +1057,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.22.0';
+const VERSION_APPLI = '1.23.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -1132,6 +1177,43 @@ const PREFS_DEFAUT = { tailleTexte: 11, couleurTexte: '#111111', largeurSignatur
 function lirePrefs() { try { return { ...PREFS_DEFAUT, ...JSON.parse(localStorage.getItem(CLE_PREFS) || '{}') }; } catch { return { ...PREFS_DEFAUT }; } }
 function ecrirePrefs(p) { try { localStorage.setItem(CLE_PREFS, JSON.stringify(p)); } catch { toast('Impossible d\'enregistrer les réglages.'); } }
 let prefs = lirePrefs();
+/* Mode d'utilisation : « particulier » (simple) ou « entreprise » (dossiers clients, formulaires, tampons, tableau de bord).
+   Première ouverture après la mise à jour : si l'entreprise a déjà été renseignée ou des dossiers créés, on reste en mode Entreprise. */
+if (prefs.mode !== 'particulier' && prefs.mode !== 'entreprise') {
+  prefs.mode = (prefs.entreprise?.nom || prefs.dossiers?.length || prefs.formulairesPerso?.length) ? 'entreprise' : 'particulier';
+  ecrirePrefs(prefs);
+}
+const enEntreprise = () => prefs.mode === 'entreprise';
+function appliquerMode() {
+  document.body.classList.toggle('mode-entreprise', enEntreprise());
+  if (typeof majTableauBord === 'function') majTableauBord();
+}
+/* Documents gratuits : chaque document enregistré ou partagé compte une fois (par mode).
+   « bloquer » restera à false tant que le paiement (abonnement) n'existe pas : on compte, on affiche, on ne bloque pas. */
+const QUOTA = { gratuit: 20, bloquer: false };
+const docsComptes = (m = prefs.mode) => prefs.docsEnregistres?.[m] || [];
+async function verifierQuota(docId) {
+  const m = prefs.mode, liste = docsComptes(m);
+  if (!docId || liste.includes(docId)) return true;
+  if (liste.length >= QUOTA.gratuit && QUOTA.bloquer) { await feuilleOffre(); return false; }
+  prefs.docsEnregistres = { ...(prefs.docsEnregistres || {}), [m]: [...liste, docId] }; ecrirePrefs(prefs);
+  return true;
+}
+function blocOffre() {
+  const n = docsComptes().length, g = QUOTA.gratuit;
+  return el('div', { class: 'carte-offre' },
+    el('strong', { text: `Mode ${enEntreprise() ? 'Entreprise' : 'Particulier'} : ${Math.min(n, g)} / ${g} documents gratuits utilisés` }),
+    el('div', { class: 'jauge' + (n >= g ? ' pleine' : ''), role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': String(g), 'aria-valuenow': String(Math.min(n, g)), 'aria-label': 'Documents gratuits utilisés' },
+      el('span', { style: { width: Math.min(100, n / g * 100) + '%' } })),
+    el('small', { class: 'note', text: n >= g ? 'Vos documents gratuits sont utilisés. Pour l\'instant vous pouvez continuer : l\'abonnement n\'est pas encore proposé.' : 'Un document compte une seule fois, même si vous l\'enregistrez plusieurs fois.' }));
+}
+function feuilleOffre() {
+  return new Promise(res => {
+    const fe = feuille({ titre: 'Documents gratuits utilisés', surFermeture: () => res() });
+    fe.corps.append(el('p', { text: `Vous avez enregistré vos ${QUOTA.gratuit} documents gratuits en mode ${enEntreprise() ? 'Entreprise' : 'Particulier'}.` }), blocOffre());
+    fe.pied.append(bouton('Fermer', { cls: 'btn principal', onclick: () => fe.fermer() }));
+  });
+}
 function lireTampons() { try { const t = JSON.parse(localStorage.getItem(CLE_TAMPONS) || '[]'); return Array.isArray(t) ? t : []; } catch { return []; } }
 function ecrireTampons(liste) {
   try { localStorage.setItem(CLE_TAMPONS, JSON.stringify(liste)); return true; }
@@ -3265,6 +3347,7 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
     retenirNom();
     const nomFinal = nomTouche ? nomSaisi() + '.pdf' : compresse ? nomSortie(nom, 'compressé') : aplatir ? nomSortie(nom, 'aplati') : nom;
     await fe.fermer();
+    if (!(await verifierQuota(D.docId))) return;
     if (!partage) { prefs.destinationExport = destination; ecrirePrefs(prefs); }
     const surDrive = partage ? versDrive : destination !== 'appareil';
     const seulementDrive = !partage && destination === 'drive';
@@ -3371,7 +3454,7 @@ function ouvrirPanneau(type) {
     panneau.append(el('div', { class: 'barre-plus' },
       o('gauche', 'Retour', fermerPanneau),
       o('numero', 'Numéroter', () => ouvrirPanneau('numeros')),
-      o('image', 'Logo', () => { fermerPanneau(); poserLogo(); }),
+      enEntreprise() ? o('image', 'Logo', () => { fermerPanneau(); poserLogo(); }) : null,
       o('filigrane', 'Filigrane', () => ouvrirPanneau('filigrane')),
       o('note', 'Commentaire', () => { fermerPanneau(); demanderPlacement({ outil: 'note' }, 'Touchez l\'endroit où ajouter le commentaire.'); }),
       o('recherche', 'Rechercher', () => { fermerPanneau(); ouvrirRecherche(); }),
@@ -4354,7 +4437,7 @@ const listesPieces = () => {
   return { ...base, ...Object.fromEntries((prefs.listesPerso || []).map(l => [l.id, l])), vide };
 };
 const dossiers = () => prefs.dossiers || [];
-const ecrireDossier = d => { d.maj = Date.now(); prefs.dossiers = [...dossiers().filter(x => x.id !== d.id), d]; ecrirePrefs(prefs); };
+const ecrireDossier = d => { d.maj = Date.now(); prefs.dossiers = [...dossiers().filter(x => x.id !== d.id), d]; ecrirePrefs(prefs); majTableauBord(); };
 const nomClient = c => [c.prenom, c.nom].filter(Boolean).join(' ') || 'Client sans nom';
 const avancement = d => { const n = d.pieces.length, ok = d.pieces.filter(p => p.etat === 'recu').length; return { n, ok, complet: n > 0 && ok === n }; };
 /** Données du client pour pré-remplir un formulaire (champs marqués client: …). */
@@ -4373,8 +4456,50 @@ function barreAvancement(d) {
     el('small', { text: complet ? '✓ Dossier complet' : `${ok} / ${n} pièce${n > 1 ? 's' : ''}` }));
 }
 
+/* ---------- Suivi client (mini CRM) ---------- */
+const ETAPES = [['prospect', 'Prospect'], ['devis', 'Devis envoyé'], ['signe', 'Devis signé'], ['travaux', 'Travaux en cours'], ['termine', 'Terminé'], ['perdu', 'Perdu']];
+const nomEtape = k => (ETAPES.find(e => e[0] === k) || ETAPES[0])[1];
+const etapeDe = d => d.etape || 'prospect';
+const dossierActif = d => !['termine', 'perdu'].includes(etapeDe(d));
+const dateCourte = iso => new Date(iso + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+/** Dossiers à relancer : date de relance arrivée, ou dossier actif incomplet sans activité depuis 7 jours. */
+function aRelancer() {
+  const auj = aujourdhuiIso(), semaine = Date.now() - 7 * 864e5;
+  return dossiers().filter(dossierActif).map(d => {
+    if (d.relance && d.relance <= auj) return { d, pourquoi: `Relance prévue le ${dateCourte(d.relance)}` };
+    if (!d.relance && !avancement(d).complet && (d.maj || d.cree) < semaine) { const n = d.pieces.filter(p => p.etat !== 'recu').length; return { d, pourquoi: `${n} pièce${n > 1 ? 's' : ''} manquante${n > 1 ? 's' : ''}, rien depuis 7 jours` }; }
+    return null;
+  }).filter(Boolean).sort((a, b) => (a.d.relance || '9') .localeCompare(b.d.relance || '9'));
+}
+function majTableauBord() {
+  const zone = $('#tableau-bord'); if (!zone) return;
+  if (!enEntreprise()) { zone.replaceChildren(); return; }
+  const tous = dossiers(), actifs = tous.filter(dossierActif), relances = aRelancer();
+  const complets = actifs.filter(d => avancement(d).complet).length;
+  const signes = tous.filter(d => ['signe', 'travaux'].includes(etapeDe(d))).length;
+  const stat = (n, texte, cls, filtre) => el('button', { type: 'button', class: 'tb-stat' + (cls ? ' ' + cls : ''), onclick: () => ouvrirDossiers(filtre) }, el('strong', { text: String(n) }), el('span', { text: texte }));
+  zone.replaceChildren(
+    el('div', { class: 'tb-tete' },
+      el('h2', {}, 'Tableau de bord', el('small', { text: entreprise().nom || 'Mode Entreprise' })),
+      bouton('', { ico: 'reglages', cls: 'btn-icone', label: 'Coordonnées de l\'entreprise', onclick: () => { prefs.ongletParametres = 'p-entreprise'; ecrirePrefs(prefs); ouvrirParametres(); } })),
+    el('div', { class: 'tb-stats' },
+      stat(actifs.length, 'dossier' + (actifs.length > 1 ? 's' : '') + ' en cours', '', 'actifs'),
+      stat(signes, 'devis signé' + (signes > 1 ? 's' : ''), '', 'signe'),
+      stat(complets, 'complet' + (complets > 1 ? 's' : ''), 'ok', 'complets'),
+      stat(relances.length, 'à relancer', relances.length ? 'alerte' : '', 'relancer')),
+    el('div', { class: 'tb-relances' },
+      el('h3', { text: relances.length ? 'À relancer' : 'Relances' }),
+      ...(relances.length ? relances.slice(0, 4).map(({ d, pourquoi }) => el('button', { type: 'button', class: 'tb-relance', onclick: () => ouvrirDossier(d.id) },
+        el('span', {}, el('strong', { text: nomClient(d.client) }), el('small', { text: pourquoi })), icone('droite')))
+        : [el('p', { class: 'tb-vide', text: tous.length ? 'Aucune relance aujourd\'hui.' : 'Créez votre premier dossier client pour suivre vos chantiers ici.' })])),
+    el('div', { class: 'tb-actions' },
+      bouton('Nouveau dossier', { ico: 'plus', cls: 'btn principal', onclick: () => nouveauDossier() }),
+      bouton('Tous les dossiers', { ico: 'dossier', onclick: () => ouvrirDossiers() }),
+      bouton('Formulaires', { ico: 'formulaire', onclick: () => ouvrirFormulaires() })));
+}
+
 /* ---------- Tableau de bord ---------- */
-function ouvrirDossiers() {
+function ouvrirDossiers(filtreInitial = 'tous') {
   const fe = feuille({ titre: 'Dossiers clients', plein: true, pied: false });
   fe.feuille.classList.add('large');
   const recherche = el('input', { class: 'champ', id: 'recherche-dossiers', type: 'search', placeholder: 'Nom, ville…', autocomplete: 'off' });
@@ -4390,18 +4515,24 @@ function ouvrirDossiers() {
       el('div', { class: 'stat' }, el('strong', { text: String(tous.length - complets) }), el('span', { text: 'en cours' })),
       el('div', { class: 'stat ok' }, el('strong', { text: String(complets) }), el('span', { text: 'complet' + (complets > 1 ? 's' : '') })),
       el('div', { class: 'stat' }, el('strong', { text: String(manquantes) }), el('span', { text: 'pièce' + (manquantes > 1 ? 's' : '') + ' manquante' + (manquantes > 1 ? 's' : '') })));
-    const q = sansA(recherche.value.trim());
-    const liste = tous.filter(d => !q || sansA([nomClient(d.client), d.client.ville, d.client.adresse].join(' ')).includes(q));
+    const q = sansA(recherche.value.trim()), f = filtre.value, relancer = new Set(aRelancer().map(x => x.d.id));
+    const liste = tous.filter(d => !q || sansA([nomClient(d.client), d.client.ville, d.client.adresse].join(' ')).includes(q))
+      .filter(d => f === 'tous' || (f === 'actifs' && dossierActif(d)) || (f === 'complets' && dossierActif(d) && avancement(d).complet) || (f === 'relancer' && relancer.has(d.id)) || (f === 'signe' && ['signe', 'travaux'].includes(etapeDe(d))) || f === etapeDe(d));
     zone.replaceChildren(...(liste.length ? liste.map(d => el('button', { type: 'button', class: 'carte-dossier', onclick: async () => { await fe.fermer(); ouvrirDossier(d.id); } },
       el('span', { class: 'carte-dossier-tete' }, el('strong', { text: nomClient(d.client) }), el('small', { text: [d.client.ville, listesPieces()[d.liste]?.nom].filter(Boolean).join(' · ') })),
+      el('span', {}, el('span', { class: 'etape ' + etapeDe(d), text: nomEtape(etapeDe(d)) }), relancer.has(d.id) ? el('small', { class: 'relance-due', text: '  À relancer' }) : null),
       barreAvancement(d)))
-      : [el('div', { class: 'vide-dossiers' }, el('p', { text: tous.length ? 'Aucun dossier ne correspond à cette recherche.' : 'Aucun dossier pour l\'instant. Créez-en un par client : vous verrez d\'un coup d\'œil les pièces reçues et celles qui manquent.' }),
+      : [el('div', { class: 'vide-dossiers' }, el('p', { text: tous.length ? 'Aucun dossier ne correspond à cette recherche ou à ce filtre.' : 'Aucun dossier pour l\'instant. Créez-en un par client : vous verrez d\'un coup d\'œil les pièces reçues et celles qui manquent.' }),
         tous.length ? null : bouton('Créer le premier dossier', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); nouveauDossier(); } }))]));
   };
   recherche.addEventListener('input', afficher);
+  const filtre = el('select', { class: 'champ', id: 'filtre-dossiers', 'aria-label': 'Afficher' },
+    [['tous', 'Tous les dossiers'], ['actifs', 'En cours'], ['relancer', 'À relancer'], ['complets', 'Complets (en cours)'], ['signe', 'Devis signés et travaux'], ...ETAPES.map(([k, n]) => [k, 'Étape : ' + n])].map(([v, t]) => el('option', { value: v, text: t })));
+  filtre.value = filtreInitial; filtre.addEventListener('change', afficher);
   fe.corps.append(stats,
     el('div', { class: 'barre-dossiers' },
       el('label', { class: 'lib-recherche', for: 'recherche-dossiers' }, icone('zoom'), 'Rechercher'), recherche,
+      filtre,
       bouton('Mes listes', { ico: 'vue-liste', label: 'Mes listes de pièces', onclick: async () => { await fe.fermer(); ouvrirMesListes(ouvrirDossiers); } }),
       bouton('Nouveau dossier', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); nouveauDossier(); } })),
     zone);
@@ -4515,7 +4646,7 @@ function ouvrirDossier(id) {
   let d = dossiers().find(x => x.id === id); if (!d) { toast('Dossier introuvable.'); return; }
   const fe = feuille({ titre: nomClient(d.client), plein: true });
   fe.feuille.classList.add('large', 'fiche-dossier');
-  const tete = el('div', { class: 'dossier-tete' }), liste = el('div', { class: 'liste-pieces' });
+  const tete = el('div', { class: 'dossier-tete' }), liste = el('div', { class: 'liste-pieces' }), suivi = el('div', { class: 'dossier-tete' });
   const sauver = () => { ecrireDossier(d); rendre(); };
   function rendre() {
     fe.feuille.querySelector('.feuille-tete h2').textContent = nomClient(d.client);
@@ -4526,6 +4657,24 @@ function ouvrirDossier(id) {
         el('p', { class: 'note', text: [c.tel, c.email].filter(Boolean).join(' · ') || 'Téléphone et e-mail non renseignés' })),
       barreAvancement(d),
       bouton('Modifier le client', { ico: 'crayon', cls: 'btn', onclick: modifierClient }));
+    // Suivi : étape, date de relance, notes (le plus récent en haut)
+    const etape = el('select', { class: 'champ', id: 'd-etape' }, ETAPES.map(([k, n]) => el('option', { value: k, text: n })));
+    etape.value = etapeDe(d);
+    etape.addEventListener('change', () => { d.etape = etape.value; (d.notes ||= []).push({ d: Date.now(), t: 'Étape : ' + nomEtape(d.etape), auto: true }); if (!dossierActif(d)) d.relance = ''; sauver(); toast('Étape enregistrée'); });
+    const relance = el('input', { class: 'champ', id: 'd-relance', type: 'date' }); relance.value = d.relance || '';
+    relance.addEventListener('change', () => { d.relance = relance.value; sauver(); toast(relance.value ? 'Relance prévue le ' + dateCourte(relance.value) : 'Relance retirée'); });
+    const note = el('input', { class: 'champ', id: 'd-note', autocomplete: 'off', placeholder: 'Ex. : Appelé, rappeler pour le RIB' });
+    const ajouterNote = () => { const t = note.value.trim(); if (!t) { note.focus(); return; } (d.notes ||= []).push({ d: Date.now(), t }); sauver(); setTimeout(() => $('#d-note')?.focus(), 0); };
+    note.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); ajouterNote(); } });
+    const notes = (d.notes || []).slice().reverse();
+    suivi.replaceChildren(
+      el('div', { class: 'suivi-client' },
+        el('div', {}, el('label', { class: 'etiquette', for: 'd-etape', text: 'Étape' }), etape),
+        el('div', {}, el('label', { class: 'etiquette', for: 'd-relance', text: 'Relancer le' }), relance)),
+      el('label', { class: 'etiquette', for: 'd-note', text: 'Ajouter une note' }),
+      el('div', { class: 'barre-dossiers' }, note, bouton('Ajouter', { ico: 'plus', onclick: ajouterNote })),
+      notes.length ? el('div', { class: 'notes-client' }, notes.slice(0, 20).map(n => el('div', { class: 'note-client' },
+        el('small', { text: new Date(n.d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) }), n.t))) : null);
     liste.replaceChildren(...d.pieces.map((p, i) => {
       const modele = p.modele && tousLesModeles().find(m => m.id === p.modele);
       const recu = p.etat === 'recu';
@@ -4605,6 +4754,7 @@ function ouvrirDossier(id) {
     toast(manquantes ? `${lots.length} pièce(s) réunie(s). Attention : ${manquantes} pièce(s) encore manquante(s).` : 'Toutes les pièces sont réunies en un seul PDF.', 6000);
   }
   fe.corps.append(tete,
+    el('h3', { class: 'titre-section', text: 'Suivi' }), suivi,
     el('h3', { class: 'titre-section', text: 'Pièces du dossier' }), liste,
     el('div', { class: 'rangee-btn' }, bouton('Ajouter une pièce à la liste', { ico: 'plus', cls: 'btn', onclick: () => {
       const n = prompt('Nom de la pièce (ex. : Attestation d\'assurance) :'); if (!n || !n.trim()) return;
@@ -4744,8 +4894,13 @@ function choisirTampon(type) {
           rapide('✓ Coche', { rapide: 'marque', marque: 'coche' }),
           rapide('✗ Croix', { rapide: 'marque', marque: 'croix' })),
         el('h3', { class: 'titre-section', text: 'Mes tampons' }));
+      if (!enEntreprise()) {
+        fe.corps.lastChild.remove();
+        fe.corps.append(el('p', { class: 'note', text: 'Tampons de société et logo : activez le mode Entreprise dans Paramètres → Réglages.' }));
+        return;
+      }
     }
-    if (type === 'signature') fe.corps.append(el('div', { class: 'rangee-btn', style: { marginTop: 0 } }, bouton('Faire signer le client', { ico: 'signature', cls: 'btn principal', onclick: () => { choix = { rapide: 'client' }; fe.fermer(); } })), el('p', { class: 'note', text: 'Plein écran pour le client, certificat avec date, heure et lieu. Sa signature n\'est pas gardée dans les vôtres.' }), el('h3', { class: 'titre-section', text: 'Mes signatures' }));
+    if (type === 'signature') fe.corps.append(el('div', { class: 'rangee-btn', style: { marginTop: 0 } }, bouton(enEntreprise() ? 'Faire signer le client' : 'Faire signer une autre personne', { ico: 'signature', cls: 'btn principal', onclick: () => { choix = { rapide: 'client' }; fe.fermer(); } })), el('p', { class: 'note', text: 'Plein écran pour la personne qui signe, certificat avec date, heure et lieu. Sa signature n\'est pas gardée dans les vôtres.' }), el('h3', { class: 'titre-section', text: 'Mes signatures' }));
     const liste = lireTampons().filter(t => t.type === type);
     if (liste.length) {
       fe.corps.append(el('div', { class: 'grille-tampons' }, liste.map(t =>
@@ -5121,8 +5276,18 @@ function renommerEnPlace(span, t, apres) {
   });
   span.addEventListener('blur', () => finir(true), { once: true });
 }
+/** Change de mode, puis rouvre les Paramètres au bon endroit (coordonnées de l'entreprise à remplir). */
+async function changerMode(mode) {
+  if (mode === prefs.mode) return;
+  prefs.mode = mode; prefs.ongletParametres = mode === 'entreprise' ? 'p-entreprise' : 'p-reglages'; ecrirePrefs(prefs);
+  appliquerMode();
+  if (document.querySelector('.feuille.parametres') && fermerFeuilleParametres) await fermerFeuilleParametres();
+  toast(mode === 'entreprise' ? 'Mode Entreprise activé : renseignez les coordonnées de votre entreprise.' : 'Mode Particulier activé. Vos dossiers et tampons sont gardés : ils reviendront si vous repassez en mode Entreprise.', 6000);
+}
+let fermerFeuilleParametres = null;
 function ouvrirParametres() {
   const fe = feuille({ titre: 'Paramètres', plein: true, pied: false });
+  fermerFeuilleParametres = async () => { await fe.fermer(); ouvrirParametres(); };
   // Deux rubriques séparées : « Mes signatures » et « Mes tampons », chacune en blocs (comme les Réglages)
   const sectionSig = el('div'), sectionTam = el('div'), sectionLogo = el('div');
   const majListe = () => {
@@ -5195,7 +5360,7 @@ function ouvrirParametres() {
   const groupe = (ico, nom, ...lignes) => el('div', { class: 'groupe-reglage' }, el('h4', { class: 'titre-groupe' }, el('span', { class: 'pastille-groupe' }, icone(ico)), nom), ...lignes);
   // Sommaire : on saute directement à la rubrique voulue
   // Trois onglets seulement : tout ce qui concerne l'entreprise, puis les réglages de l'appli, puis « À propos »
-  const rubriques = [['p-entreprise', 'Mon entreprise'], ['p-reglages', 'Réglages'], ['p-apropos', 'À propos']];
+  const rubriques = [['p-entreprise', enEntreprise() ? 'Mon entreprise' : 'Mes signatures'], ['p-reglages', 'Réglages'], ['p-apropos', 'À propos']];
   // Anciens noms d'onglets (versions précédentes) → nouvel onglet qui les contient
   const ANCIENS = { 'p-signatures': 'p-entreprise', 'p-tampons': 'p-entreprise', 'p-drive': 'p-reglages', 'p-stockage': 'p-reglages' };
   const titre = (id, texte) => el('h3', { class: 'titre-section', id, text: texte });
@@ -5213,10 +5378,18 @@ function ouvrirParametres() {
   fe.corps.append(
     sommaire,
     el('div', { class: 'param-contenu' },
-    carte('p-entreprise', el('div', { id: 'p-infos' }, blocEntreprise())),
-    carte('p-entreprise', el('div', { id: 'p-logos' }, sectionLogo)),
+    ...(enEntreprise() ? [
+      carte('p-entreprise', el('div', { id: 'p-infos' }, blocEntreprise())),
+      carte('p-entreprise', el('div', { id: 'p-logos' }, sectionLogo))] : []),
     carte('p-entreprise', el('div', { id: 'p-signatures' }, sectionSig)),
-    carte('p-entreprise', el('div', { id: 'p-tampons' }, sectionTam)),
+    enEntreprise() ? carte('p-entreprise', el('div', { id: 'p-tampons' }, sectionTam))
+      : carte('p-entreprise', titre('p-pro', 'Vous êtes une entreprise ?'),
+        el('p', { class: 'note', text: 'Le mode Entreprise ajoute : vos coordonnées et votre logo sur les documents, les tampons de société, les dossiers clients avec tableau de bord, et les formulaires (PV de réception, attestation, mandat…).' }),
+        el('div', { class: 'rangee-btn' }, bouton('Passer en mode Entreprise', { ico: 'dossier', cls: 'btn principal', onclick: () => changerMode('entreprise') }))),
+    carte('p-reglages', titre('p-mode', 'Mode d\'utilisation'),
+      el('p', { class: 'note', text: 'Particulier : l\'essentiel pour modifier, remplir et signer vos documents. Entreprise : en plus, coordonnées de l\'entreprise, tampons, logo, dossiers clients, formulaires et tableau de bord.' }),
+      (() => { const s = segments('pref-mode', [['particulier', 'Particulier'], ['entreprise', 'Entreprise']], prefs.mode, v => changerMode(v)); s.setAttribute('aria-label', 'Mode d\'utilisation'); return s; })(),
+      el('div', { style: { marginTop: '14px' } }, blocOffre())),
     carte('p-reglages', titre('p-reglages-app', 'Réglages'),
     groupe('texte', 'Texte ajouté',
       reglage('tailleTexte', 'Taille', [['9', 'Petite'], ['11', 'Normale'], ['14', 'Grande']], 'Pour le texte que vous écrivez sur un PDF'),
@@ -6706,6 +6879,7 @@ $('#btn-formulaires').addEventListener('click', ouvrirFormulaires);
 $('#btn-dossiers').addEventListener('click', ouvrirDossiers);
 $('#btn-excel').addEventListener('click', async () => { const [f] = await choisirFichiers({ accept: ACCEPT_TABLEUR }); if (f) convertirTableur(f); });
 $('#btn-modeles').addEventListener('click', () => ouvrirMesDocuments('modeles'));
+appliquerMode();
 $('#btn-creer-tampon').addEventListener('click', async () => { const t = await tamponTexte(); if (t) toast('Votre tampon est prêt : touchez « Tampon » dans un document pour le poser'); });
 $('#btn-ouvrir-drive').addEventListener('click', () => choisirDansDrive('ouvrir'));
 $('#pastille-drive').addEventListener('click', () => driveConnecte() ? ouvrirMesDocuments('drive') : connecterDrive());
