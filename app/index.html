@@ -331,6 +331,10 @@ a{color:var(--accent)}
 #ecran-doc.mode-lire.onglet-document #barre-apercu{display:flex}
 #ecran-doc.mode-lire :is(.inserer,.ajout-fin,#aide-placement){display:none!important}
 #ecran-doc.mode-lire #defil{background:#c9c7c0}
+/* Lecture pure : document en grand, barre simple (Modifier, Partager, Enregistrer, Plus) */
+#ap-plus{display:none}
+#ecran-doc.lecture-pure #ap-plus{display:flex}
+#ecran-doc.lecture-pure :is(.onglets,#doc-apercu,#doc-annuler,#doc-partager,#doc-enregistrer){display:none}
 #doc-apercu[aria-pressed="true"]{background:var(--accent-pale);color:var(--accent-fort)}
 #ecran-doc:not(.onglet-document) :is(#defil,#indic-page,#aide-placement,#barre-recherche,#bandeau-page){display:none!important}
 #ecran-doc:not(.onglet-pages) #vue-pages{display:none}
@@ -1146,6 +1150,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
     <button class="btn principal" id="ap-retour"><svg class="ico"><use href="#i-crayon"/></svg>Revenir à la modification</button>
     <button class="outil" id="ap-partager"><svg class="ico"><use href="#i-partager"/></svg>Partager</button>
     <button class="outil" id="ap-enregistrer"><svg class="ico"><use href="#i-enregistrer"/></svg>Enregistrer</button>
+    <button class="outil" id="ap-plus" aria-label="Plus : signer, organiser, fusionner, rechercher, alléger"><svg class="ico"><use href="#i-menu"/></svg>Plus</button>
   </footer>
 </section>
 
@@ -1160,7 +1165,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.27.4';
+const VERSION_APPLI = '1.28.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -1571,13 +1576,15 @@ async function pagesDe(source, k, deja = 0) {
   return res;
 }
 
-async function ouvrirFichier(f) {
+async function ouvrirFichier(f, opts) {
   if (!estPdf(f)) { toast('Ce fichier n\'est pas un PDF.'); return; }
-  return ouvrirDocuments([await lireFichier(f)]);
+  return ouvrirDocuments([await lireFichier(f)], opts);
 }
 const ouvrirPdf = (octets, nom, opts) => ouvrirDocuments([{ octets, nom }], opts);
 
-async function ouvrirDocuments(fichiers, { onglet = 'document', restaurer = null } = {}) {
+/* Mode lecture : un PDF reçu (« Ouvrir avec », Partager, glisser-déposer, pièce d'un client, Drive) s'ouvre d'abord
+   en simple lecture ; « Modifier » passe aux outils. Un PDF à champs (formulaire) s'ouvre directement en modification. */
+async function ouvrirDocuments(fichiers, { onglet = 'document', restaurer = null, lecture = false } = {}) {
   if (!D && document.querySelector('.feuille.page-app:not(.fermee)')) await fermerTout();
   if (D && D.modifie) {
     // Le document en cours est gardé dans « Mes documents » (sinon, on demande avant de le perdre)
@@ -1617,6 +1624,7 @@ async function ouvrirDocuments(fichiers, { onglet = 'document', restaurer = null
       afficherEcran('doc'); ouvrirCouche(fermerDocument);
     }
     dernierePage = null;
+    if (lecture && onglet === 'document' && !restaurer && !sources.some(s => s.aDesChamps)) { D.mode = 'lire'; D.lecture = true; }
     fermerRecherche(true);
     majClassesDoc();
     choisirOnglet(onglet);
@@ -1666,6 +1674,12 @@ function majClassesDoc() {
   }
   ecranDoc.classList.toggle('mode-lire', D.mode === 'lire');
   ecranDoc.classList.toggle('mode-editer', D.mode === 'editer');
+  const pure = D.mode === 'lire' && !!D.lecture;
+  if (ecranDoc.classList.contains('lecture-pure') !== pure || !$('#ap-retour').dataset.fait) {
+    ecranDoc.classList.toggle('lecture-pure', pure);
+    $('#ap-retour').replaceChildren(icone('crayon'), pure ? 'Modifier' : 'Revenir à la modification');
+    $('#ap-retour').dataset.fait = '1';
+  }
   ['document', 'pages'].forEach(o => ecranDoc.classList.toggle('onglet-' + o, D.onglet === o));
   ecranDoc.classList.toggle('avec-selection', D.mode === 'editer' && !!D.selection);
   ecranDoc.classList.toggle('avec-panneau', !!D.panneau);
@@ -1689,6 +1703,7 @@ function basculerApercu(actif = D.mode !== 'lire') {
   if (document.activeElement && pagesEl.contains(document.activeElement)) document.activeElement.blur();
   terminerEdition(); annulerPlacement(); selectionner(null);
   D.mode = actif ? 'lire' : 'editer';
+  if (!actif) D.lecture = false;
   if (D.onglet !== 'document') choisirOnglet('document');
   majClassesDoc();
   $('#doc-apercu').setAttribute('aria-pressed', String(actif));
@@ -1699,12 +1714,32 @@ function basculerApercu(actif = D.mode !== 'lire') {
     rendreItems(pg.id);
     if (v.visible) rendrePage(pg.id);
   }
-  if (actif) toast('Aperçu : voici le document tel qu\'il sera enregistré.');
+  if (actif && !D.lecture) toast('Aperçu : voici le document tel qu\'il sera enregistré.');
 }
 $('#doc-apercu').addEventListener('click', () => basculerApercu());
 $('#ap-retour').addEventListener('click', () => basculerApercu(false));
 $('#ap-partager').addEventListener('click', () => exporter('partager'));
 $('#ap-enregistrer').addEventListener('click', () => exporter('enregistrer'));
+/** Lecture : « Plus » propose les transformations courantes sans passer par tous les outils. */
+$('#ap-plus').addEventListener('click', async () => {
+  if (!D) return;
+  const v = await demanderChoix('Que voulez-vous faire ?', [
+    { valeur: 'signer', texte: 'Signer', ico: 'signature' },
+    { valeur: 'texte', texte: 'Écrire ou remplir', ico: 'texte' },
+    { valeur: 'pages', texte: 'Organiser les pages (trier, pivoter, supprimer)', ico: 'pages' },
+    { valeur: 'fusion', texte: 'Ajouter d\'autres PDF ou photos', ico: 'fusion' },
+    { valeur: 'rechercher', texte: 'Rechercher dans le document', ico: 'recherche' },
+    { valeur: 'compresser', texte: 'Enregistrer en plus léger', ico: 'compresser' },
+    { valeur: 'images', texte: 'Convertir en images (JPG)', ico: 'images' }]);
+  if (!v || !D) return;
+  if (v === 'rechercher') return ouvrirRecherche();
+  if (v === 'compresser') return exporter('enregistrer');
+  if (v === 'images') return exporter('enregistrer', { format: 'jpg' });
+  basculerApercu(false);
+  if (v === 'pages') return choisirOnglet('pages');
+  if (v === 'fusion') return ajouterFichiers(D.pages.length);
+  $(`#barre-editer [data-action="${v === 'signer' ? 'signature' : 'texte'}"]`)?.click();
+});
 $('#onglet-pages').addEventListener('click', () => choisirOnglet('pages'));
 
 /* Une page seule (touchée dans l'onglet Pages) */
@@ -4955,7 +4990,7 @@ function ouvrirDossier(id, filtre = 'tous') {
   async function voirPiece(p) {
     const octets = await bdGet('fichiers', 'piece:' + p.id).catch(() => null);
     if (!octets) { toast('Le fichier de cette pièce est introuvable sur cet appareil.'); return; }
-    await fe.fermer(); ouvrirPdf(new Uint8Array(octets), p.fichier?.nom || p.nom + '.pdf');
+    await fe.fermer(); ouvrirPdf(new Uint8Array(octets), p.fichier?.nom || p.nom + '.pdf', { lecture: true });
   }
   async function remplirPiece(p, modele) {
     await fe.fermer();
@@ -5968,7 +6003,7 @@ async function traiterFichiers(fichiers) {
   if (!fichiers.some(estPdf) && fichiers.some(estTableur)) return convertirTableur(fichiers.find(estTableur));
   const pdfs = fichiers.filter(estPdf), imgs = fichiers.filter(f => !estPdf(f) && estImage(f));
   if (!pdfs.length && !imgs.length) { toast('Ces fichiers ne sont pas pris en charge (PDF ou images uniquement).'); return; }
-  if (pdfs.length === 1 && !imgs.length) return ouvrirFichier(pdfs[0]);
+  if (pdfs.length === 1 && !imgs.length) return ouvrirFichier(pdfs[0], { lecture: true });
   if (!pdfs.length) return outilPhotos({ fichiers: imgs });
   // Plusieurs fichiers : on les réunit et on montre l'onglet Pages
   const lots = await Promise.all(pdfs.map(lireFichier));
@@ -6508,7 +6543,7 @@ async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
           const o = await bdGet('fichiers', 'h' + h.id);
           if (!o) { toast('Ce fichier n\'est plus disponible.'); return; }
           const octets = new Uint8Array(o);
-          if (choix === 'ouvrir') ouvrirPuis(() => ouvrirPdf(octets, h.nom));
+          if (choix === 'ouvrir') ouvrirPuis(() => ouvrirPdf(octets, h.nom, { lecture: true }));
           else if (choix === 'partager') partager([fichierPdf(octets, h.nom)]);
           else if (await enregistrer(octets, h.nom)) toast('Fichier enregistré');
         } })));
@@ -6766,7 +6801,7 @@ async function retourChoixDrive(choix, ids, rouvrir) {
     }
   } catch (e) { console.error(e); toast('Le fichier n\'a pas pu être téléchargé : ' + e.message, 6000); return; }
   finally { libre(); }
-  await ouvrirDocuments(fichiers);
+  await ouvrirDocuments(fichiers, { lecture: choix === 'ouvrir' });
   if (choix === 'modele' && D) demarrerCreationModele();
 }
 async function driveFetch(url, opts = {}) {
@@ -6952,7 +6987,7 @@ async function listeDrive(zone, ouvrirPuis) {
       onclick: async () => {
         occupe('Téléchargement depuis Drive…');
         let octets; try { octets = await telechargerDrive(f.id); } catch (e) { toast('Le fichier n\'a pas pu être téléchargé : ' + e.message, 5000); return; } finally { libre(); }
-        ouvrirPuis(() => ouvrirPdf(octets, f.name));
+        ouvrirPuis(() => ouvrirPdf(octets, f.name, { lecture: true }));
       },
       actions: [bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: `Mettre ${f.name} à la corbeille de Drive`, onclick: async () => {
         if (!await confirmer({ titre: `Mettre « ${f.name} » à la corbeille de Drive ?`, texte: 'Vous pourrez le récupérer pendant 30 jours depuis la corbeille de Google Drive.', action: 'Mettre à la corbeille' })) return;
