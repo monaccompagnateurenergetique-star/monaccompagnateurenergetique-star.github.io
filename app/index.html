@@ -968,127 +968,154 @@ body.mode-entreprise .seul-particulier{display:none!important}
 @media (max-width:640px){.page-outils .grille-formulaires{grid-template-columns:1fr 1fr;gap:8px}.page-outils .carte-form{padding:12px 10px}}
 /* ---------- Créateur de documents ---------- */
 body .feuille.createur .feuille-corps{padding:0;overflow:hidden;display:flex;flex-direction:column;background:#e8ecea}
-.cr-barre{display:flex;align-items:flex-end;gap:10px 12px;flex-wrap:wrap;padding:8px 14px 10px;background:var(--carte);border-bottom:1px solid var(--ligne)}
-.cr-nom-boite{flex:1 1 240px;min-width:0;display:flex;flex-direction:column;gap:2px}
-.cr-etiq{font-size:12.5px;font-weight:600;color:var(--doux)}
-.cr-barre .cr-nom{min-height:44px;width:100%}
-.cr-onglets{flex:none;margin:0}
-.cr-actions{display:flex;align-items:center;gap:4px;flex:none}
+.cr-barre{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:8px 12px;background:var(--carte);border-bottom:1px solid var(--ligne)}
+.cr-barre .cr-nom{flex:1 1 200px;min-width:0;min-height:44px;font-weight:600}
+.cr-actions{display:flex;align-items:center;gap:6px;flex:none;margin-left:auto}
 .cr-zone{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr)}
-.cr-plan{overflow:auto;padding:46px 10px 40px;overscroll-behavior:contain}
-.cr-cote{display:none}
-.cr-form{flex:1;min-height:0;overflow:auto;padding:16px 12px 40px}
-body .feuille.createur .cr-pied{gap:2px;padding:4px 6px calc(4px + var(--bas-sur))}
-body .feuille.createur .cr-pied .cr-outil{flex:1;flex-direction:column;gap:2px;min-height:54px;padding:4px 2px;font-size:12.5px;border:0;background:none;color:var(--encre);min-width:0}
-.cr-pied .cr-outil .ico{color:var(--accent)}
-body .feuille.createur.cr-mode-form .cr-pied{display:none}
-@media (max-width:999px){
-  .cr-barre{gap:8px;padding:8px 12px}
-  .cr-etiq{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-  .cr-nom-boite{flex-basis:100%}
-  .cr-barre .cr-nom{min-height:42px}
-  .cr-onglets{flex:1 1 auto;flex-wrap:nowrap;gap:4px}
-  .cr-onglets span{padding:0 10px;min-height:40px;font-size:13.5px}
-  .cr-actions .btn{padding:0 10px;min-height:40px}
-  .cr-actions .btn-icone{width:40px;height:40px}
-}
+.cr-plan{overflow:auto;padding:52px 10px 40px;overscroll-behavior:contain}
+.cr-palette,.cr-cote{display:none}
+body .feuille.createur .cr-pied{gap:6px;padding:6px 10px calc(6px + var(--bas-sur))}
+body .feuille.createur .cr-pied .cr-outil{flex:1;gap:6px;min-height:48px;padding:0 6px;font-size:14px;min-width:0}
+body .feuille.createur .cr-pied .cr-outil.fort{flex:1.4;background:var(--accent);border-color:transparent;color:#fff}
+.cr-btn-theme{display:none}
+@media (max-width:999px){.cr-barre{flex-wrap:nowrap}.cr-barre .cr-nom{flex:1 1 100px}.cr-actions .btn{padding:0 12px;min-height:42px}}
 @media (min-width:1000px){
-  .cr-barre{padding:10px 28px 12px}
-  .cr-zone{grid-template-columns:minmax(0,1fr) 320px}
-  .cr-cote{display:block;overflow:auto;background:var(--carte);border-left:1px solid var(--ligne);padding:14px 16px 40px;overscroll-behavior:contain}
-  .cr-plan{padding:56px 28px 60px}
-  .cr-form{padding:24px 28px 60px}
+  .cr-barre{padding:10px 24px}
+  .cr-zone{grid-template-columns:212px minmax(0,1fr)}
+  .cr-palette{display:block;overflow:auto;background:var(--carte);border-right:1px solid var(--ligne);padding:6px 12px 30px;overscroll-behavior:contain}
+  .cr-plan{padding:60px 28px 60px}
   body .feuille.createur .cr-pied{display:none}
+  .cr-btn-theme{display:inline-flex}
 }
-/* La page A4 */
-.cr-page{--px:50px;--py:42px;--doc-c1:#0d6b4f;width:100%;max-width:794px;aspect-ratio:210/297;margin:0 auto;background:#fff;box-shadow:0 1px 2px rgba(27,33,48,.08),0 12px 32px rgba(27,33,48,.10);padding:var(--py) var(--px) 20px;display:flex;flex-direction:column;gap:6px;color:#1d222c;font:14px/1.45 Helvetica,Arial,sans-serif;overflow-wrap:anywhere}
+@media (min-width:1240px){
+  .cr-zone{grid-template-columns:212px minmax(0,1fr) 300px}
+  .cr-cote{display:block;overflow:auto;background:var(--carte);border-left:1px solid var(--ligne);padding:12px 16px 40px;overscroll-behavior:contain}
+  .cr-btn-theme,.cr-ob.pas-large{display:none}
+}
+/* La page */
+.cr-page{--px:50px;--py:42px;--doc-c1:#0d6b4f;width:100%;max-width:794px;aspect-ratio:210/297;margin:0 auto;background:#fff;box-shadow:0 1px 2px rgba(27,33,48,.08),0 12px 32px rgba(27,33,48,.10);padding:var(--py) var(--px) 20px;display:flex;flex-direction:column;gap:10px;color:#1d222c;font:14px/1.45 Helvetica,Arial,sans-serif;overflow-wrap:anywhere}
 .cr-page.police-classique{font-family:"Times New Roman",Times,serif;font-size:15px}
-@media (max-width:640px){.cr-page{--px:16px;--py:18px;font-size:13px;aspect-ratio:auto;min-height:70vh}.cr-page.police-classique{font-size:14px}}
-.cr-entete{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding-bottom:12px;margin-bottom:8px;border-bottom:2px solid var(--doc-c1);font-size:.8em;line-height:1.4}
+@media (max-width:640px){.cr-page{--px:14px;--py:16px;font-size:14px;aspect-ratio:auto;min-height:60vh}.cr-page.police-classique{font-size:15px}}
+.cr-entete{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding-bottom:12px;margin-bottom:6px;border-bottom:2px solid var(--doc-c1);font-size:.8em;line-height:1.4}
 .cr-entete-g{display:flex;gap:12px;align-items:flex-start;min-width:0}
 .cr-entete-g img{max-width:110px;max-height:48px;object-fit:contain;flex:none}
 .cr-entete-g>div{display:flex;flex-direction:column;min-width:0;color:#5b6270}
 .cr-entete strong{font-size:1.3em;color:var(--doc-c1)}
 .cr-entete-d{color:#5b6270;white-space:nowrap;text-align:right;display:flex;flex-direction:column}
 .cr-entete-d small{font-size:.9em;color:#8a92a0}
-.theme-bandeau .cr-entete{margin:calc(-1 * var(--py)) calc(-1 * var(--px)) 12px;padding:18px var(--px) 16px;background:var(--doc-c1);border:0}
+.theme-bandeau .cr-entete{margin:calc(-1 * var(--py)) calc(-1 * var(--px)) 10px;padding:18px var(--px) 16px;background:var(--doc-c1);border:0}
 .theme-bandeau .cr-entete strong,.theme-bandeau .cr-entete-g>div,.theme-bandeau .cr-entete-d,.theme-bandeau .cr-entete-d small{color:#fff}
 .theme-bandeau .cr-entete-g img{background:#fff;border-radius:6px;padding:4px}
 .theme-encadre .cr-entete{border:1.5px solid var(--doc-c1);border-radius:10px;padding:12px 14px}
-.cr-entete.masque,.cr-pied-doc.masque{margin:0 0 6px;padding:6px;border:1px dashed #c3cbd3;border-radius:8px;background:none;color:#8a92a0;font-size:.75em;justify-content:center}
+.cr-entete.masque,.cr-pied-doc.masque{margin:0;padding:4px;border:1px dashed #c3cbd3;border-radius:8px;background:none;color:#8a92a0;font-size:.75em;justify-content:center}
 .cr-pied-doc{margin-top:auto;padding-top:10px;border-top:1px solid #d5d9df;font-size:.72em;color:#5b6270;display:flex;justify-content:space-between;gap:12px}
-.cr-pied-doc.masque{margin:auto 0 0}
-.cr-vide{color:#8a92a0;text-align:center;padding:30px 0}
+.cr-pied-doc.masque{margin-top:auto}
+.cr-vide{display:flex;flex-direction:column;align-items:center;gap:4px;margin:20px 0;padding:34px 16px;border:2px dashed #b9c6bf;border-radius:14px;background:#f7faf8;color:#5b6270;font:inherit;cursor:pointer}
+.cr-vide strong{color:#1d222c;font-size:1.1em}
+.cr-vide .ico{color:var(--accent);width:28px;height:28px}
+.cr-page.cible-fin .cr-vide{border-color:#1fae76;background:#e6f4ec}
 /* Blocs */
-.cr-bloc{position:relative;border-radius:6px;outline:1px dashed transparent;outline-offset:4px;padding:1px 2px}
-.cr-bloc:hover{outline-color:#b9c6bf}
+.cr-bloc{position:relative;border-radius:8px;outline:1.5px solid transparent;outline-offset:5px;padding:1px 2px;transition:outline-color .12s}
+@media (hover:hover){.cr-bloc:hover{outline-color:#cfdad4}}
 .cr-bloc.choisi{outline:2px solid #1fae76}
-.cr-outils-bloc{position:absolute;bottom:calc(100% + 8px);right:-4px;display:none;gap:1px;background:#1b2130;border-radius:10px;padding:3px;z-index:3;box-shadow:0 6px 16px rgba(0,0,0,.2)}
+.cr-outils-bloc{position:absolute;bottom:calc(100% + 9px);right:-6px;display:none;gap:1px;background:#1b2130;border-radius:10px;padding:3px;z-index:3;box-shadow:0 6px 16px rgba(0,0,0,.22)}
 .cr-bloc.choisi .cr-outils-bloc{display:flex}
 .cr-ob{border:0;background:none;color:#fff;min-width:36px;height:36px;padding:0 4px;border-radius:7px;display:grid;place-items:center;font:600 15px/1 Georgia,serif}
+.cr-ob.texte{font:600 13px/1 system-ui,sans-serif;padding:0 10px;background:#2c7a5e;margin:0 3px}
 .cr-ob .ico{width:18px;height:18px}
-.cr-ob:hover{background:rgba(255,255,255,.14)}
-.cr-ob.cr-glisser{cursor:grab;touch-action:none}
+.cr-ob:hover{background:rgba(255,255,255,.16)}
+.cr-ob.texte:hover{background:#34906f}
+.cr-ob.cr-glisser{cursor:grab;touch-action:none;background:rgba(255,255,255,.1)}
+@media (pointer:coarse){.cr-ob{min-width:38px;height:40px}.cr-ob.pc{display:none}}
 .cr-page.en-glisse{user-select:none}
-.cr-page.en-glisse .cr-bloc.glisse{outline:2px dashed #1fae76}
-@media (pointer:coarse){.cr-ob{min-width:40px;height:40px}.cr-ob.pc{display:none}}
-.cr-bloc.glisse{opacity:.4}
-.cr-bloc.cible-avant{box-shadow:0 -3px 0 #1fae76}
-.cr-bloc.cible-apres{box-shadow:0 3px 0 #1fae76}
+.cr-bloc.glisse{opacity:.35}
+.cr-bloc.cible-avant::before,.cr-bloc.cible-apres::after{content:"";position:absolute;left:-6px;right:-6px;height:4px;border-radius:2px;background:#1fae76;z-index:2}
+.cr-bloc.cible-avant::before{top:-8px}
+.cr-bloc.cible-apres::after{bottom:-8px}
+.cr-fantome{position:fixed;left:0;top:0;pointer-events:none;background:#1b2130;color:#fff;font:600 13px/1 system-ui,sans-serif;padding:9px 12px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.cr-si{display:inline-flex;align-items:center;gap:5px;margin:0 0 4px;padding:2px 9px 2px 6px;border-radius:99px;background:#fff3c9;color:#7a5200;font:600 12px/1.5 system-ui,sans-serif}
+.cr-si .ico{width:14px;height:14px}
+.cr-bloc.conditionnel{padding-left:10px;border-left:3px solid #f0c95a;border-radius:0 8px 8px 0}
 .cr-zone-texte{outline:none;min-height:1.45em}
 .cr-zone-texte p{margin:0 0 6px}
 .cr-zone-texte p:last-child{margin-bottom:0}
 .cr-zone-texte ul,.cr-zone-texte ol{margin:0 0 6px;padding-left:22px}
-.cr-page [data-vide]:empty::before{content:attr(data-vide);color:#9aa2ae}
-.cr-titre{font-weight:700;font-size:1.55em;line-height:1.25;text-align:center;color:var(--doc-c1);outline:none}
+.cr-page [data-vide]:empty::before{content:attr(data-vide);color:#9aa2ae;font-weight:400}
+.cr-page [contenteditable]{outline:none;cursor:text}
+.cr-titre{font-weight:700;font-size:1.55em;line-height:1.25;text-align:center;color:var(--doc-c1)}
 .theme-sobre .cr-titre{color:#1d222c}
-.cr-sous{text-align:center;color:#5b6270;font-size:.86em;outline:none}
+.cr-sous{text-align:center;color:#5b6270;font-size:.9em}
 .cr-titre.gauche,.cr-sous.gauche{text-align:left}
+.cr-section{font-weight:700;font-size:1.12em;color:var(--doc-c1);padding:8px 0 3px;border-bottom:1.5px solid var(--doc-c1)}
 .cr-colonnes{display:grid;gap:22px}
 .cr-colonnes.n2{grid-template-columns:1fr 1fr}
 .cr-colonnes.n3{grid-template-columns:1fr 1fr 1fr}
 .cr-colonnes.separees>div+div{border-left:1px solid #cfd5dc;padding-left:22px}
 @media (max-width:640px){.cr-colonnes.n2,.cr-colonnes.n3{grid-template-columns:1fr;gap:10px}.cr-colonnes.separees>div+div{border-left:0;padding-left:0;border-top:1px solid #cfd5dc;padding-top:8px}}
-.cr-ligne{border-top:1px solid;margin:6px 0}
+.cr-ligne{border-top:1px solid;margin:4px 0}
 .cr-encadre{border-radius:8px;padding:10px 12px}
 .cr-encadre.pale{background:color-mix(in srgb,var(--doc-c1) 10%,#fff)}
 .cr-encadre.bord{border:1.5px solid var(--doc-c1)}
 .cr-tableau{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.92em}
 .cr-tableau th,.cr-tableau td{border:1px solid #cfd5dc;padding:5px 7px;text-align:left;vertical-align:top}
 .cr-tableau th{background:color-mix(in srgb,var(--doc-c1) 10%,#fff);font-weight:700}
-.cr-choix{display:flex;flex-direction:column;gap:5px}
-.cr-lien-q{font-size:.8em;color:#5b6270}
-.cr-case{display:flex;gap:9px;align-items:flex-start}
-.cr-case i{width:13px;height:13px;border:1.5px solid #3d4452;border-radius:2px;flex:none;margin-top:.28em}
-.cr-photos{display:flex;flex-direction:column;gap:6px}
+/* Questions */
+.cr-question{display:flex;flex-direction:column;gap:6px}
+.cr-q-tete{display:flex;align-items:baseline;gap:6px}
+.cr-q-label{font-weight:600;min-width:40px}
+.cr-requis{color:#b42318;font-weight:700}
+.cr-q-note{color:#8a92a0;font-size:.78em;margin-left:auto;white-space:nowrap}
+.cr-question.sans-titre .cr-q-label{color:#8a92a0}
+.cr-faux-champ{min-height:38px;display:flex;align-items:center;padding:0 12px;border:1px solid #d5dbe1;border-radius:9px;background:#f8fafb;color:#9aa2ae;font-size:.92em}
+.cr-faux-champ.long{min-height:72px;align-items:flex-start;padding-top:9px}
+.cr-faux-champ.date,.cr-faux-champ.nombre{max-width:190px}
+.cr-pilules{display:flex;gap:8px}
+.cr-pilules span{min-width:76px;min-height:38px;display:grid;place-items:center;border:1px solid #d5dbe1;border-radius:9px;background:#f8fafb;font-weight:600;color:#3d4452}
+.cr-options{display:flex;flex-direction:column;gap:2px}
+.cr-option{display:flex;align-items:center;gap:9px;min-height:36px}
+.cr-option i,.cr-case i{width:15px;height:15px;border:1.5px solid #3d4452;border-radius:3px;flex:none}
+.cr-option-texte{flex:1;min-width:30px;padding:4px 6px;border-radius:6px}
+.cr-option-texte:focus{background:#f1f5f3}
+.cr-option-x{border:0;background:none;width:36px;height:36px;display:grid;place-items:center;color:#8a92a0;border-radius:8px;opacity:0}
+.cr-bloc.choisi .cr-option-x,.cr-option-x:focus-visible{opacity:1}
+.cr-option-x .ico{width:16px;height:16px}
+.cr-option-plus{align-self:flex-start;display:none;align-items:center;gap:6px;min-height:36px;margin-top:2px;padding:0 10px 0 4px;border:0;background:none;color:var(--accent);font:600 .9em/1 system-ui,sans-serif;border-radius:8px}
+.cr-bloc.choisi .cr-option-plus{display:inline-flex}
+.cr-option-plus .ico{width:16px;height:16px}
 .cr-grille{display:grid;gap:8px}
-.cr-photo{aspect-ratio:4/3;border:1.5px dashed #c3cbd3;border-radius:8px;display:grid;place-items:center;color:#8a92a0;font-size:.8em;background:#fafbfc}
+.cr-photo{aspect-ratio:4/3;border:1.5px dashed #c3cbd3;border-radius:8px;display:grid;place-items:center;color:#aab2bd;font-size:.8em;background:#fafbfc}
 .cr-signatures{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 .cr-sig{display:flex;flex-direction:column;gap:3px;min-width:0}
-.cr-sig strong{font-size:.92em}
+.cr-sig strong,.cr-sig-titre{font-size:.95em;font-weight:700}
 .cr-sig small{color:#5b6270;font-size:.78em}
 .cr-sig-zone{height:84px;border:1px solid #cfd5dc;border-radius:6px;background:repeating-linear-gradient(-45deg,#f6f7f8 0 6px,#fff 6px 12px);display:grid;place-items:center;color:#8a92a0;font-size:.78em;text-align:center;padding:4px}
-.cr-saut{display:flex;align-items:center;gap:10px;color:#8a92a0;font-size:.8em;margin:6px 0}
+.cr-saut{display:flex;align-items:center;gap:10px;color:#8a92a0;font-size:.8em;margin:4px 0}
 .cr-saut::before,.cr-saut::after{content:"";flex:1;border-top:1.5px dashed #c3cbd3}
+.cr-perdu{color:#b42318;font-size:.9em}
 /* Remplir sur le document */
 .choix-remplir{justify-content:center;margin:0 0 6px}
 .aide-remplir{text-align:center;margin:0 0 10px}
 body .feuille.remplir-createur .feuille-corps{background:#e8ecea}
 .remplir-doc{padding:0 0 24px}
+.cr-page.remplie{gap:12px}
 .champ-doc{background:#fff3c9;border-bottom:1.5px dashed #b7791f;border-radius:4px 4px 0 0;padding:1px 5px;cursor:pointer;color:#7a5200;font-weight:600;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .champ-doc.requis:not(.rempli)::after{content:" *"}
-.champ-doc.rempli{background:#e6f4ec;border-bottom:1.5px solid #1fae76;color:inherit;font-weight:inherit}
-.champ-doc:hover{filter:brightness(.96)}
-.cr-page.remplie .cr-case{width:100%;min-height:40px;align-items:center;padding:4px 6px;border:0;border-radius:8px;background:#fff3c9;font:inherit;color:inherit;text-align:left;cursor:pointer}
-.cr-page.remplie .cr-case i{margin-top:0;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;line-height:1}
-.cr-page.remplie .cr-choix:has(.coche) .cr-case{background:none}
-.cr-page.remplie .cr-case.coche{background:#e6f4ec;font-weight:700}
-.cr-page.remplie .cr-case.coche i::after{content:"✓"}
+.champ-doc.rempli{background:#e6f4ec;border-bottom:1.5px solid #1fae76;color:inherit}
+.cr-page.remplie .cr-question.en-ligne{flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.cr-page.remplie .cr-question.type-ouinon{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px}
+.cr-page.remplie .cr-q-label{font-weight:500}
+.cr-choix{display:flex;flex-direction:column;gap:5px}
+.cr-choix.en-ligne{flex-direction:row;gap:8px}
+.cr-case{display:flex;gap:9px;align-items:center;min-height:42px;padding:4px 12px 4px 10px;border:1px solid #ead9a0;border-radius:9px;background:#fff9e3;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.cr-case i{display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;line-height:1;background:#fff}
+.cr-choix:has(.coche) .cr-case{background:#fff;border-color:#dfe4e8}
+.cr-choix .cr-case.coche{background:#e6f4ec;border-color:#1fae76;font-weight:700}
+.cr-case.coche i::after{content:"✓"}
 .cr-photo.pleine{position:relative;border:0;padding:0;overflow:hidden}
 .cr-photo.pleine img{width:100%;height:100%;object-fit:cover;display:block}
 .cr-photo-x{position:absolute;top:2px;right:2px;width:36px;height:36px;background:rgba(255,255,255,.9);border-radius:50%}
-.cr-photo.ajouter{border-color:#b7791f;background:#fff3c9;color:#7a5200;font:inherit;font-weight:600;gap:2px;cursor:pointer;grid-auto-flow:row;align-content:center;justify-items:center}
-button.cr-sig-zone{width:100%;font:inherit;font-size:.82em;cursor:pointer}
+.cr-photo.ajouter{border-color:#b7791f;background:#fff3c9;color:#7a5200;font:inherit;font-weight:600;gap:2px;cursor:pointer;align-content:center;justify-items:center}
+button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 .cr-sig-zone.signable{border:1.5px dashed #b7791f;background:#fff3c9;color:#7a5200;font-weight:600}
 .cr-sig-zone.signee{background:#fff;display:flex;justify-content:space-around;gap:6px}
 .cr-sig-zone img{max-width:48%;max-height:74px;object-fit:contain}
@@ -1100,53 +1127,31 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.82em;cursor:pointer}
 .src-auto{background:#eef0f3;color:#475063}
 .src-question{background:#efe7fb;color:#6b2fb3}
 .src-perdu{background:#fde8e8;color:#b42318}
-/* Panneau d'outils (à droite sur ordinateur, petite fenêtre sur téléphone) */
-.cr-tabs{margin:0 0 14px;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
-.cr-tabs label span{width:100%;padding:0 4px;justify-content:center}
-.cr-tuiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media (max-width:999px){.cr-tuiles{grid-template-columns:repeat(3,1fr)}}
-.cr-tuile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:72px;padding:10px 6px;border:1px solid var(--ligne);border-radius:12px;background:#fbfcfb;font-weight:600;font-size:13.5px;text-align:center;color:var(--encre)}
-.cr-tuile .ico{color:var(--accent)}
+/* Palette et réglages */
+.cr-groupe{font-size:12px;font-weight:700;letter-spacing:.02em;color:var(--doux);margin:14px 2px 6px}
+.cr-tuiles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cr-feuille .cr-tuiles{grid-template-columns:repeat(3,1fr);gap:8px}
+.cr-tuile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:64px;padding:8px 4px;border:1px solid var(--ligne);border-radius:12px;background:#fbfcfb;font-weight:600;font-size:12.5px;line-height:1.2;text-align:center;color:var(--encre);touch-action:manipulation}
+.cr-tuile .ico{color:var(--accent);width:20px;height:20px}
 .cr-tuile:hover{border-color:var(--accent);background:var(--accent-pale)}
-.cr-groupe{font-size:12.5px;font-weight:700;color:var(--doux);margin:12px 6px 2px}
+@media (min-width:1000px){.cr-tuile{cursor:grab}}
 .cr-champs{display:flex;flex-direction:column}
 .cr-champ{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:4px 8px;border:0;background:none;border-radius:10px;text-align:left;color:var(--encre)}
 .cr-champ:hover{background:var(--fond)}
 .cr-champ small{color:var(--doux);font-size:12px;flex:none}
-.cr-nq-boite{margin-top:14px;display:flex;flex-direction:column;gap:6px}
-.cr-nq{display:flex;flex-direction:column;gap:6px}
+.cr-nq{display:flex;flex-direction:column;gap:6px;margin-top:10px}
 .cr-pop{position:fixed;width:300px;max-height:380px;overflow:auto;background:#fff;border:1px solid var(--ligne);border-radius:14px;box-shadow:0 16px 40px rgba(27,33,48,.18);padding:4px 10px 12px}
 .cr-reglages{display:flex;flex-direction:column;gap:4px}
-.cr-reglage{display:flex;flex-direction:column;gap:6px;margin:6px 0 8px}
-.cr-h3{font-size:15px;margin:6px 0 6px}
+.cr-reglages .case-option{margin-top:6px}
+.cr-reglage{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.cr-h3{font-size:15px;margin:8px 0 2px}
 .cr-rangee{flex-wrap:wrap;margin-top:8px}
-.cr-sous-reglage{border:1px solid var(--ligne);border-radius:12px;padding:10px 12px;margin:6px 0;display:flex;flex-direction:column;gap:4px}
+.cr-sous-reglage{border:1px solid var(--ligne);border-radius:12px;padding:10px 12px;margin:6px 0;display:flex;flex-direction:column;gap:2px}
 .cr-pastilles{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .cr-pastille{width:36px;height:36px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px var(--ligne);padding:0}
 .cr-pastille[aria-pressed="true"]{box-shadow:0 0 0 2px var(--encre)}
 .cr-couleur{width:48px;height:38px;border:1px solid var(--ligne);border-radius:10px;padding:2px;background:#fff}
 .cr-vide-reglages{border:1px dashed var(--ligne);border-radius:12px;padding:14px;color:var(--doux);font-size:14px}
-/* Onglet Formulaire */
-.cr-form-cadre{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
-.cr-intro{margin:0}
-.cr-carte{background:var(--carte);border-radius:14px;box-shadow:var(--ombre);overflow:hidden}
-.cr-carte-tete{padding:12px 16px;border-bottom:1px solid var(--ligne);display:flex;flex-direction:column;gap:2px}
-.cr-carte-tete h3{margin:0;font-size:16px}
-.cr-carte-tete small{color:var(--doux);font-size:13px}
-.cr-pad{padding:12px 16px;margin:0}
-.cr-tags{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px}
-.cr-q{padding:12px 16px 10px;border-top:1px solid var(--ligne)}
-.cr-q:first-child{border-top:0}
-.cr-q-grille{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 12px}
-.cr-fq{display:flex;flex-direction:column;min-width:0}
-.cr-fq.large{grid-column:1/-1}
-@media (min-width:760px){.cr-fq.large:first-child{grid-column:span 1}}
-@media (max-width:759px){.cr-q-grille{grid-template-columns:1fr}}
-.cr-q-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px}
-.cr-q-actions .case-option{margin:0;flex:1 1 200px;padding:8px 10px}
-.cr-q-inutile{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.cr-q-inutile .texte{display:flex;flex-direction:column}
-.cr-q-inutile small{color:var(--doux)}
 </style>
 </head>
 <body>
@@ -1347,7 +1352,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.82em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.31.0';
+const VERSION_APPLI = '1.32.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -5389,10 +5394,13 @@ function editerModeleFormulaire(existant = null) {
 
 /* =========================================================
    CRÉATEUR DE DOCUMENTS
-   Un modèle = une page A4 faite de blocs empilés (titre, texte, colonnes, encadré, tableau, cases à cocher,
-   photos, signatures…). Dans le texte, des étiquettes colorées [Nom du client] marquent ce qui sera rempli :
-   par la fiche du client, par l'entreprise, automatiquement (date du jour) ou par une question du formulaire.
-   Le formulaire est fabriqué tout seul à partir des étiquettes ; le PDF est dessiné à partir des blocs.
+   Un modèle = une page faite de blocs empilés, sur un seul écran :
+   - des QUESTIONS (réponse courte ou longue, oui/non, choix, date, nombre, photos, signature) dont on écrit
+     le titre et les réponses directement sur la page ;
+   - de la MISE EN PAGE (titre, section, texte libre, colonnes, encadré, tableau, trait, saut de page) ;
+   - dans un texte libre, des étiquettes colorées [Nom du client] pour ce qui se remplit tout seul.
+   Chaque bloc peut n'apparaître que selon une réponse (« seulement si … = Oui »).
+   Le formulaire à remplir suit l'ordre de la page (les sections font les étapes) ; le PDF est dessiné depuis les blocs.
    Rangement : prefs.modelesDoc (les modèles), prefs.themeDoc (le thème de l'entreprise).
    ========================================================= */
 const CHAMPS_DOC = {
@@ -5408,15 +5416,31 @@ const CHAMPS_DOC = {
   'e-representant': { label: 'Représentant', source: 'entreprise', val: e => [e.representant, e.qualite].filter(Boolean).join(', ') },
   'd-date': { label: 'Date du jour', source: 'auto' }
 };
-const TYPES_Q = { texte: 'Texte court', long: 'Texte long', date: 'Date', nombre: 'Nombre', ouinon: 'Oui / non', choix: 'Cases à cocher', photos: 'Photos', signature: 'Signature' };
+const TYPES_Q = { texte: 'Réponse courte', long: 'Réponse longue', ouinon: 'Oui / Non', choix: 'Choix dans une liste', date: 'Date', nombre: 'Nombre', photos: 'Photos', signature: 'Signature' };
 const TYPES_Q_TEXTE = ['texte', 'long', 'date', 'nombre', 'ouinon'];
-const BLOCS_DOC = { titre: ['Titre', 'texte'], texte: ['Texte', 'lignes'], colonnes: ['Colonnes', 'pages'], ligne: ['Ligne', 'texte-moins'], encadre: ['Encadré', 'note'], tableau: ['Tableau', 'vue-lignes'], choix: ['Cases à cocher', 'valider'], photos: ['Photos', 'camera'], signatures: ['Signatures', 'signature'], saut: ['Saut de page', 'bas'] };
+const TYPES_Q_BLOC = ['texte', 'long', 'ouinon', 'choix', 'date', 'nombre', 'photos'];
+const NOMS_BLOCS = { titre: 'Titre', section: 'Section', texte: 'Texte libre', colonnes: 'Colonnes', ligne: 'Trait', encadre: 'Encadré', tableau: 'Tableau', question: 'Question', signatures: 'Signatures', saut: 'Saut de page' };
+const PALETTE_DOC = [
+  ['Questions', [['q:texte', 'Réponse courte', 'texte'], ['q:long', 'Réponse longue', 'note'], ['q:ouinon', 'Oui / Non', 'valider'], ['q:choix', 'Choix', 'vue-liste'], ['q:date', 'Date', 'horloge'], ['q:nombre', 'Nombre', 'numero'], ['q:photos', 'Photos', 'camera'], ['signatures', 'Signatures', 'signature']]],
+  ['Mise en page', [['titre', 'Titre', 'texte-plus'], ['section', 'Section', 'lignes'], ['texte', 'Texte libre', 'stylo'], ['colonnes', 'Colonnes', 'pages'], ['encadre', 'Encadré', 'note'], ['tableau', 'Tableau', 'vue-lignes'], ['ligne', 'Trait', 'texte-moins'], ['saut', 'Saut de page', 'bas']]],
+  ['Déjà rempli', [['client', 'Le client', 'clients'], ['entreprise', 'Mon entreprise', 'maison']]]];
 const COULEURS_DOC = ['#0d6b4f', '#1d4fb3', '#9a3412', '#6b2fb3', '#1b2130', '#b7791f'];
 const THEME_DEFAUT = { style: 'sobre', c1: '#0d6b4f', police: 'moderne' };
 const themeDe = m => ({ ...THEME_DEFAUT, ...(m.theme || prefs.themeDoc || {}) });
-const modelesDoc = () => prefs.modelesDoc || [];
+/** Met un modèle au format courant (les anciens blocs « cases à cocher » et « photos » deviennent des questions). */
+function normaliserModeleDoc(m) {
+  m.questions ||= []; m.blocs ||= [];
+  for (const b of m.blocs) {
+    if (b.type === 'choix') { b.type = 'question'; b.sansTitre = true; }
+    if (b.type === 'photos') b.type = 'question';
+  }
+  return m;
+}
+const modelesDoc = () => (prefs.modelesDoc || []).map(normaliserModeleDoc);
 const questionDe = (m, cle) => (m.questions || []).find(q => q.cle === cle);
 const dateLongue = () => new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+/** Un bloc soumis à une condition n'apparaît que si la réponse attendue a été donnée. */
+const blocVisible = (b, rep) => !b.si?.q || (rep[b.si.q] ?? '') === b.si.val;
 function infoChamp(m, cle) {
   if (CHAMPS_DOC[cle]) return CHAMPS_DOC[cle];
   const q = questionDe(m, cle);
@@ -5435,7 +5459,6 @@ function nettoyerHtml(html) {
       if (n.dataset?.champ) { const s = document.createElement('span'); s.dataset.champ = n.dataset.champ; dst.append(s); continue; }
       const nv = BALISES_DOC[n.tagName];
       if (!nv) { copier(n, dst); continue; }
-      // Un paragraphe dans un paragraphe devient un simple retour à la ligne
       if (nv === 'p' && dst.closest('p,li,b,i,u')) { copier(n, dst); dst.append(document.createElement('br')); continue; }
       const e = document.createElement(nv); dst.append(e);
       if (nv !== 'br') copier(n, e);
@@ -5444,60 +5467,66 @@ function nettoyerHtml(html) {
   copier(t.content, sortie);
   return sortie.innerHTML;
 }
-/** Donne aux étiquettes leur couleur et leur nom à jour (le nom d'une question peut avoir changé). */
 function rafraichirTags(racine, m) {
   racine.querySelectorAll('[data-champ]').forEach(t => {
     const c = infoChamp(m, t.dataset.champ);
     t.className = 'tag-doc src-' + c.source; t.contentEditable = 'false'; t.textContent = c.label;
   });
 }
-/** Toutes les étiquettes et questions utilisées par le document, dans l'ordre où elles apparaissent. */
+const htmlsDuBloc = b => [b.html, ...(b.cols || []), ...(b.entetes || []), ...(b.lignes || []).flat()].filter(Boolean);
+const etiquettesDuBloc = b => htmlsDuBloc(b).flatMap(h => [...String(h).matchAll(/data-champ="([^"]+)"/g)].map(x => x[1]));
+/** Tout ce que le document utilise (étiquettes et questions), dans l'ordre de la page. */
 function champsUtilises(m) {
   const vus = new Set();
   for (const b of m.blocs) {
-    const htmls = [b.html, ...(b.cols || []), ...(b.entetes || []), ...(b.lignes || []).flat()].filter(Boolean);
-    for (const h of htmls) for (const x of String(h).matchAll(/data-champ="([^"]+)"/g)) vus.add(x[1]);
+    etiquettesDuBloc(b).forEach(c => vus.add(c));
     if (b.q) vus.add(b.q);
     for (const c of b.cases || []) if (c.q) vus.add(c.q);
+    if (b.si?.q) vus.add(b.si.q);
   }
   return [...vus];
 }
-/** Le formulaire (blocs de saisie) fabriqué à partir du document : le client d'abord, puis les questions par étape. */
+/** Le formulaire fabriqué à partir de la page : le client d'abord, puis les questions dans l'ordre (les sections font les étapes). */
 function formulaireDuDocument(m) {
-  const util = champsUtilises(m), blocs = [];
+  const blocs = [], vus = new Set(), util = champsUtilises(m);
   const clients = Object.keys(CHAMPS_DOC).filter(c => CHAMPS_DOC[c].source === 'client' && util.includes(c));
   if (clients.length) {
     blocs.push({ t: 'section', texte: 'Le client' });
     for (const c of clients) blocs.push({ t: 'champ', id: c, label: CHAMPS_DOC[c].label, client: CHAMPS_DOC[c].client, clavier: CHAMPS_DOC[c].clavier, titre: c === 'c-nom' });
   }
-  const groupes = new Map();
-  for (const q of (m.questions || []).filter(q => util.includes(q.cle))) {
-    const e = (q.etape || '').trim();
-    if (!groupes.has(e)) groupes.set(e, []);
-    groupes.get(e).push(q);
-  }
-  for (const [etape, qs] of groupes) {
-    if (etape || clients.length) blocs.push({ t: 'section', texte: etape || 'Le document' });
-    for (const q of qs) {
-      const b = { id: q.cle, label: q.label || 'Question', requis: !!q.requis };
-      if (q.type === 'texte') Object.assign(b, { t: 'champ' });
-      else if (q.type === 'long') Object.assign(b, { t: 'zone' });
-      else if (q.type === 'date') Object.assign(b, { t: 'date', auto: !!q.auto });
-      else if (q.type === 'nombre') Object.assign(b, { t: 'champ', clavier: 'decimal' });
-      else if (q.type === 'ouinon') Object.assign(b, { t: 'choix', options: ['Oui', 'Non'] });
-      else if (q.type === 'choix') Object.assign(b, { t: 'choix', options: q.options?.length ? q.options : ['Oui', 'Non'] });
-      else if (q.type === 'photos') Object.assign(b, { t: 'photos' });
-      else if (q.type === 'signature') Object.assign(b, { t: 'signature', qui: q.qui || 'client' });
-      else continue;
-      if (q.aide && ['champ', 'zone'].includes(b.t)) b.label += ` (${q.aide})`;
-      blocs.push(b);
+  let sectionVoulue = clients.length > 0;
+  const champDe = q => {
+    const b = { id: q.cle, label: q.label || 'Question', requis: !!q.requis };
+    if (q.type === 'texte') b.t = 'champ';
+    else if (q.type === 'long') b.t = 'zone';
+    else if (q.type === 'date') Object.assign(b, { t: 'date', auto: !!q.auto });
+    else if (q.type === 'nombre') Object.assign(b, { t: 'champ', clavier: 'decimal' });
+    else if (q.type === 'ouinon') Object.assign(b, { t: 'choix', options: ['Oui', 'Non'] });
+    else if (q.type === 'choix') Object.assign(b, { t: 'choix', options: q.options?.length ? q.options : ['Oui', 'Non'] });
+    else if (q.type === 'photos') b.t = 'photos';
+    else if (q.type === 'signature') Object.assign(b, { t: 'signature', qui: q.qui || 'client' });
+    else return null;
+    if (q.aide && ['champ', 'zone'].includes(b.t)) b.label += ` (${q.aide})`;
+    return b;
+  };
+  for (const b of m.blocs) {
+    const si = b.si?.q ? [b.si.q, b.si.val] : null;
+    if (b.type === 'section') { blocs.push({ t: 'section', texte: b.texte || 'Section', ...(si ? { si } : {}) }); sectionVoulue = false; continue; }
+    const cles = b.type === 'question' ? [b.q] : b.type === 'signatures' ? b.cases.map(c => c.q) : etiquettesDuBloc(b);
+    for (const cle of cles) {
+      const q = questionDe(m, cle);
+      if (!q || vus.has(cle)) continue;
+      vus.add(cle);
+      const f = champDe(q); if (!f) continue;
+      if (sectionVoulue) { blocs.push({ t: 'section', texte: 'Le document' }); sectionVoulue = false; }
+      if (si) f.si = si;
+      blocs.push(f);
     }
   }
   return blocs;
 }
 /** Un modèle du créateur vu comme un formulaire à remplir (même écran de saisie, brouillons, fiche client). */
 const modeleRemplissable = m => ({ id: m.id, nom: m.nom || 'Modèle sans nom', resume: m.resume || 'Mon modèle', perso: true, doc: m, blocs: formulaireDuDocument(m) });
-/** Valeur d'une étiquette dans le PDF ('' si pas encore remplie). */
 function valeurChampDoc(m, cle, rep) {
   const c = CHAMPS_DOC[cle];
   if (c?.source === 'entreprise') return String(c.val(entreprise()) || '').trim();
@@ -5514,70 +5543,115 @@ function enregistrerModeleDoc(m) {
     if (b.entetes) b.entetes = b.entetes.map(nettoyerHtml);
     if (b.lignes) b.lignes = b.lignes.map(l => l.map(nettoyerHtml));
   }
+  const util = champsUtilises(propre);
+  propre.questions = propre.questions.filter(q => util.includes(q.cle)); // les questions des blocs supprimés ne sont pas gardées
   propre.maj = Date.now();
-  const l = modelesDoc().slice(), i = l.findIndex(x => x.id === m.id);
+  const l = (prefs.modelesDoc || []).slice(), i = l.findIndex(x => x.id === m.id);
   if (i >= 0) l[i] = propre; else l.push(propre);
   prefs.modelesDoc = l; ecrirePrefs(prefs);
 }
 
 /* ---------- Modèles de départ ---------- */
+const tagDoc = c => `<span data-champ="${c}"></span>`;
 const modeleDocVide = () => ({ id: 'doc-' + idUnique(), doc: true, nom: '', resume: '', theme: null, entete: 'toutes', pied: 'toutes', questions: [], blocs: [
-  { id: idUnique(), type: 'titre', texte: 'Titre du document', sous: null },
-  { id: idUnique(), type: 'texte', html: '' }] });
-function modeleDocExemplePv() {
-  const t = c => `<span data-champ="${c}"></span>`;
-  const b = (type, o = {}) => ({ id: idUnique(), type, ...o });
-  return { id: 'doc-' + idUnique(), doc: true, nom: 'PV de réception (mon modèle)', resume: 'Réception des travaux, avec ou sans réserves', theme: null, entete: 'toutes', pied: 'toutes',
-    questions: [
-      { cle: 'q-travaux', label: 'Nature des travaux', type: 'texte', etape: 'Le chantier', aide: 'ex. : isolation des combles perdus', requis: true },
-      { cle: 'q-devis', label: 'Numéro du devis', type: 'texte', etape: 'Le chantier' },
-      { cle: 'q-date-devis', label: 'Date du devis', type: 'date', etape: 'Le chantier' },
-      { cle: 'q-date-visite', label: 'Date de la visite de réception', type: 'date', etape: 'La réception', auto: true },
-      { cle: 'q-decision', label: 'Décision', type: 'choix', etape: 'La réception', requis: true, options: ['Réception sans réserve', 'Réception avec les réserves ci-dessous', 'Refus de la réception pour les motifs ci-dessous'] },
-      { cle: 'q-reserves', label: 'Réserves ou motifs', type: 'long', etape: 'La réception', aide: 'une réserve par ligne' },
-      { cle: 'q-delai', label: 'Levée des réserves avant le', type: 'date', etape: 'La réception' },
-      { cle: 'q-photos', label: 'Photos du chantier', type: 'photos', etape: 'Photos' },
-      { cle: 'q-lieu', label: 'Fait à (ville)', type: 'texte', etape: 'Signatures' },
-      { cle: 'q-sig-client', label: 'Signature du maître d\'ouvrage', type: 'signature', qui: 'client', etape: 'Signatures', requis: true },
-      { cle: 'q-sig-ent', label: 'Signature de l\'entreprise', type: 'signature', qui: 'entreprise', etape: 'Signatures' }],
-    blocs: [
-      b('titre', { texte: 'Procès-verbal de réception des travaux', sous: 'Article 1792-6 du Code civil' }),
-      b('colonnes', { separees: true, cols: [
-        `<p><b>L'entreprise</b></p><p>${t('e-nom')}<br>${t('e-adresse')}<br>SIRET ${t('e-siret')}</p>`,
-        `<p><b>Le maître d'ouvrage</b></p><p>${t('c-nom')}<br>${t('c-adresse')}<br>Tél. ${t('c-tel')}</p>`] }),
-      b('ligne', { ep: 1, coul: 'gris' }),
-      b('texte', { html: `<p><b>Chantier :</b> ${t('q-travaux')}, situé ${t('c-adresse')}.</p><p>Devis n° ${t('q-devis')} du ${t('q-date-devis')}.</p>` }),
-      b('texte', { html: `<p>Après visite contradictoire des travaux le ${t('q-date-visite')}, en présence des deux parties, le maître d'ouvrage déclare :</p>` }),
-      b('choix', { q: 'q-decision' }),
-      b('encadre', { fond: 'pale', html: `<p><b>Réserves ou motifs :</b></p><p>${t('q-reserves')}</p><p>Les réserves seront levées avant le ${t('q-delai')}.</p>` }),
-      b('photos', { q: 'q-photos', parLigne: 3 }),
-      b('texte', { html: `<p>Fait à ${t('q-lieu')}, le ${t('d-date')}, en deux exemplaires.</p>` }),
-      b('signatures', { cases: [{ titre: 'Le maître d\'ouvrage', q: 'q-sig-client', mention: true }, { titre: 'L\'entreprise', q: 'q-sig-ent', mention: false }] })] };
+  { id: idUnique(), type: 'titre', texte: 'Titre du document', sous: null }] });
+/** Petit outil pour écrire un modèle de départ : q('Question', 'type', {…}) crée la question et son bloc. */
+function fabriqueModeleDoc(nom, resume) {
+  const m = { id: 'doc-' + idUnique(), doc: true, nom, resume, theme: null, entete: 'toutes', pied: 'toutes', questions: [], blocs: [] };
+  let n = 0;
+  const b = (type, o = {}) => { const x = { id: idUnique() + (n++), type, ...o }; m.blocs.push(x); return x; };
+  const question = (label, type, o = {}) => { const q = { cle: 'q-' + idUnique() + (n++), label, type, requis: false, ...o }; m.questions.push(q); return q.cle; };
+  const q = (label, type, o = {}, bloc = {}) => { const cle = question(label, type, o); b('question', { q: cle, ...bloc }); return cle; };
+  return { m, b, q, question };
 }
-function creerBlocDoc(type, m) {
-  const b = { id: idUnique(), type };
-  const nouvelleQ = o => { const q = { cle: 'q-' + idUnique(), requis: false, etape: '', ...o }; m.questions.push(q); return q.cle; };
-  if (type === 'titre') Object.assign(b, { texte: 'Titre', sous: null });
-  if (type === 'texte') b.html = '';
-  if (type === 'colonnes') Object.assign(b, { separees: true, cols: ['', ''] });
-  if (type === 'ligne') Object.assign(b, { ep: 1, coul: 'theme' });
-  if (type === 'encadre') Object.assign(b, { fond: 'pale', html: '' });
-  if (type === 'tableau') Object.assign(b, { entetes: ['Désignation', 'Quantité', 'Observation'], lignes: [['', '', ''], ['', '', '']] });
-  if (type === 'choix') b.q = nouvelleQ({ label: 'Nouvelle question', type: 'choix', options: ['Oui', 'Non'] });
-  if (type === 'photos') Object.assign(b, { q: nouvelleQ({ label: 'Photos', type: 'photos', etape: 'Photos' }), parLigne: 3 });
-  if (type === 'signatures') b.cases = [
-    { titre: 'Le client', q: nouvelleQ({ label: 'Signature du client', type: 'signature', qui: 'client', etape: 'Signatures' }), mention: true },
-    { titre: 'L\'entreprise', q: nouvelleQ({ label: 'Signature de l\'entreprise', type: 'signature', qui: 'entreprise', etape: 'Signatures' }), mention: false }];
+function modeleDocExemplePrevisite() {
+  const { m, b, q, question } = fabriqueModeleDoc('Prévisite – combles perdus', 'Accès, état des combles, photos, conclusion');
+  b('titre', { texte: 'Fiche de prévisite', sous: 'Isolation des combles perdus' });
+  b('texte', { html: `<p><b>Client :</b> ${tagDoc('c-nom')}<br>${tagDoc('c-adresse')}<br>Tél. ${tagDoc('c-tel')}</p>` });
+  q('Date de la visite', 'date', { auto: true });
+  b('section', { texte: 'Accès aux combles' });
+  const trappe = q('Y a-t-il une trappe d\'accès ?', 'ouinon', { requis: true });
+  q('Comment accède-t-on à la trappe ?', 'choix', { options: ['Par une échelle', 'Par un escalier', 'Par un escabeau', 'Autre'] }, { si: { q: trappe, val: 'Oui' } });
+  q('Dimensions de la trappe (cm)', 'texte', { aide: 'ex. : 60 x 80' }, { si: { q: trappe, val: 'Oui' } });
+  q('Sans trappe, comment accéder aux combles ?', 'long', { aide: 'par le toit, création d\'une trappe…' }, { si: { q: trappe, val: 'Non' } });
+  b('section', { texte: 'État des combles' });
+  q('Surface à isoler (m²)', 'nombre', { requis: true });
+  q('Hauteur sous faîtage (m)', 'nombre');
+  const isolant = q('Y a-t-il déjà un isolant ?', 'ouinon');
+  q('Type d\'isolant en place', 'choix', { options: ['Laine de verre', 'Laine de roche', 'Ouate de cellulose', 'Autre'] }, { si: { q: isolant, val: 'Oui' } });
+  q('Épaisseur de l\'isolant en place (cm)', 'nombre', {}, { si: { q: isolant, val: 'Oui' } });
+  q('Spots encastrés ou conduits à protéger ?', 'ouinon');
+  q('Le plancher est-il praticable ?', 'ouinon');
+  b('section', { texte: 'Photos' });
+  q('Photos des combles', 'photos', {}, { parLigne: 3 });
+  q('Photos de l\'accès', 'photos', {}, { parLigne: 3 });
+  b('section', { texte: 'Conclusion' });
+  q('Le chantier est-il réalisable ?', 'choix', { options: ['Oui', 'Oui, avec réserves', 'Non'], requis: true });
+  q('Observations', 'long');
+  b('texte', { html: `<p>Fait à ${tagDoc(question('Fait à (ville)', 'texte'))}, le ${tagDoc('d-date')}.</p>` });
+  b('signatures', { cases: [
+    { titre: 'Le client', q: question('Signature du client', 'signature', { qui: 'client' }), mention: false },
+    { titre: 'Le technicien', q: question('Signature du technicien', 'signature', { qui: 'entreprise' }), mention: false }] });
+  return m;
+}
+function modeleDocExemplePv() {
+  const { m, b, q, question } = fabriqueModeleDoc('PV de réception (mon modèle)', 'Réception des travaux, avec ou sans réserves');
+  const travaux = question('Nature des travaux', 'texte', { aide: 'ex. : isolation des combles perdus', requis: true });
+  const devis = question('Numéro du devis', 'texte'), dateDevis = question('Date du devis', 'date');
+  const visite = question('Date de la visite de réception', 'date', { auto: true });
+  b('titre', { texte: 'Procès-verbal de réception des travaux', sous: 'Article 1792-6 du Code civil' });
+  b('colonnes', { separees: true, cols: [
+    `<p><b>L'entreprise</b></p><p>${tagDoc('e-nom')}<br>${tagDoc('e-adresse')}<br>SIRET ${tagDoc('e-siret')}</p>`,
+    `<p><b>Le maître d'ouvrage</b></p><p>${tagDoc('c-nom')}<br>${tagDoc('c-adresse')}<br>Tél. ${tagDoc('c-tel')}</p>`] });
+  b('ligne', { ep: 1, coul: 'gris' });
+  b('texte', { html: `<p><b>Chantier :</b> ${tagDoc(travaux)}, situé ${tagDoc('c-adresse')}.</p><p>Devis n° ${tagDoc(devis)} du ${tagDoc(dateDevis)}.</p>` });
+  b('texte', { html: `<p>Après visite contradictoire des travaux le ${tagDoc(visite)}, en présence des deux parties, le maître d'ouvrage déclare :</p>` });
+  const decision = q('Décision', 'choix', { requis: true, options: ['Réception sans réserve', 'Réception avec les réserves ci-dessous', 'Refus de la réception pour les motifs ci-dessous'] }, { sansTitre: true });
+  const avecReserves = { si: { q: decision, val: 'Réception avec les réserves ci-dessous' } };
+  q('Réserves', 'long', { aide: 'une réserve par ligne' }, avecReserves);
+  q('Les réserves seront levées avant le', 'date', {}, avecReserves);
+  q('Motifs du refus', 'long', {}, { si: { q: decision, val: 'Refus de la réception pour les motifs ci-dessous' } });
+  q('Photos du chantier', 'photos', {}, { parLigne: 3 });
+  b('texte', { html: `<p>Fait à ${tagDoc(question('Fait à (ville)', 'texte'))}, le ${tagDoc('d-date')}, en deux exemplaires.</p>` });
+  b('signatures', { cases: [
+    { titre: 'Le maître d\'ouvrage', q: question('Signature du maître d\'ouvrage', 'signature', { qui: 'client', requis: true }), mention: true },
+    { titre: 'L\'entreprise', q: question('Signature de l\'entreprise', 'signature', { qui: 'entreprise' }), mention: false }] });
+  return m;
+}
+/** Crée un bloc (et sa question s'il en faut une). « q:ouinon » = question Oui / Non, etc. */
+function creerBlocDoc(cle, m) {
+  const b = { id: idUnique(), type: cle };
+  const nouvelleQ = o => { const q = { cle: 'q-' + idUnique() + Math.random().toString(36).slice(2, 5), requis: false, ...o }; m.questions.push(q); return q.cle; };
+  if (cle.startsWith('q:')) {
+    const type = cle.slice(2);
+    const noms = { texte: 'Votre question', long: 'Votre question', ouinon: 'Votre question ?', choix: 'Votre question', date: 'Date', nombre: 'Nombre', photos: 'Photos de…' };
+    Object.assign(b, { type: 'question', q: nouvelleQ({ label: noms[type], type, ...(type === 'choix' ? { options: ['Réponse 1', 'Réponse 2'] } : {}), ...(type === 'date' ? { auto: false } : {}) }) });
+    if (type === 'photos') b.parLigne = 3;
+  }
+  if (cle === 'titre') Object.assign(b, { texte: 'Titre', sous: null });
+  if (cle === 'section') b.texte = 'Nouvelle section';
+  if (cle === 'texte') b.html = '';
+  if (cle === 'client') Object.assign(b, { type: 'texte', html: `<p><b>Client :</b> ${tagDoc('c-nom')}<br>${tagDoc('c-adresse')}<br>Tél. ${tagDoc('c-tel')}</p>` });
+  if (cle === 'entreprise') Object.assign(b, { type: 'texte', html: `<p><b>${tagDoc('e-nom')}</b><br>${tagDoc('e-adresse')}<br>Tél. ${tagDoc('e-tel')} – SIRET ${tagDoc('e-siret')}</p>` });
+  if (cle === 'colonnes') Object.assign(b, { separees: true, cols: ['', ''] });
+  if (cle === 'ligne') Object.assign(b, { ep: 1, coul: 'theme' });
+  if (cle === 'encadre') Object.assign(b, { fond: 'pale', html: '' });
+  if (cle === 'tableau') Object.assign(b, { entetes: ['Désignation', 'Quantité', 'Observation'], lignes: [['', '', ''], ['', '', '']] });
+  if (cle === 'signatures') b.cases = [
+    { titre: 'Le client', q: nouvelleQ({ label: 'Signature du client', type: 'signature', qui: 'client' }), mention: false },
+    { titre: 'L\'entreprise', q: nouvelleQ({ label: 'Signature de l\'entreprise', type: 'signature', qui: 'entreprise' }), mention: false }];
   return b;
 }
-/** « Créer mon modèle » : page blanche, exemple, ou copie d'un modèle. Renvoie le modèle choisi, ou null. */
+/** « Créer mon modèle » : page blanche, exemples, ou copie d'un modèle. Renvoie le modèle choisi, ou null. */
 async function choisirDepartDocument() {
   const mes = modelesDoc();
   const v = await demanderChoix('Créer mon modèle', [
     { valeur: 'vide', texte: 'Page blanche', ico: 'doc' },
-    { valeur: 'pv', texte: 'Partir de l\'exemple : PV de réception', ico: 'formulaire' },
+    { valeur: 'previsite', texte: 'Exemple : prévisite de combles perdus (questions, photos)', ico: 'formulaire' },
+    { valeur: 'pv', texte: 'Exemple : PV de réception (texte et signatures)', ico: 'formulaire' },
     ...(mes.length ? [{ valeur: 'copie', texte: 'Copier un de mes modèles', ico: 'copier' }] : [])]);
   if (v === 'vide') return modeleDocVide();
+  if (v === 'previsite') return modeleDocExemplePrevisite();
   if (v === 'pv') return modeleDocExemplePv();
   if (v === 'copie') {
     const id = await demanderChoix('Copier quel modèle ?', mes.map(x => ({ valeur: x.id, texte: x.nom || 'Modèle sans nom', ico: 'copier' })));
@@ -5587,13 +5661,12 @@ async function choisirDepartDocument() {
   return null;
 }
 
-/* ---------- L'éditeur ---------- */
+/* ---------- L'éditeur : palette à gauche, page au centre, réglages du bloc choisi à droite ---------- */
 function editerDocument(source) {
-  const m = JSON.parse(JSON.stringify(source));
-  m.questions ||= []; m.blocs ||= [];
-  let choisi = null, onglet = 'document', panneau = 'ajouter', sauve = true, supprime = false, minuteur;
+  const m = normaliserModeleDoc(JSON.parse(JSON.stringify(source)));
+  let choisi = null, sauve = true, supprime = false, minuteur;
   let range = null, zoneActive = null, pop = null, feuilleOutil = null;
-  const mq = matchMedia('(min-width:1000px)'), estPc = () => mq.matches;
+  const mqPc = matchMedia('(min-width:1000px)'), mqLarge = matchMedia('(min-width:1240px)');
   const fe = feuille({ titre: m.nom || 'Nouveau modèle', plein: true, page: 'rediger',
     rouvrir: () => editerDocument(modelesDoc().find(x => x.id === m.id) || m),
     retour: { label: 'Revenir aux modèles', action: async () => { await fe.fermer(); ouvrirFormulaires(); } },
@@ -5602,60 +5675,48 @@ function editerDocument(source) {
       if (!sauve && !supprime) enregistrerModeleDoc(m);
       document.removeEventListener('selectionchange', memoriser);
       document.removeEventListener('pointerdown', horsPop, true);
-      mq.removeEventListener('change', rendreCote);
+      mqPc.removeEventListener('change', rendreTout); mqLarge.removeEventListener('change', rendreTout);
     } });
   fe.feuille.classList.add('large', 'createur');
   const modifie = () => { sauve = false; clearTimeout(minuteur); minuteur = setTimeout(() => { if (supprime) return; enregistrerModeleDoc(m); sauve = true; }, 700); };
 
-  /* Barre du haut : nom, onglets Document / Formulaire, Essayer */
-  const nom = el('input', { class: 'champ cr-nom', id: 'cr-nom', placeholder: 'Ex. : PV de réception', maxlength: 60, autocomplete: 'off' });
+  const nom = el('input', { class: 'champ cr-nom', id: 'cr-nom', placeholder: 'Nom du modèle (ex. : Prévisite combles)', maxlength: 60, autocomplete: 'off', 'aria-label': 'Nom du modèle' });
   nom.value = m.nom || '';
   nom.addEventListener('input', () => { m.nom = nom.value.trim(); fe.feuille.querySelector('.feuille-tete h2').textContent = m.nom || 'Nouveau modèle'; modifie(); });
-  const onglets = segments('cr-onglet', [['document', 'Document'], ['formulaire', 'Formulaire']], onglet, v => { onglet = v; rendreTout(); });
-  onglets.classList.add('cr-onglets');
-  const barre = el('div', { class: 'cr-barre' },
-    el('div', { class: 'cr-nom-boite' }, el('label', { class: 'cr-etiq', for: 'cr-nom', text: 'Nom du modèle' }), nom),
-    onglets,
+  const barre = el('div', { class: 'cr-barre' }, nom,
     el('div', { class: 'cr-actions' },
-      bouton('Essayer', { ico: 'oeil', onclick: essai }),
+      bouton('Thème', { ico: 'palette', cls: 'btn cr-btn-theme', onclick: () => ouvrirOutil('theme') }),
+      bouton('Tester', { ico: 'oeil', cls: 'btn principal', label: 'Tester : remplir ce modèle et voir le PDF', onclick: essai }),
       bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: 'Supprimer ce modèle', onclick: supprimerModele })));
   const page = el('div', { class: 'cr-page' });
   const plan = el('div', { class: 'cr-plan' }, page);
-  const cote = el('aside', { class: 'cr-cote', 'aria-label': 'Outils du créateur' });
-  const zoneDoc = el('div', { class: 'cr-zone' }, plan, cote);
-  const zoneForm = el('div', { class: 'cr-form' });
-  fe.corps.append(barre, zoneDoc, zoneForm);
-  // Téléphone : la barre d'outils en bas ouvre chaque outil dans une petite fenêtre
-  const outil = (texte, ico, quoi) => { const b = bouton(texte, { ico, cls: 'btn cr-outil', onclick: () => ouvrirOutil(quoi) }); b.addEventListener('pointerdown', e => e.preventDefault()); return b; };
+  const palette = el('aside', { class: 'cr-palette', 'aria-label': 'Blocs à ajouter' });
+  const cote = el('aside', { class: 'cr-cote', 'aria-label': 'Réglages' });
+  fe.corps.append(barre, el('div', { class: 'cr-zone' }, palette, plan, cote));
+  const outil = (texte, ico, quoi, cls = '') => { const b = bouton(texte, { ico, cls: 'btn cr-outil ' + cls, onclick: () => ouvrirOutil(quoi) }); b.addEventListener('pointerdown', e => e.preventDefault()); return b; };
   fe.pied.classList.add('cr-pied');
-  fe.pied.append(outil('Ajouter', 'plus', 'ajouter'), outil('Champ', 'texte', 'champs'), outil('Bloc', 'reglages', 'bloc'), outil('Thème', 'palette', 'theme'));
+  fe.pied.append(outil('Ajouter', 'plus', 'ajouter', 'fort'), outil('Réglages', 'reglages', 'bloc'), outil('Thème', 'palette', 'theme'));
 
   const blocDe = id => m.blocs.find(x => x.id === id);
   const blocDeZone = z => blocDe(z?.closest('.cr-bloc')?.dataset.id);
   const idx = id => m.blocs.findIndex(x => x.id === id);
+  const nomBloc = b => b.type === 'question' ? (TYPES_Q[questionDe(m, b.q)?.type] || 'Question') : NOMS_BLOCS[b.type];
 
   /* ----- La page ----- */
   function rendrePage() {
-    const th = themeDe(m);
+    const th = themeDe(m), e = entreprise(), logo = lireTampons().find(t => t.id === e.logoId);
     page.className = `cr-page theme-${th.style} police-${th.police}`;
     page.style.setProperty('--doc-c1', th.c1);
-    page.replaceChildren(enteteEd(), ...m.blocs.map(blocEd), piedEd());
-    if (!m.blocs.length) page.lastChild.before(el('p', { class: 'cr-vide', text: 'Page vide : touchez « Ajouter » pour poser un premier bloc.' }));
-  }
-  function enteteEd() {
-    const e = entreprise(), logo = lireTampons().find(t => t.id === e.logoId);
-    if (m.entete === 'aucun') return el('div', { class: 'cr-entete masque', text: 'Pas d\'en-tête (Thème → En-tête)' });
-    return el('div', { class: 'cr-entete' },
+    const entete = m.entete === 'aucun' ? el('div', { class: 'cr-entete masque', text: 'Pas d\'en-tête' }) : el('div', { class: 'cr-entete' },
       el('div', { class: 'cr-entete-g' }, logo ? el('img', { src: logo.png, alt: 'Logo' }) : null,
         el('div', {}, el('strong', { text: e.nom || 'Votre entreprise' }),
-          el('span', { text: [e.adresse, e.cpVille].filter(Boolean).join(', ') || 'Adresse, logo : Paramètres → Mon entreprise' }),
+          el('span', { text: [e.adresse, e.cpVille].filter(Boolean).join(', ') || 'Logo et adresse : Paramètres → Mon entreprise' }),
           [e.tel, e.email].some(Boolean) ? el('span', { text: [e.tel, e.email].filter(Boolean).join(' · ') }) : null)),
       el('div', { class: 'cr-entete-d' }, dateLongue(), m.entete === 'premiere' ? el('small', { text: '1re page seulement' }) : null));
-  }
-  function piedEd() {
-    const e = entreprise();
-    if (m.pied === 'aucun') return el('div', { class: 'cr-pied-doc masque', text: 'Pas de pied de page (Thème → Pied de page)' });
-    return el('div', { class: 'cr-pied-doc' }, el('span', { text: [e.nom, e.siret ? 'SIRET ' + e.siret : '', e.mentions].filter(Boolean).join(' · ') || 'Mentions de l\'entreprise : Paramètres → Mon entreprise' }), el('span', { text: 'Page 1 / 1' }));
+    const pied = m.pied === 'aucun' ? el('div', { class: 'cr-pied-doc masque', text: 'Pas de pied de page' })
+      : el('div', { class: 'cr-pied-doc' }, el('span', { text: [e.nom, e.siret ? 'SIRET ' + e.siret : '', e.mentions].filter(Boolean).join(' · ') || 'Mentions de l\'entreprise : Paramètres → Mon entreprise' }), el('span', { text: 'Page 1 / 1' }));
+    const vide = m.blocs.length ? null : el('button', { type: 'button', class: 'cr-vide', onclick: () => ouvrirOutil('ajouter') }, icone('plus'), el('strong', { text: 'Ajoutez votre premier bloc' }), el('span', { text: mqPc.matches ? 'Cliquez un bloc à gauche, ou glissez-le ici.' : 'Touchez « Ajouter » en bas de l\'écran.' }));
+    page.replaceChildren(entete, ...m.blocs.map(blocEd), ...(vide ? [vide] : []), pied);
   }
   function zoneTexte(b, cle, html, vide = 'Écrivez ici…') {
     const z = el('div', { class: 'cr-zone-texte', contenteditable: 'true', 'data-cle': cle, 'data-vide': vide });
@@ -5663,40 +5724,57 @@ function editerDocument(source) {
     z.addEventListener('input', () => { sauverZone(b, z); verifierAccolades(z); });
     z.addEventListener('focus', () => { zoneActive = z; });
     z.addEventListener('paste', e => { e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain')); });
-    z.addEventListener('click', e => { const t = e.target.closest('[data-champ]'); if (t) montrerChamp(t.dataset.champ); });
     return z;
   }
-  function zonePlate(b, cle, cls, vide) {
-    const z = el('div', { class: cls, contenteditable: 'true', 'data-cle': cle, 'data-vide': vide, 'data-plat': '1', text: b[cle] || '' });
-    z.addEventListener('input', () => sauverZone(b, z));
-    z.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+  /** Texte simple modifiable sur place, relié à obj[cle] (titre, section, intitulé d'une question, réponse d'un choix). */
+  function zonePlate(obj, cle, cls, vide, apres) {
+    const z = el('div', { class: cls, contenteditable: 'true', 'data-vide': vide, 'data-plat': '1', text: obj[cle] || '' });
+    z.addEventListener('input', () => { obj[cle] = z.textContent.replace(/\s+/g, ' '); modifie(); apres?.(); });
+    z.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); z.blur(); } });
     z.addEventListener('paste', e => { e.preventDefault(); document.execCommand('insertText', false, e.clipboardData.getData('text/plain').replace(/\s+/g, ' ')); });
     return z;
   }
   function sauverZone(b, z) {
     if (!b) return;
     const cle = z.dataset.cle;
-    if (cle === 'texte' || cle === 'sous') b[cle] = z.textContent;
-    else if (cle.startsWith('col')) b.cols[+cle.slice(3)] = z.innerHTML;
+    if (cle.startsWith('col')) b.cols[+cle.slice(3)] = z.innerHTML;
     else if (cle.startsWith('th')) b.entetes[+cle.slice(2)] = z.innerHTML;
     else if (cle.startsWith('td')) { const [r, c] = cle.slice(2).split('-').map(Number); b.lignes[r][c] = z.innerHTML; }
     else b.html = z.innerHTML;
     modifie();
   }
-  function montrerChamp(cle) {
-    const c = infoChamp(m, cle);
-    const d = { client: 'rempli depuis la fiche du client (sinon demandé dans le formulaire)', entreprise: 'rempli tout seul depuis Paramètres → Mon entreprise', auto: 'rempli tout seul par l\'appli', question: `question du formulaire (${TYPES_Q[c.q?.type] || ''})`, perso: '' }[c.source] || 'cette question a été supprimée : effacez l\'étiquette';
-    toast(`« ${c.label} » : ${d}.`, 4500);
+  function questionEd(b) {
+    const q = questionDe(m, b.q);
+    if (!q) return el('div', { class: 'cr-perdu', text: 'Cette question a été supprimée. Supprimez ce bloc.' });
+    let champ;
+    if (q.type === 'ouinon') champ = el('div', { class: 'cr-pilules' }, el('span', { text: 'Oui' }), el('span', { text: 'Non' }));
+    else if (q.type === 'choix') {
+      q.options ||= [];
+      const viser = i => requestAnimationFrame(() => { const z = page.querySelectorAll(`.cr-bloc[data-id="${b.id}"] .cr-option-texte`)[i]; if (z) { z.focus(); getSelection().selectAllChildren(z); } });
+      champ = el('div', { class: 'cr-options' },
+        q.options.map((o, i) => {
+          const z = el('div', { class: 'cr-option-texte', contenteditable: 'true', 'data-plat': '1', 'data-vide': 'Réponse', text: o });
+          z.addEventListener('input', () => { q.options[i] = z.textContent.replace(/\s+/g, ' ').trim(); modifie(); });
+          z.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); q.options.splice(i + 1, 0, 'Réponse ' + (q.options.length + 1)); modifie(); rendrePage(); viser(i + 1); } });
+          return el('div', { class: 'cr-option' }, el('i'), z,
+            q.options.length > 1 ? el('button', { type: 'button', class: 'cr-option-x', 'aria-label': `Retirer la réponse « ${o} »`, title: 'Retirer', onclick: () => { q.options.splice(i, 1); modifie(); rendrePage(); rafraichirPanneaux(); } }, icone('fermer')) : null);
+        }),
+        el('button', { type: 'button', class: 'cr-option-plus', onclick: () => { q.options.push('Réponse ' + (q.options.length + 1)); modifie(); rendrePage(); viser(q.options.length - 1); } }, icone('plus'), 'Ajouter une réponse'));
+    } else if (q.type === 'photos') {
+      const n = b.parLigne || 3;
+      champ = el('div', { class: 'cr-grille', style: { gridTemplateColumns: `repeat(${n}, 1fr)` } }, Array.from({ length: n }, () => el('div', { class: 'cr-photo' }, icone('camera'))));
+    } else champ = el('div', { class: 'cr-faux-champ ' + q.type, text: q.type === 'date' ? (q.auto ? 'Date du jour' : 'jj/mm/aaaa') : q.type === 'nombre' ? '0' : q.aide ? 'ex. : ' + q.aide.replace(/^ex\.?\s*:?\s*/i, '') : q.type === 'long' ? 'Réponse sur plusieurs lignes' : 'Réponse' });
+    return el('div', { class: 'cr-question type-' + q.type + (b.sansTitre ? ' sans-titre' : '') },
+      el('div', { class: 'cr-q-tete' }, zonePlate(q, 'label', 'cr-q-label', 'Écrivez la question'), q.requis ? el('span', { class: 'cr-requis', title: 'Réponse obligatoire', text: '*' }) : null,
+        b.sansTitre ? el('small', { class: 'cr-q-note', text: 'titre masqué dans le PDF' }) : null),
+      champ);
   }
   function blocEd(b) {
     let corps;
     switch (b.type) {
-      case 'titre': {
-        const g = b.align === 'gauche' ? ' gauche' : '';
-        corps = el('div', {}, zonePlate(b, 'texte', 'cr-titre' + g, 'Titre du document'), b.sous != null ? zonePlate(b, 'sous', 'cr-sous' + g, 'Sous-titre') : null);
-        break;
-      }
-      case 'texte': corps = zoneTexte(b, 'html', b.html); break;
+      case 'titre': { const g = b.align === 'gauche' ? ' gauche' : ''; corps = el('div', {}, zonePlate(b, 'texte', 'cr-titre' + g, 'Titre du document'), b.sous != null ? zonePlate(b, 'sous', 'cr-sous' + g, 'Sous-titre') : null); break; }
+      case 'section': corps = zonePlate(b, 'texte', 'cr-section', 'Nom de la section'); break;
+      case 'texte': corps = zoneTexte(b, 'html', b.html, 'Écrivez votre texte…'); break;
       case 'colonnes': corps = el('div', { class: `cr-colonnes n${b.cols.length}${b.separees ? ' separees' : ''}` }, b.cols.map((c, i) => zoneTexte(b, 'col' + i, c, `Colonne ${i + 1}`))); break;
       case 'ligne': corps = el('div', { class: 'cr-ligne', style: { borderTopWidth: (b.ep || 1) + 'px', borderTopColor: b.coul === 'gris' ? '#cfd5dc' : 'var(--doc-c1)' } }); break;
       case 'encadre': corps = el('div', { class: 'cr-encadre ' + (b.fond === 'bord' ? 'bord' : 'pale') }, zoneTexte(b, 'html', b.html, 'Texte mis en valeur…')); break;
@@ -5704,101 +5782,52 @@ function editerDocument(source) {
         el('thead', {}, el('tr', {}, b.entetes.map((h, i) => el('th', {}, zoneTexte(b, 'th' + i, h, 'Titre'))))),
         el('tbody', {}, b.lignes.map((l, r) => el('tr', {}, l.map((c, i) => el('td', {}, zoneTexte(b, `td${r}-${i}`, c, ' ')))))));
         break;
-      case 'choix': {
-        const q = questionDe(m, b.q);
-        corps = el('div', { class: 'cr-choix' },
-          el('div', { class: 'cr-lien-q' }, 'Question : ', el('span', { class: 'tag-doc src-question', text: q?.label || 'Question supprimée' })),
-          (q?.options || []).map(o => el('div', { class: 'cr-case' }, el('i'), el('span', { text: o }))));
-        break;
-      }
-      case 'photos': {
-        const q = questionDe(m, b.q), n = b.parLigne || 3;
-        corps = el('div', { class: 'cr-photos' }, el('strong', { text: q?.label || 'Photos' }),
-          el('div', { class: 'cr-grille', style: { gridTemplateColumns: `repeat(${n}, 1fr)` } }, Array.from({ length: n }, () => el('div', { class: 'cr-photo', text: 'Photo' }))));
-        break;
-      }
+      case 'question': corps = questionEd(b); break;
       case 'signatures': corps = el('div', { class: 'cr-signatures' + (b.cases.length === 1 ? ' une' : '') }, b.cases.map(c => {
         const q = questionDe(m, c.q);
-        return el('div', { class: 'cr-sig' }, el('strong', { text: c.titre || 'Signature' }), c.mention ? el('small', { text: 'Mention « Lu et approuvé »' }) : null,
-          el('div', { class: 'cr-sig-zone', text: q?.qui === 'entreprise' ? 'Signature et tampon de l\'entreprise' : 'Signature du client' }));
+        return el('div', { class: 'cr-sig' }, zonePlate(c, 'titre', 'cr-sig-titre', 'Qui signe ?', () => { if (q) q.label = 'Signature : ' + (c.titre || ''); }), c.mention ? el('small', { text: 'Mention « Lu et approuvé »' }) : null,
+          el('div', { class: 'cr-sig-zone', text: q?.qui === 'entreprise' ? 'Signature et tampon de l\'entreprise' : 'Signature du client (date, heure et lieu enregistrés)' }));
       })); break;
       case 'saut': corps = el('div', { class: 'cr-saut', text: 'Saut de page' }); break;
     }
     const aTexte = ['texte', 'colonnes', 'encadre', 'tableau'].includes(b.type);
-    const ob = (contenu, label, action, cls = '') => el('button', { type: 'button', class: 'cr-ob ' + cls, 'aria-label': label, title: label, onpointerdown: e => e.preventDefault(), onclick: e => { e.stopPropagation(); action(); } }, contenu);
+    const ob = (contenu, label, action, cls = '') => el('button', { type: 'button', class: 'cr-ob ' + cls, 'aria-label': label, title: label, onpointerdown: e => e.preventDefault(), onclick: e => { e.stopPropagation(); action(e); } }, contenu);
     const format = cmd => () => { document.execCommand(cmd); if (zoneActive?.isConnected) sauverZone(blocDeZone(zoneActive), zoneActive); };
     const poignee = el('span', { class: 'cr-ob cr-glisser', title: 'Glisser pour déplacer', 'aria-hidden': 'true' }, icone('deplacer'));
+    poignee.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); choisir(b.id); demarrerGlisse(e, poignee, { id: b.id, libelle: nomBloc(b) }); });
     const outils = el('div', { class: 'cr-outils-bloc' },
       poignee,
-      aTexte ? [ob(el('b', { text: 'B' }), 'Gras', format('bold')), ob(el('i', { text: 'I' }), 'Italique', format('italic')), ob(el('u', { text: 'U' }), 'Souligné', format('underline'), 'pc'), ob(icone('lignes'), 'Liste à puces', format('insertUnorderedList'))] : [],
+      aTexte ? [ob('Champ', 'Insérer un champ : nom du client, date, réponse…', e => { const r = e.currentTarget.getBoundingClientRect(); if (mqPc.matches) ouvrirPop(r.left, r.bottom + 6); else ouvrirOutil('champs'); }, 'texte'),
+        ob(el('b', { text: 'G' }), 'Gras', format('bold')), ob(el('i', { text: 'I' }), 'Italique', format('italic'), 'pc'), ob(icone('lignes'), 'Liste à puces', format('insertUnorderedList'))] : [],
       ob(icone('haut'), 'Monter le bloc', () => deplacer(b.id, -1)),
       ob(icone('bas'), 'Descendre le bloc', () => deplacer(b.id, 1)),
-      ob(icone('reglages'), 'Réglages du bloc', () => { choisir(b.id); ouvrirOutil('bloc'); }),
+      ob(icone('reglages'), 'Réglages du bloc', () => { choisir(b.id); ouvrirOutil('bloc'); }, 'pas-large'),
       ob(icone('copier'), 'Dupliquer le bloc', () => dupliquer(b.id), 'pc'),
       ob(icone('poubelle'), 'Supprimer le bloc', () => supprimer(b.id)));
-    const n = el('div', { class: `cr-bloc cr-b-${b.type}${choisi === b.id ? ' choisi' : ''}`, dataset: { id: b.id } }, outils, corps);
+    const cond = b.si?.q ? el('div', { class: 'cr-si' }, icone('info'), `Seulement si « ${questionDe(m, b.si.q)?.label || '?'} » = ${b.si.val}`) : null;
+    const n = el('div', { class: `cr-bloc cr-b-${b.type}${choisi === b.id ? ' choisi' : ''}${cond ? ' conditionnel' : ''}`, dataset: { id: b.id } }, outils, cond, corps);
     n.addEventListener('pointerdown', () => choisir(b.id));
     n.addEventListener('focusin', () => choisir(b.id));
-    // Ordinateur : glisser la poignée (ou une tuile « Ajouter ») sur la page
-    poignee.addEventListener('pointerdown', e => {
-      e.preventDefault(); e.stopPropagation(); choisir(b.id);
-      try { poignee.setPointerCapture(e.pointerId); } catch {}
-      n.classList.add('glisse'); page.classList.add('en-glisse');
-      let cible = null, dernierY = e.clientY, vDefile = 0;
-      const viser = () => {
-        const blocs = [...page.querySelectorAll('.cr-bloc')];
-        blocs.forEach(x => x.classList.remove('cible-avant', 'cible-apres'));
-        let mieux = null, dist = Infinity;
-        for (const x of blocs) { const rc = x.getBoundingClientRect(), d = dernierY < rc.top ? rc.top - dernierY : dernierY > rc.bottom ? dernierY - rc.bottom : 0; if (d < dist) { dist = d; mieux = { x, apres: dernierY > rc.top + rc.height / 2 }; } }
-        cible = mieux && mieux.x.dataset.id !== b.id ? { id: mieux.x.dataset.id, apres: mieux.apres } : null;
-        if (cible) mieux.x.classList.add(cible.apres ? 'cible-apres' : 'cible-avant');
-      };
-      const bouger = ev => {
-        dernierY = ev.clientY; viser();
-        // Près du haut ou du bas : la page défile toute seule
-        const pr = plan.getBoundingClientRect(); vDefile = dernierY < pr.top + 60 ? -12 : dernierY > pr.bottom - 60 ? 12 : 0;
-      };
-      const defile = setInterval(() => { if (vDefile) { plan.scrollBy(0, vDefile); viser(); } }, 16);
-      const fin = () => {
-        clearInterval(defile); poignee.removeEventListener('pointermove', bouger); poignee.removeEventListener('pointerup', fin); poignee.removeEventListener('pointercancel', fin);
-        n.classList.remove('glisse'); page.classList.remove('en-glisse');
-        if (cible) { const j = idx(b.id); const [x] = m.blocs.splice(j, 1); let i = idx(cible.id) + (cible.apres ? 1 : 0); m.blocs.splice(i, 0, x); modifie(); }
-        rendrePage();
-      };
-      poignee.addEventListener('pointermove', bouger); poignee.addEventListener('pointerup', fin); poignee.addEventListener('pointercancel', fin);
-    });
-    n.addEventListener('dragover', e => {
-      if (![...e.dataTransfer.types].some(t => t.startsWith('text/cr-'))) return;
-      e.preventDefault(); const r = n.getBoundingClientRect(), apres = e.clientY > r.top + r.height / 2;
-      n.classList.toggle('cible-apres', apres); n.classList.toggle('cible-avant', !apres);
-    });
-    n.addEventListener('dragleave', () => n.classList.remove('cible-avant', 'cible-apres'));
-    n.addEventListener('drop', e => {
-      const deId = e.dataTransfer.getData('text/cr-bloc'), nouveau = e.dataTransfer.getData('text/cr-nouveau');
-      if (!deId && !nouveau) return;
-      e.preventDefault(); const apres = n.classList.contains('cible-apres'); n.classList.remove('cible-avant', 'cible-apres');
-      let i = idx(b.id) + (apres ? 1 : 0);
-      if (nouveau) { const nb = creerBlocDoc(nouveau, m); m.blocs.splice(i, 0, nb); choisi = nb.id; }
-      else if (deId !== b.id) { const j = idx(deId); const [x] = m.blocs.splice(j, 1); if (j < i) i--; m.blocs.splice(i, 0, x); }
-      modifie(); rendrePage(); rendreCote();
-    });
     return n;
   }
   function choisir(id) {
     if (choisi === id) return;
     choisi = id;
     page.querySelectorAll('.cr-bloc').forEach(x => x.classList.toggle('choisi', x.dataset.id === id));
-    if (estPc() && panneau !== 'champs') { if (panneau === 'ajouter' || panneau === 'bloc') rendreCote(); }
+    if (mqLarge.matches) rendreCote();
   }
-  function ajouterBloc(type) {
-    const b = creerBlocDoc(type, m), i = idx(choisi);
-    m.blocs.splice(i >= 0 ? i + 1 : m.blocs.length, 0, b); choisi = b.id;
-    modifie(); rendrePage(); rendreCote();
+  function viserBloc(id, editer = true) {
     requestAnimationFrame(() => {
-      const n = page.querySelector(`.cr-bloc[data-id="${b.id}"]`); if (!n) return;
+      const n = page.querySelector(`.cr-bloc[data-id="${id}"]`); if (!n) return;
       n.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      n.querySelector('[contenteditable="true"]')?.focus({ preventScroll: true });
+      const z = n.querySelector('[contenteditable="true"]');
+      if (editer && z) { z.focus({ preventScroll: true }); if (z.dataset.plat) getSelection().selectAllChildren(z); }
     });
+  }
+  function ajouterBloc(cle, position = null) {
+    const b = creerBlocDoc(cle, m), i = position ?? (idx(choisi) >= 0 ? idx(choisi) + 1 : m.blocs.length);
+    m.blocs.splice(i, 0, b); choisi = b.id;
+    modifie(); rendrePage(); rendreCote(); viserBloc(b.id);
   }
   function deplacer(id, d) {
     const i = idx(id), j = i + d; if (i < 0 || j < 0 || j >= m.blocs.length) return;
@@ -5808,17 +5837,56 @@ function editerDocument(source) {
   function dupliquer(id) {
     const i = idx(id); if (i < 0) return;
     const c = JSON.parse(JSON.stringify(m.blocs[i])); c.id = idUnique();
-    m.blocs.splice(i + 1, 0, c); choisi = c.id; modifie(); rendrePage(); rafraichirPanneaux();
-    toast('Bloc dupliqué');
+    const copieQ = cle => { const q = questionDe(m, cle); if (!q) return cle; const nq = { ...JSON.parse(JSON.stringify(q)), cle: 'q-' + idUnique() + Math.random().toString(36).slice(2, 5) }; m.questions.push(nq); return nq.cle; };
+    if (c.type === 'question') c.q = copieQ(c.q);
+    if (c.cases) c.cases.forEach(x => { x.q = copieQ(x.q); });
+    m.blocs.splice(i + 1, 0, c); choisi = c.id; modifie(); rendrePage(); rafraichirPanneaux(); viserBloc(c.id, false);
   }
   async function supprimer(id) {
     const i = idx(id); if (i < 0) return;
-    const [b] = m.blocs.splice(i, 1); choisi = null; modifie();
-    await fermerOutil(); rendrePage(); rafraichirPanneaux();
-    toast(`Bloc « ${BLOCS_DOC[b.type][0]} » supprimé.`, { action: 'Annuler', onAction: () => { m.blocs.splice(i, 0, b); choisi = b.id; modifie(); rendrePage(); rafraichirPanneaux(); } });
+    const [b] = m.blocs.splice(i, 1); choisi = null;
+    // Les blocs qui dépendaient de cette question redeviennent toujours visibles
+    const dependants = b.q ? m.blocs.filter(x => x.si?.q === b.q) : [];
+    dependants.forEach(x => { x.siAvant = x.si; delete x.si; });
+    modifie(); await fermerOutil(); rendrePage(); rafraichirPanneaux();
+    toast(`Bloc « ${nomBloc(b)} » supprimé.`, { action: 'Annuler', onAction: () => { m.blocs.splice(i, 0, b); dependants.forEach(x => { x.si = x.siAvant; delete x.siAvant; }); choisi = b.id; modifie(); rendrePage(); rafraichirPanneaux(); } });
   }
 
-  /* ----- Étiquettes : mémoriser le curseur, « {{ », insertion ----- */
+  /* ----- Glisser-déposer : la poignée d'un bloc, ou une tuile de la palette (ordinateur) ----- */
+  function demarrerGlisse(e, prise, { id = null, nouveau = null, libelle = '' }) {
+    try { prise.setPointerCapture(e.pointerId); } catch {}
+    const src = id ? page.querySelector(`.cr-bloc[data-id="${id}"]`) : null;
+    src?.classList.add('glisse'); page.classList.add('en-glisse');
+    const fantome = el('div', { class: 'cr-fantome', text: libelle }); fantome.style.zIndex = zFeuille + 6; document.body.append(fantome);
+    let cible = null, x = e.clientX, y = e.clientY, vDefile = 0;
+    const viser = () => {
+      fantome.style.transform = `translate(${x + 14}px, ${y + 10}px)`;
+      const blocs = [...page.querySelectorAll('.cr-bloc')];
+      blocs.forEach(n => n.classList.remove('cible-avant', 'cible-apres')); page.classList.remove('cible-fin'); cible = null;
+      const pr = plan.getBoundingClientRect();
+      if (x < pr.left || x > pr.right || y < pr.top || y > pr.bottom) return;
+      if (!blocs.length) { cible = { fin: true }; page.classList.add('cible-fin'); return; }
+      let mieux = null, dist = Infinity;
+      for (const n of blocs) { const rc = n.getBoundingClientRect(), d = y < rc.top ? rc.top - y : y > rc.bottom ? y - rc.bottom : 0; if (d < dist) { dist = d; mieux = { n, apres: y > rc.top + rc.height / 2 }; } }
+      if (mieux.n.dataset.id === id) return;
+      cible = { id: mieux.n.dataset.id, apres: mieux.apres };
+      mieux.n.classList.add(cible.apres ? 'cible-apres' : 'cible-avant');
+    };
+    const bouger = ev => { x = ev.clientX; y = ev.clientY; viser(); const pr = plan.getBoundingClientRect(); vDefile = x > pr.left && x < pr.right ? (y < pr.top + 60 ? -12 : y > pr.bottom - 60 ? 12 : 0) : 0; };
+    const defile = setInterval(() => { if (vDefile) { plan.scrollBy(0, vDefile); viser(); } }, 16);
+    const fin = () => {
+      clearInterval(defile); fantome.remove();
+      prise.removeEventListener('pointermove', bouger); prise.removeEventListener('pointerup', fin); prise.removeEventListener('pointercancel', fin);
+      page.classList.remove('en-glisse', 'cible-fin');
+      if (cible && nouveau) return ajouterBloc(nouveau, cible.fin ? m.blocs.length : idx(cible.id) + (cible.apres ? 1 : 0));
+      if (cible && id) { const [bl] = m.blocs.splice(idx(id), 1); m.blocs.splice(idx(cible.id) + (cible.apres ? 1 : 0), 0, bl); modifie(); }
+      rendrePage();
+    };
+    prise.addEventListener('pointermove', bouger); prise.addEventListener('pointerup', fin); prise.addEventListener('pointercancel', fin);
+    viser();
+  }
+
+  /* ----- Étiquettes dans un texte libre ----- */
   function memoriser() {
     const s = getSelection(); if (!s.rangeCount) return;
     const n = s.anchorNode, z = (n?.nodeType === 1 ? n : n?.parentElement)?.closest('[contenteditable="true"]:not([data-plat])');
@@ -5834,12 +5902,12 @@ function editerDocument(source) {
     n.textContent = avant.slice(0, -2) + n.textContent.slice(r.startOffset);
     const nr = document.createRange(); nr.setStart(n, avant.length - 2); nr.collapse(true); s.removeAllRanges(); s.addRange(nr);
     range = nr.cloneRange(); zoneActive = z; sauverZone(blocDeZone(z), z);
-    if (estPc()) { const rc = nr.getBoundingClientRect(), rz = z.getBoundingClientRect(); ouvrirPop(rc.left || rz.left, (rc.bottom || rz.bottom) + 6); }
+    if (mqPc.matches) { const rc = nr.getBoundingClientRect(), rz = z.getBoundingClientRect(); ouvrirPop(rc.left || rz.left, (rc.bottom || rz.bottom) + 6); }
     else ouvrirOutil('champs');
   }
   function insererChamp(cle) {
     fermerPop();
-    if (!zoneActive?.isConnected || !range) { toast('Touchez d\'abord le texte de la page, à l\'endroit où mettre le champ.', 4500); return; }
+    if (!zoneActive?.isConnected || !range) { toast('Touchez d\'abord le texte, à l\'endroit où mettre le champ.', 4500); return; }
     const c = infoChamp(m, cle), t = el('span', { 'data-champ': cle });
     t.className = 'tag-doc src-' + c.source; t.contentEditable = 'false'; t.textContent = c.label;
     zoneActive.focus({ preventScroll: true });
@@ -5848,7 +5916,6 @@ function editerDocument(source) {
     const r = document.createRange(); r.setStartAfter(espace); r.collapse(true);
     const s = getSelection(); s.removeAllRanges(); s.addRange(r); range = r.cloneRange();
     sauverZone(blocDeZone(zoneActive), zoneActive);
-    if (onglet === 'document' && estPc() && panneau === 'champs') rendreCote();
   }
   function ouvrirPop(x, y) {
     fermerPop();
@@ -5861,41 +5928,6 @@ function editerDocument(source) {
   function horsPop(e) { if (pop && !pop.contains(e.target)) fermerPop(); }
   document.addEventListener('pointerdown', horsPop, true);
   fe.feuille.addEventListener('keydown', e => { if (e.key === 'Escape' && pop) { fermerPop(); e.stopPropagation(); } });
-
-  /* ----- Panneaux : à droite sur ordinateur, en petite fenêtre sur téléphone ----- */
-  async function ouvrirOutil(quoi) {
-    if (estPc()) { panneau = quoi; rendreCote(); return; }
-    await fermerOutil();
-    const titres = { ajouter: 'Ajouter un bloc', champs: 'Insérer un champ', bloc: 'Réglages du bloc', theme: 'Thème et mise en page' };
-    const f = feuille({ titre: titres[quoi], pied: false, surFermeture: () => { if (feuilleOutil === f) feuilleOutil = null; } });
-    f.quoi = quoi; f.feuille.classList.add('cr-feuille');
-    f.corps.append(contenuPanneau(quoi));
-    feuilleOutil = f;
-  }
-  async function fermerOutil() { const f = feuilleOutil; feuilleOutil = null; if (f && !f.ferme()) await f.fermer(); }
-  function rafraichirPanneaux() {
-    if (estPc()) rendreCote();
-    else if (feuilleOutil) feuilleOutil.corps.replaceChildren(contenuPanneau(feuilleOutil.quoi));
-  }
-  function apres() { modifie(); rendrePage(); rafraichirPanneaux(); }
-  function rendreCote() {
-    if (!estPc() || onglet !== 'document') { cote.replaceChildren(); return; }
-    const tabs = segments('cr-panneau', [['ajouter', 'Ajouter'], ['champs', 'Champs'], ['bloc', 'Bloc'], ['theme', 'Thème']], panneau, v => { panneau = v; rendreCote(); });
-    tabs.classList.add('cr-tabs');
-    cote.replaceChildren(tabs, contenuPanneau(panneau));
-  }
-  mq.addEventListener('change', rendreCote);
-  function contenuPanneau(quoi) {
-    if (quoi === 'ajouter') return el('div', {},
-      el('div', { class: 'cr-tuiles' }, Object.entries(BLOCS_DOC).map(([t, [nomB, ico]]) => el('button', { type: 'button', class: 'cr-tuile', draggable: estPc() ? 'true' : null,
-        ondragstart: e => e.dataTransfer.setData('text/cr-nouveau', t), onclick: async () => { await fermerOutil(); ajouterBloc(t); } }, icone(ico), el('span', { text: nomB })))),
-      el('p', { class: 'note', text: choisi ? 'Le bloc s\'ajoute sous le bloc choisi (entouré en vert).' : 'Le bloc s\'ajoute en bas de la page.' + (estPc() ? ' Vous pouvez aussi glisser une tuile sur la page.' : '') }));
-    if (quoi === 'champs') return el('div', {},
-      el('p', { class: 'note', text: 'Touchez le texte de la page à l\'endroit voulu, puis choisissez un champ. Astuce : tapez {{ dans le texte.' }),
-      listeChamps());
-    if (quoi === 'bloc') return reglagesBloc();
-    return reglagesTheme();
-  }
   function listeChamps() {
     const groupe = (titre, cles) => cles.length ? [el('div', { class: 'cr-groupe', text: titre }), el('div', { class: 'cr-champs' }, cles.map(cle => {
       const c = infoChamp(m, cle);
@@ -5903,99 +5935,142 @@ function editerDocument(source) {
         el('span', { class: 'tag-doc src-' + c.source, text: c.label }), c.q ? el('small', { text: TYPES_Q[c.q.type] }) : null);
     }))] : [];
     const parSource = s => Object.keys(CHAMPS_DOC).filter(k => CHAMPS_DOC[k].source === s);
-    return el('div', { class: 'cr-liste-champs' },
-      groupe('Le client (repris de sa fiche)', parSource('client')),
-      groupe('Mon entreprise (rempli tout seul)', parSource('entreprise')),
-      groupe('Automatique', parSource('auto')),
-      groupe('Mes questions', m.questions.filter(q => TYPES_Q_TEXTE.includes(q.type)).map(q => q.cle)),
-      formNouvelleQuestion());
-  }
-  function formNouvelleQuestion() {
     const id = 'cr-nq-' + idUnique();
-    const nomQ = el('input', { class: 'champ', id, placeholder: 'Ex. : Marque de la chaudière', maxlength: 80, autocomplete: 'off' });
-    const type = el('select', { class: 'champ', id: id + '-t' }, TYPES_Q_TEXTE.map(t => el('option', { value: t, text: TYPES_Q[t] })));
+    const nomQ = el('input', { class: 'champ', id, placeholder: 'Ex. : Numéro du devis', maxlength: 80, autocomplete: 'off' });
     const creer = async () => {
       const label = nomQ.value.trim(); if (!label) { nomQ.focus(); return; }
-      const q = { cle: 'q-' + idUnique(), label, type: type.value, requis: false, etape: '' };
+      const q = { cle: 'q-' + idUnique(), label, type: 'texte', requis: false };
       m.questions.push(q); modifie(); await fermerOutil(); insererChamp(q.cle);
     };
     nomQ.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); creer(); } });
-    const zone = el('div', { class: 'cr-nq', hidden: true },
-      el('label', { class: 'etiquette', for: id, text: 'Question posée dans le formulaire' }), nomQ,
-      el('label', { class: 'etiquette', for: id + '-t', text: 'Type de réponse' }), type,
-      bouton('Créer et insérer', { ico: 'plus', cls: 'btn principal', onclick: creer }));
-    const ouvrir = bouton('Nouvelle question', { ico: 'plus', onclick: () => { zone.hidden = false; ouvrir.hidden = true; nomQ.focus(); } });
-    return el('div', { class: 'cr-nq-boite' }, ouvrir, zone);
+    return el('div', { class: 'cr-liste-champs' },
+      el('p', { class: 'note', text: 'Un champ dans une phrase : il sera remplacé par la réponse.' }),
+      groupe('Le client (repris de sa fiche)', parSource('client')),
+      groupe('Mon entreprise (rempli tout seul)', parSource('entreprise')),
+      groupe('Automatique', parSource('auto')),
+      groupe('Réponses aux questions', m.questions.filter(q => TYPES_Q_TEXTE.includes(q.type) && champsUtilises(m).includes(q.cle)).map(q => q.cle)),
+      el('div', { class: 'cr-nq' }, el('label', { class: 'etiquette', for: id, text: 'Nouvelle réponse à demander' }), nomQ, bouton('Créer et insérer', { ico: 'plus', onclick: creer })));
   }
+
+  /* ----- Palette, réglages, thème ----- */
+  function contenuPalette() {
+    return el('div', { class: 'cr-palette-contenu' }, PALETTE_DOC.flatMap(([titre, tuiles]) => [el('h3', { class: 'cr-groupe', text: titre }),
+      el('div', { class: 'cr-tuiles' }, tuiles.map(([cle, nomB, ico]) => {
+        const t = el('button', { type: 'button', class: 'cr-tuile', onclick: async () => { if (t.dataset.glisse) return; await fermerOutil(); ajouterBloc(cle); } }, icone(ico), el('span', { text: nomB }));
+        // Ordinateur : on peut aussi glisser la tuile jusqu'à l'endroit voulu de la page
+        t.addEventListener('pointerdown', e => {
+          if (!mqPc.matches || e.button) return;
+          const x0 = e.clientX, y0 = e.clientY;
+          try { t.setPointerCapture(e.pointerId); } catch {}
+          const mv = ev => { if (Math.hypot(ev.clientX - x0, ev.clientY - y0) < 7) return; t.removeEventListener('pointermove', mv); t.dataset.glisse = "1"; demarrerGlisse(ev, t, { nouveau: cle, libelle: nomB }); t.addEventListener('pointerup', () => setTimeout(() => delete t.dataset.glisse, 50), { once: true }); };
+          t.addEventListener('pointermove', mv);
+          t.addEventListener('pointerup', () => t.removeEventListener('pointermove', mv), { once: true });
+        });
+        return t;
+      }))]));
+  }
+  async function ouvrirOutil(quoi) {
+    if (quoi === 'ajouter' && mqPc.matches) return;
+    if (quoi === 'bloc' && mqLarge.matches) { rendreCote(); return; }
+    if (quoi === 'theme' && mqLarge.matches) { choisi = null; page.querySelectorAll('.cr-bloc.choisi').forEach(x => x.classList.remove('choisi')); rendreCote(); return; }
+    await fermerOutil();
+    const titres = { ajouter: 'Ajouter un bloc', champs: 'Insérer un champ', bloc: 'Réglages du bloc', theme: 'Thème et mise en page' };
+    const f = feuille({ titre: titres[quoi], pied: false, surFermeture: () => { if (feuilleOutil === f) feuilleOutil = null; } });
+    f.quoi = quoi; f.feuille.classList.add('cr-feuille');
+    f.corps.append(contenuOutil(quoi));
+    feuilleOutil = f;
+  }
+  const contenuOutil = quoi => quoi === 'ajouter' ? contenuPalette() : quoi === 'champs' ? listeChamps() : quoi === 'bloc' ? reglagesBloc() : reglagesTheme();
+  async function fermerOutil() { const f = feuilleOutil; feuilleOutil = null; if (f && !f.ferme()) await f.fermer(); }
+  function rafraichirPanneaux() {
+    rendreCote();
+    if (feuilleOutil) feuilleOutil.corps.replaceChildren(contenuOutil(feuilleOutil.quoi));
+  }
+  function apres() { modifie(); rendrePage(); rafraichirPanneaux(); }
+  function rendreCote() {
+    palette.replaceChildren(...(mqPc.matches ? [contenuPalette()] : []));
+    cote.replaceChildren(...(mqLarge.matches ? [blocDe(choisi) ? reglagesBloc() : reglagesTheme()] : []));
+  }
+  function rendreTout() { rendrePage(); rendreCote(); }
+  mqPc.addEventListener('change', rendreTout); mqLarge.addEventListener('change', rendreTout);
   const ligneReglage = (titre, contenu) => el('div', { class: 'cr-reglage' }, el('div', { class: 'etiquette', text: titre }), contenu);
-  function reglagesQuestion(q, { options = false, requis = true } = {}) {
-    const id = 'cr-q-' + idUnique();
-    const lab = el('input', { class: 'champ', id, maxlength: 80, autocomplete: 'off' }); lab.value = q.label || '';
-    lab.addEventListener('input', () => { q.label = lab.value; modifie(); rendrePage(); });
-    const res = [el('label', { class: 'etiquette', for: id, text: 'Question posée dans le formulaire' }), lab];
-    if (options) {
-      const ta = el('textarea', { class: 'champ', id: id + '-o', rows: 4 }); ta.value = (q.options || []).join('\n');
-      ta.addEventListener('input', () => { q.options = ta.value.split('\n').map(s => s.trim()).filter(Boolean); modifie(); rendrePage(); });
-      res.push(el('label', { class: 'etiquette', for: id + '-o', text: 'Réponses possibles (une par ligne)' }), ta);
-    }
-    if (requis) {
-      const c = el('input', { type: 'checkbox', id: id + '-r', checked: !!q.requis }); c.addEventListener('change', () => { q.requis = c.checked; modifie(); });
-      res.push(el('label', { class: 'case-option', for: id + '-r' }, c, el('span', { class: 'texte' }, el('strong', { text: 'Réponse obligatoire' }))));
-    }
-    return res;
+  const coche = (texte, obj, cle, detail) => { const id = 'cr-c-' + idUnique(); const c = el('input', { type: 'checkbox', id, checked: !!obj[cle] }); c.addEventListener('change', () => { obj[cle] = c.checked; apres(); }); return el('label', { class: 'case-option', for: id }, c, el('span', { class: 'texte' }, el('strong', { text: texte }), detail ? el('small', { text: detail }) : null)); };
+  /** « Afficher seulement si … » : dépend d'une question Oui / Non ou à choix placée ailleurs dans la page. */
+  function reglageCondition(b) {
+    const sources = m.blocs.filter(x => x.type === 'question' && x.id !== b.id).map(x => questionDe(m, x.q)).filter(q => q && ['ouinon', 'choix'].includes(q.type));
+    if (!sources.length) return el('p', { class: 'note', text: 'Pour afficher ce bloc seulement selon une réponse, ajoutez d\'abord une question « Oui / Non » ou « Choix ».' });
+    const id = 'cr-si-' + b.id;
+    const selQ = el('select', { class: 'champ', id }, el('option', { value: '', text: 'Toujours' }), sources.map(q => el('option', { value: q.cle, text: `Si « ${q.label} »…`, selected: b.si?.q === q.cle })));
+    const src = questionDe(m, b.si?.q), vals = src ? (src.type === 'ouinon' ? ['Oui', 'Non'] : src.options || []) : [];
+    const selV = src ? el('select', { class: 'champ', id: id + '-v', 'aria-label': 'Réponse attendue' }, vals.map(v => el('option', { value: v, text: '… est : ' + v, selected: b.si.val === v }))) : null;
+    selQ.addEventListener('change', () => { const q = questionDe(m, selQ.value); if (!q) delete b.si; else b.si = { q: q.cle, val: q.type === 'ouinon' ? 'Oui' : (q.options || [])[0] || '' }; apres(); });
+    selV?.addEventListener('change', () => { b.si.val = selV.value; apres(); });
+    return el('div', { class: 'cr-reglage' }, el('label', { class: 'etiquette', for: id, text: 'Afficher ce bloc' }), selQ, selV);
   }
   function reglagesBloc() {
     const b = blocDe(choisi);
     if (!b) return el('div', { class: 'cr-vide-reglages', text: 'Touchez un bloc de la page pour voir ses réglages.' });
     const seg = (cle, opts, val, f) => segments(`cr-${cle}-${b.id}`, opts, val, v => { f(v); apres(); });
-    const parts = [el('h3', { class: 'cr-h3', text: BLOCS_DOC[b.type][0] })];
+    const parts = [el('h3', { class: 'cr-h3', text: nomBloc(b) })];
     switch (b.type) {
+      case 'question': {
+        const q = questionDe(m, b.q); if (!q) break;
+        const idT = 'cr-type-' + b.id;
+        const type = el('select', { class: 'champ', id: idT }, TYPES_Q_BLOC.map(t => el('option', { value: t, text: TYPES_Q[t], selected: t === q.type })));
+        type.addEventListener('change', () => { q.type = type.value; if (q.type === 'choix' && !q.options?.length) q.options = ['Réponse 1', 'Réponse 2']; if (q.type === 'photos') b.parLigne ||= 3; apres(); });
+        parts.push(el('div', { class: 'cr-reglage' }, el('label', { class: 'etiquette', for: idT, text: 'Type de réponse' }), type),
+          coche('Réponse obligatoire', q, 'requis'));
+        if (['texte', 'long'].includes(q.type)) {
+          const idA = 'cr-aide-' + b.id, aide = el('input', { class: 'champ', id: idA, placeholder: 'Ex. : 60 x 80', maxlength: 80, autocomplete: 'off' }); aide.value = q.aide || '';
+          aide.addEventListener('input', () => { q.aide = aide.value.trim(); modifie(); rendrePage(); });
+          parts.push(el('div', { class: 'cr-reglage' }, el('label', { class: 'etiquette', for: idA, text: 'Exemple de réponse (facultatif)' }), aide));
+        }
+        if (q.type === 'date') parts.push(coche('Date du jour déjà remplie', q, 'auto'));
+        if (q.type === 'choix') parts.push(el('p', { class: 'note', text: 'Les réponses se modifient directement sur la page. Entrée ajoute une réponse.' }));
+        if (q.type === 'photos') parts.push(ligneReglage('Photos par ligne dans le PDF', seg('pl', [['2', '2'], ['3', '3']], String(b.parLigne || 3), v => { b.parLigne = +v; })));
+        if (q.type !== 'photos') parts.push(coche('Masquer le titre dans le PDF', b, 'sansTitre', 'Utile quand la phrase juste au-dessus pose déjà la question.'));
+        break;
+      }
       case 'titre': parts.push(
         ligneReglage('Sous-titre', seg('sous', [['oui', 'Afficher'], ['non', 'Masquer']], b.sous != null ? 'oui' : 'non', v => { b.sous = v === 'oui' ? (b.sous || 'Sous-titre') : null; })),
         ligneReglage('Alignement', seg('al', [['centre', 'Centré'], ['gauche', 'À gauche']], b.align || 'centre', v => { b.align = v; })));
         break;
+      case 'section': parts.push(el('p', { class: 'note', text: 'Une section range les questions qui la suivent : elle fait un intertitre dans le PDF et une étape dans le formulaire.' })); break;
       case 'texte': case 'encadre': case 'colonnes': case 'tableau':
-        parts.push(el('p', { class: 'note', text: 'Écrivez directement dans la page. B (gras), I (italique) et la liste à puces sont au-dessus du bloc choisi. Champ : pour insérer le nom du client, une date, une réponse…' }));
+        parts.push(el('p', { class: 'note', text: 'Écrivez directement dans la page. Le bouton « Champ » au-dessus du bloc insère le nom du client, une date ou une réponse dans la phrase.' }));
         if (b.type === 'encadre') parts.push(ligneReglage('Style', seg('fond', [['pale', 'Fond coloré'], ['bord', 'Bordure']], b.fond, v => { b.fond = v; })));
         if (b.type === 'colonnes') parts.push(
           ligneReglage('Nombre de colonnes', seg('n', [['2', '2'], ['3', '3']], String(b.cols.length), v => { if (v === '3' && b.cols.length === 2) b.cols.push(''); if (v === '2') b.cols = b.cols.slice(0, 2); })),
           ligneReglage('Trait entre les colonnes', seg('sep', [['oui', 'Oui'], ['non', 'Non']], b.separees ? 'oui' : 'non', v => { b.separees = v === 'oui'; })));
         if (b.type === 'tableau') parts.push(
           el('div', { class: 'rangee-btn cr-rangee' },
-            bouton('Ajouter une ligne', { ico: 'plus', onclick: () => { b.lignes.push(b.entetes.map(() => '')); apres(); } }),
-            bouton('Ajouter une colonne', { ico: 'plus', onclick: () => { if (b.entetes.length >= 6) { toast('6 colonnes au maximum.'); return; } b.entetes.push(''); b.lignes.forEach(l => l.push('')); apres(); } })),
+            bouton('Ligne', { ico: 'plus', label: 'Ajouter une ligne', onclick: () => { b.lignes.push(b.entetes.map(() => '')); apres(); } }),
+            bouton('Colonne', { ico: 'plus', label: 'Ajouter une colonne', onclick: () => { if (b.entetes.length >= 6) { toast('6 colonnes au maximum.'); return; } b.entetes.push(''); b.lignes.forEach(l => l.push('')); apres(); } })),
           el('div', { class: 'rangee-btn cr-rangee' },
-            bouton('Retirer la dernière ligne', { ico: 'texte-moins', onclick: () => { if (b.lignes.length > 1) { b.lignes.pop(); apres(); } } }),
-            bouton('Retirer la dernière colonne', { ico: 'texte-moins', onclick: () => { if (b.entetes.length > 1) { b.entetes.pop(); b.lignes.forEach(l => l.pop()); apres(); } } })));
+            bouton('Ligne', { ico: 'texte-moins', label: 'Retirer la dernière ligne', onclick: () => { if (b.lignes.length > 1) { b.lignes.pop(); apres(); } } }),
+            bouton('Colonne', { ico: 'texte-moins', label: 'Retirer la dernière colonne', onclick: () => { if (b.entetes.length > 1) { b.entetes.pop(); b.lignes.forEach(l => l.pop()); apres(); } } })));
         break;
       case 'ligne': parts.push(
         ligneReglage('Épaisseur', seg('ep', [['1', 'Fine'], ['2', 'Moyenne'], ['4', 'Épaisse']], String(b.ep || 1), v => { b.ep = +v; })),
         ligneReglage('Couleur', seg('coul', [['theme', 'Couleur du thème'], ['gris', 'Gris']], b.coul === 'gris' ? 'gris' : 'theme', v => { b.coul = v; })));
         break;
-      case 'choix': { const q = questionDe(m, b.q); if (q) parts.push(...reglagesQuestion(q, { options: true })); break; }
-      case 'photos': {
-        const q = questionDe(m, b.q); if (q) parts.push(...reglagesQuestion(q));
-        parts.push(ligneReglage('Photos par ligne', seg('pl', [['2', '2'], ['3', '3']], String(b.parLigne || 3), v => { b.parLigne = +v; })));
-        break;
-      }
       case 'signatures':
         parts.push(ligneReglage('Nombre de signatures', seg('ns', [['1', '1'], ['2', '2']], String(b.cases.length), v => {
           if (v === '1') b.cases = b.cases.slice(0, 1);
-          else if (b.cases.length === 1) { const q = { cle: 'q-' + idUnique(), label: 'Signature de l\'entreprise', type: 'signature', qui: 'entreprise', etape: 'Signatures' }; m.questions.push(q); b.cases.push({ titre: 'L\'entreprise', q: q.cle, mention: false }); }
+          else if (b.cases.length === 1) { const q = { cle: 'q-' + idUnique(), label: 'Signature de l\'entreprise', type: 'signature', qui: 'entreprise' }; m.questions.push(q); b.cases.push({ titre: 'L\'entreprise', q: q.cle, mention: false }); }
         })));
         b.cases.forEach((c, i) => {
-          const q = questionDe(m, c.q), idt = `cr-sig-${b.id}-${i}`;
-          const titre = el('input', { class: 'champ', id: idt, maxlength: 60, autocomplete: 'off' }); titre.value = c.titre || '';
-          titre.addEventListener('input', () => { c.titre = titre.value; if (q) q.label = 'Signature : ' + (titre.value.trim() || 'sans titre'); modifie(); rendrePage(); });
-          parts.push(el('div', { class: 'cr-sous-reglage' }, el('strong', { text: `Signature ${i + 1}` }),
-            el('label', { class: 'etiquette', for: idt, text: 'Titre au-dessus' }), titre,
+          const q = questionDe(m, c.q);
+          parts.push(el('div', { class: 'cr-sous-reglage' }, el('strong', { text: c.titre || `Signature ${i + 1}` }),
             ligneReglage('Qui signe ?', seg('qui' + i, [['client', 'Le client'], ['entreprise', 'L\'entreprise']], q?.qui || 'client', v => { if (q) q.qui = v; })),
-            ligneReglage('Mention « Lu et approuvé »', seg('men' + i, [['oui', 'Oui'], ['non', 'Non']], c.mention ? 'oui' : 'non', v => { c.mention = v === 'oui'; }))));
+            q ? coche('Signature obligatoire', q, 'requis') : null,
+            coche('Mention « Lu et approuvé »', c, 'mention')));
         });
         break;
       case 'saut': parts.push(el('p', { class: 'note', text: 'Ce qui suit ce bloc commence sur une nouvelle page du PDF.' })); break;
     }
-    parts.push(el('div', { class: 'rangee-btn cr-rangee' }, bouton('Dupliquer', { ico: 'copier', onclick: () => dupliquer(b.id) }), bouton('Supprimer le bloc', { ico: 'poubelle', onclick: () => supprimer(b.id) })));
+    if (b.type !== 'saut') parts.push(reglageCondition(b));
+    parts.push(el('div', { class: 'rangee-btn cr-rangee' }, bouton('Dupliquer', { ico: 'copier', onclick: () => dupliquer(b.id) }), bouton('Supprimer', { ico: 'poubelle', onclick: () => supprimer(b.id) })));
     return el('div', { class: 'cr-reglages' }, ...parts);
   }
   function reglagesTheme() {
@@ -6005,103 +6080,98 @@ function editerDocument(source) {
     const libre = el('input', { type: 'color', class: 'cr-couleur', 'aria-label': 'Autre couleur', title: 'Autre couleur' }); libre.value = th.c1;
     libre.addEventListener('change', () => changer('c1', libre.value));
     return el('div', { class: 'cr-reglages' },
-      el('h3', { class: 'cr-h3', text: 'Thème' }),
-      seg('src', [['ent', 'De l\'entreprise'], ['propre', 'Propre à ce modèle']], propre ? 'propre' : 'ent', v => { m.theme = v === 'propre' ? { ...th } : null; apres(); }),
-      el('p', { class: 'note', text: propre ? 'Ce modèle garde ses propres couleurs.' : 'Le thème de l\'entreprise s\'applique à tous vos modèles qui le suivent.' }),
-      ligneReglage('Style', seg('style', [['sobre', 'Sobre'], ['bandeau', 'Bandeau'], ['encadre', 'Encadré']], th.style, v => changer('style', v))),
+      el('h3', { class: 'cr-h3', text: 'Thème du document' }),
+      ligneReglage('Style de l\'en-tête', seg('style', [['sobre', 'Sobre'], ['bandeau', 'Bandeau'], ['encadre', 'Encadré']], th.style, v => changer('style', v))),
       ligneReglage('Couleur', el('div', { class: 'cr-pastilles' },
         COULEURS_DOC.map(c => el('button', { type: 'button', class: 'cr-pastille', 'aria-label': 'Couleur ' + c, 'aria-pressed': String(c === th.c1), style: { background: c }, onclick: () => changer('c1', c) })), libre)),
       ligneReglage('Police', seg('police', [['moderne', 'Moderne'], ['classique', 'Classique']], th.police, v => changer('police', v))),
+      ligneReglage('Ce thème sert à', seg('src', [['ent', 'Tous mes modèles'], ['propre', 'Ce modèle seulement']], propre ? 'propre' : 'ent', v => { m.theme = v === 'propre' ? { ...th } : null; apres(); })),
       el('h3', { class: 'cr-h3', text: 'En-tête et pied de page' }),
       ligneReglage('En-tête (logo, coordonnées)', seg('entete', [['toutes', 'Toutes les pages'], ['premiere', '1re page'], ['aucun', 'Aucun']], m.entete || 'toutes', v => { m.entete = v; apres(); })),
       ligneReglage('Pied de page (mentions, numéro)', seg('pied', [['toutes', 'Toutes les pages'], ['aucun', 'Aucun']], m.pied || 'toutes', v => { m.pied = v; apres(); })),
       el('p', { class: 'note', text: 'Logo, adresse et mentions viennent de Paramètres → Mon entreprise.' }));
   }
 
-  /* ----- Onglet Formulaire : les questions, leur ordre, les étapes ----- */
-  function rendreFormulaireTab() {
-    const util = champsUtilises(m);
-    const autos = util.filter(c => CHAMPS_DOC[c] && CHAMPS_DOC[c].source !== 'client');
-    const clients = util.filter(c => CHAMPS_DOC[c]?.source === 'client');
-    const utilisees = m.questions.filter(q => util.includes(q.cle)), inutiles = m.questions.filter(q => !util.includes(q.cle));
-    const etapes = [...new Set(m.questions.map(q => (q.etape || '').trim()).filter(Boolean))];
-    const carte = (titre, sous, ...contenu) => el('section', { class: 'cr-carte' }, el('div', { class: 'cr-carte-tete' }, el('h3', { text: titre }), sous ? el('small', { text: sous }) : null), ...contenu);
-    const tags = cles => el('div', { class: 'cr-tags' }, cles.map(c => el('span', { class: 'tag-doc src-' + CHAMPS_DOC[c].source, text: CHAMPS_DOC[c].label })));
-    const bouger = (q, d) => {
-      const memes = utilisees.filter(x => (x.etape || '').trim() === (q.etape || '').trim()), i = memes.indexOf(q), voisin = memes[i + d];
-      if (!voisin) return;
-      const a = m.questions.indexOf(q), b2 = m.questions.indexOf(voisin);
-      [m.questions[a], m.questions[b2]] = [m.questions[b2], m.questions[a]]; modifie(); rendreFormulaireTab();
-    };
-    const ligneQ = q => {
-      const id = 'cr-fq-' + q.cle;
-      const champ = (etiq, controle, cls = '') => el('div', { class: 'cr-fq ' + cls }, el('label', { class: 'etiquette', for: controle.id, text: etiq }), controle);
-      const lab = el('input', { class: 'champ', id, maxlength: 80, autocomplete: 'off' }); lab.value = q.label || '';
-      lab.addEventListener('input', () => { q.label = lab.value; modifie(); });
-      let type;
-      if (TYPES_Q_TEXTE.includes(q.type)) {
-        type = el('select', { class: 'champ', id: id + '-t' }, TYPES_Q_TEXTE.map(t => el('option', { value: t, text: TYPES_Q[t], selected: t === q.type })));
-        type.addEventListener('change', () => { q.type = type.value; modifie(); rendreFormulaireTab(); });
-      } else type = el('input', { class: 'champ', id: id + '-t', value: TYPES_Q[q.type] + (q.type === 'signature' ? (q.qui === 'entreprise' ? ' (entreprise)' : ' (client)') : ''), readonly: true });
-      const etape = el('input', { class: 'champ', id: id + '-e', list: 'cr-etapes', placeholder: 'Ex. : Le chantier', maxlength: 40, autocomplete: 'off' }); etape.value = q.etape || '';
-      etape.addEventListener('change', () => { q.etape = etape.value.trim(); modifie(); rendreFormulaireTab(); });
-      const extra = [];
-      if (['texte', 'long'].includes(q.type)) {
-        const aide = el('input', { class: 'champ', id: id + '-a', placeholder: 'Ex. : une réserve par ligne', maxlength: 80, autocomplete: 'off' }); aide.value = q.aide || '';
-        aide.addEventListener('input', () => { q.aide = aide.value.trim(); modifie(); });
-        extra.push(champ('Aide (facultatif)', aide));
-      }
-      if (q.type === 'choix') {
-        const ta = el('textarea', { class: 'champ', id: id + '-o', rows: 3 }); ta.value = (q.options || []).join('\n');
-        ta.addEventListener('input', () => { q.options = ta.value.split('\n').map(s => s.trim()).filter(Boolean); modifie(); });
-        extra.push(champ('Réponses possibles (une par ligne)', ta, 'large'));
-      }
-      const coche = (texte, cle) => { const c = el('input', { type: 'checkbox', id: id + '-' + cle, checked: !!q[cle] }); c.addEventListener('change', () => { q[cle] = c.checked; modifie(); }); return el('label', { class: 'case-option', for: id + '-' + cle }, c, el('span', { class: 'texte' }, el('strong', { text: texte }))); };
-      return el('div', { class: 'cr-q' },
-        el('div', { class: 'cr-q-grille' }, champ('Question', lab, 'large'), champ('Type de réponse', type), champ('Étape', etape), ...extra),
-        el('div', { class: 'cr-q-actions' },
-          coche('Réponse obligatoire', 'requis'),
-          q.type === 'date' ? coche('Date du jour par défaut', 'auto') : null,
-          bouton('', { ico: 'haut', cls: 'btn-icone', label: `Monter « ${q.label} »`, onclick: () => bouger(q, -1) }),
-          bouton('', { ico: 'bas', cls: 'btn-icone', label: `Descendre « ${q.label} »`, onclick: () => bouger(q, 1) })));
-    };
-    // Mêmes groupes que le formulaire : par étape, dans l'ordre de leur première question
-    const groupes = new Map();
-    for (const q of utilisees) { const e = (q.etape || '').trim(); if (!groupes.has(e)) groupes.set(e, []); groupes.get(e).push(q); }
-    zoneForm.replaceChildren(el('div', { class: 'cr-form-cadre' },
-      el('datalist', { id: 'cr-etapes' }, etapes.map(e => el('option', { value: e }))),
-      el('p', { class: 'note cr-intro', text: 'Le formulaire est fabriqué tout seul à partir des champs posés dans le document. Ici, vous réglez les questions : texte, type, étapes, ordre et réponses obligatoires.' }),
-      autos.length ? carte('Rempli tout seul', 'Depuis Paramètres → Mon entreprise, ou calculé par l\'appli', tags(autos)) : null,
-      clients.length ? carte('Le client', 'Repris de la fiche du client. Sans fiche, ces champs sont demandés au début du formulaire.', tags(clients)) : null,
-      utilisees.length
-        ? [...groupes].map(([etape, qs], i) => carte(etape || (groupes.size > 1 || clients.length ? 'Le document' : 'Questions'), `${qs.length} question${qs.length > 1 ? 's' : ''}${i === 0 ? ' · l\'étape d\'une question se change dans son champ « Étape »' : ''}`, el('div', {}, qs.map(ligneQ))))
-        : carte('Questions', null, el('p', { class: 'note cr-pad', text: 'Aucune question pour l\'instant. Dans l\'onglet Document : Champ → « Nouvelle question », ou ajoutez des cases à cocher, des photos, des signatures.' })),
-      inutiles.length ? carte('Questions qui ne sont plus dans le document', 'Elles ne seront pas posées.', el('div', {}, inutiles.map(q => el('div', { class: 'cr-q cr-q-inutile' },
-        el('span', { class: 'texte' }, el('strong', { text: q.label || 'Question sans nom' }), el('small', { text: TYPES_Q[q.type] })),
-        bouton('Supprimer', { ico: 'poubelle', onclick: () => { m.questions = m.questions.filter(x => x !== q); modifie(); rendreFormulaireTab(); } }))))) : null));
-  }
-
-  function rendreTout() {
-    zoneDoc.hidden = onglet !== 'document'; zoneForm.hidden = onglet !== 'formulaire';
-    fe.feuille.classList.toggle('cr-mode-form', onglet === 'formulaire');
-    if (onglet === 'document') { rendrePage(); rendreCote(); } else { fermerPop(); rendreCote(); rendreFormulaireTab(); }
-  }
   async function essai() {
     clearTimeout(minuteur); enregistrerModeleDoc(m); sauve = true;
-    if (!formulaireDuDocument(m).some(b => b.t !== 'section')) toast('Ce modèle n\'a encore aucune question : le PDF sera créé tel quel.', 4500);
     saisirFormulaire(modeleRemplissable(m), { id: 'essai-' + idUnique(), essai: () => editerDocument(modelesDoc().find(x => x.id === m.id) || m) });
   }
   async function supprimerModele() {
     const nomM = m.nom || 'Nouveau modèle';
     if (!(await confirmer({ titre: `Supprimer le modèle « ${nomM} » ?`, texte: 'Le modèle disparaît de la liste. Les PDF déjà créés ne changent pas.', action: 'Supprimer le modèle' }))) return;
     supprime = true; clearTimeout(minuteur);
-    prefs.modelesDoc = modelesDoc().filter(x => x.id !== m.id); ecrirePrefs(prefs);
+    prefs.modelesDoc = (prefs.modelesDoc || []).filter(x => x.id !== m.id); ecrirePrefs(prefs);
     toast('Modèle supprimé'); await fe.fermer(); ouvrirFormulaires();
   }
   rendreTout();
 }
 
 /* ---------- Remplir sur le document : la page telle qu'elle sera, les champs se touchent ---------- */
+function pageDocRemplie(m, rep, { changer, actions }) {
+  normaliserModeleDoc(m);
+  const th = themeDe(m), e = entreprise();
+  const page = el('div', { class: `cr-page remplie theme-${th.style} police-${th.police}` });
+  page.style.setProperty('--doc-c1', th.c1);
+  const champ = (cle, vide) => {
+    const c = infoChamp(m, cle), v = valeurChampDoc(m, cle, rep);
+    if (c.source !== 'client' && c.source !== 'question') return v ? document.createTextNode(v) : el('span', { class: 'tag-doc src-' + c.source, text: c.label, title: c.source === 'entreprise' ? 'À renseigner dans Paramètres → Mon entreprise' : null });
+    const ouvrir = async () => { const nv = await saisirValeurChamp(m, cle, rep); if (nv == null) return; rep[cle] = nv; changer(); };
+    const s = el('span', { class: 'champ-doc' + (v ? ' rempli' : '') + (c.q?.requis ? ' requis' : ''), role: 'button', tabindex: '0', 'aria-label': `${c.label} : ${v || 'à remplir'}`, onclick: ouvrir, onkeydown: ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); ouvrir(); } } });
+    if (v) v.split('\n').forEach((l, i) => { if (i) s.append(el('br')); s.append(l); }); else s.textContent = vide || c.label;
+    return s;
+  };
+  const riche = html => { const d = el('div', { class: 'cr-zone-texte' }); d.innerHTML = nettoyerHtml(html); d.querySelectorAll('[data-champ]').forEach(t => t.replaceWith(champ(t.dataset.champ))); return d; };
+  const cases = (cle, options, label, enLigne) => el('div', { class: 'cr-choix' + (enLigne ? ' en-ligne' : ''), role: 'radiogroup', 'aria-label': label }, options.map(o =>
+    el('button', { type: 'button', class: 'cr-case' + (rep[cle] === o ? ' coche' : ''), role: 'radio', 'aria-checked': String(rep[cle] === o), onclick: () => { rep[cle] = rep[cle] === o ? '' : o; changer(); } }, el('i'), el('span', { text: o }))));
+  const question = b => {
+    const q = questionDe(m, b.q); if (!q) return null;
+    const titre = b.sansTitre ? null : el('div', { class: 'cr-q-label', text: q.label + (q.requis ? ' *' : '') });
+    if (q.type === 'ouinon') return el('div', { class: 'cr-question type-ouinon' }, titre, cases(b.q, ['Oui', 'Non'], q.label, true));
+    if (q.type === 'choix') return el('div', { class: 'cr-question' }, titre, cases(b.q, q.options || [], q.label));
+    if (q.type === 'photos') {
+      const liste = Array.isArray(rep[b.q]) ? rep[b.q] : [], n = b.parLigne || 3;
+      return el('div', { class: 'cr-question' }, titre,
+        el('div', { class: 'cr-grille', style: { gridTemplateColumns: `repeat(${n}, 1fr)` } },
+          liste.map((p, i) => el('div', { class: 'cr-photo pleine' }, el('img', { src: p.url, alt: p.legende || `Photo ${i + 1}` }),
+            bouton('', { ico: 'fermer', cls: 'btn-icone cr-photo-x', label: `Retirer la photo ${i + 1}`, onclick: () => actions[b.q]?.retirer(i) }))),
+          el('button', { type: 'button', class: 'cr-photo ajouter', onclick: async () => {
+            const v = await demanderChoix(q.label, [{ valeur: 'camera', texte: 'Prendre une photo', ico: 'camera' }, { valeur: 'galerie', texte: 'Choisir dans la galerie', ico: 'image' }]);
+            if (v) actions[b.q]?.ajouter(v === 'camera');
+          } }, icone('plus'), 'Photo')));
+    }
+    return el('div', { class: 'cr-question type-' + q.type + (q.type === 'long' ? '' : ' en-ligne') }, titre, el('div', { class: 'cr-q-reponse' }, champ(b.q, 'Toucher pour répondre')));
+  };
+  const bloc = b => {
+    switch (b.type) {
+      case 'titre': { const g = b.align === 'gauche' ? ' gauche' : ''; return el('div', {}, el('div', { class: 'cr-titre' + g, text: b.texte || '' }), b.sous ? el('div', { class: 'cr-sous' + g, text: b.sous }) : null); }
+      case 'section': return el('div', { class: 'cr-section', text: b.texte || '' });
+      case 'texte': return riche(b.html);
+      case 'colonnes': return el('div', { class: `cr-colonnes n${b.cols.length}${b.separees ? ' separees' : ''}` }, b.cols.map(riche));
+      case 'ligne': return el('div', { class: 'cr-ligne', style: { borderTopWidth: (b.ep || 1) + 'px', borderTopColor: b.coul === 'gris' ? '#cfd5dc' : 'var(--doc-c1)' } });
+      case 'encadre': return el('div', { class: 'cr-encadre ' + (b.fond === 'bord' ? 'bord' : 'pale') }, riche(b.html));
+      case 'tableau': return el('table', { class: 'cr-tableau' }, el('thead', {}, el('tr', {}, b.entetes.map(h => el('th', {}, riche(h))))), el('tbody', {}, b.lignes.map(l => el('tr', {}, l.map(c => el('td', {}, riche(c)))))));
+      case 'question': return question(b);
+      case 'signatures': return el('div', { class: 'cr-signatures' + (b.cases.length === 1 ? ' une' : '') }, b.cases.map(c => {
+        const q = questionDe(m, c.q), s = rep[c.q];
+        return el('div', { class: 'cr-sig' }, el('strong', { text: c.titre || 'Signature' }), c.mention ? el('small', { text: 'Mention « Lu et approuvé »' }) : null,
+          el('button', { type: 'button', class: 'cr-sig-zone ' + (s ? 'signee' : 'signable'), 'aria-label': `${c.titre || 'Signature'} : ${s ? 'signé, toucher pour refaire' : 'toucher pour signer'}`, onclick: () => actions[c.q]?.signer() },
+            s ? [el('img', { src: s.png, alt: '' }), s.tampon ? el('img', { src: s.tampon, alt: '' }) : null] : (q?.qui === 'entreprise' ? 'Toucher pour signer' : 'Toucher pour faire signer')),
+          s ? el('small', {}, s.nom || '', ' ', el('button', { type: 'button', class: 'lien-effacer', text: 'Effacer', onclick: () => actions[c.q]?.effacer() })) : null);
+      }));
+      case 'saut': return el('div', { class: 'cr-saut', text: 'Saut de page' });
+    }
+    return null;
+  };
+  const logo = lireTampons().find(t => t.id === e.logoId);
+  if (m.entete !== 'aucun' && (logo || e.nom)) page.append(el('div', { class: 'cr-entete' },
+    el('div', { class: 'cr-entete-g' }, logo ? el('img', { src: logo.png, alt: 'Logo' }) : null,
+      el('div', {}, el('strong', { text: e.nom || '' }), el('span', { text: [e.adresse, e.cpVille].filter(Boolean).join(', ') }), el('span', { text: [e.tel, e.email].filter(Boolean).join(' · ') }))),
+    el('div', { class: 'cr-entete-d', text: dateLongue() })));
+  for (const b of m.blocs) { if (!blocVisible(b, rep)) continue; const n = bloc(b); if (n) page.append(el('div', { class: 'cr-bloc-rempli' }, n)); }
+  if (m.pied !== 'aucun') page.append(el('div', { class: 'cr-pied-doc' }, el('span', { text: [e.nom, e.siret ? 'SIRET ' + e.siret : '', e.mentions].filter(Boolean).join(' · ') }), el('span', {})));
+  return page;
+}
+
 function saisirValeurChamp(m, cle, rep) {
   return new Promise(res => {
     const c = infoChamp(m, cle), q = c.q, type = q?.type || 'texte';
@@ -6123,66 +6193,9 @@ function saisirValeurChamp(m, cle, rep) {
     setTimeout(() => champ.focus(), 120);
   });
 }
-function pageDocRemplie(m, rep, { changer, actions }) {
-  const th = themeDe(m), e = entreprise();
-  const page = el('div', { class: `cr-page remplie theme-${th.style} police-${th.police}` });
-  page.style.setProperty('--doc-c1', th.c1);
-  const champ = cle => {
-    const c = infoChamp(m, cle), v = valeurChampDoc(m, cle, rep);
-    if (c.source !== 'client' && c.source !== 'question') return v ? document.createTextNode(v) : el('span', { class: 'tag-doc src-' + c.source, text: c.label, title: c.source === 'entreprise' ? 'À renseigner dans Paramètres → Mon entreprise' : null });
-    const ouvrir = async () => { const nv = await saisirValeurChamp(m, cle, rep); if (nv == null) return; rep[cle] = nv; changer(); };
-    const s = el('span', { class: 'champ-doc' + (v ? ' rempli' : '') + (c.q?.requis ? ' requis' : ''), role: 'button', tabindex: '0', 'aria-label': `${c.label} : ${v || 'à remplir'}`, onclick: ouvrir, onkeydown: ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); ouvrir(); } } });
-    if (v) v.split('\n').forEach((l, i) => { if (i) s.append(el('br')); s.append(l); }); else s.textContent = c.label;
-    return s;
-  };
-  const riche = html => { const d = el('div', { class: 'cr-zone-texte' }); d.innerHTML = nettoyerHtml(html); d.querySelectorAll('[data-champ]').forEach(t => t.replaceWith(champ(t.dataset.champ))); return d; };
-  const bloc = b => {
-    switch (b.type) {
-      case 'titre': { const g = b.align === 'gauche' ? ' gauche' : ''; return el('div', {}, el('div', { class: 'cr-titre' + g, text: b.texte || '' }), b.sous ? el('div', { class: 'cr-sous' + g, text: b.sous }) : null); }
-      case 'texte': return riche(b.html);
-      case 'colonnes': return el('div', { class: `cr-colonnes n${b.cols.length}${b.separees ? ' separees' : ''}` }, b.cols.map(riche));
-      case 'ligne': return el('div', { class: 'cr-ligne', style: { borderTopWidth: (b.ep || 1) + 'px', borderTopColor: b.coul === 'gris' ? '#cfd5dc' : 'var(--doc-c1)' } });
-      case 'encadre': return el('div', { class: 'cr-encadre ' + (b.fond === 'bord' ? 'bord' : 'pale') }, riche(b.html));
-      case 'tableau': return el('table', { class: 'cr-tableau' }, el('thead', {}, el('tr', {}, b.entetes.map(h => el('th', {}, riche(h))))), el('tbody', {}, b.lignes.map(l => el('tr', {}, l.map(c => el('td', {}, riche(c)))))));
-      case 'choix': {
-        const q = questionDe(m, b.q);
-        return el('div', { class: 'cr-choix', role: 'radiogroup', 'aria-label': q?.label || 'Choix' }, (q?.options || []).map(o =>
-          el('button', { type: 'button', class: 'cr-case' + (rep[b.q] === o ? ' coche' : ''), role: 'radio', 'aria-checked': String(rep[b.q] === o), onclick: () => { rep[b.q] = rep[b.q] === o ? '' : o; changer(); } }, el('i'), el('span', { text: o }))));
-      }
-      case 'photos': {
-        const q = questionDe(m, b.q), liste = Array.isArray(rep[b.q]) ? rep[b.q] : [], n = b.parLigne || 3;
-        return el('div', { class: 'cr-photos' }, el('strong', { text: q?.label || 'Photos' }),
-          el('div', { class: 'cr-grille', style: { gridTemplateColumns: `repeat(${n}, 1fr)` } },
-            liste.map((p, i) => el('div', { class: 'cr-photo pleine' }, el('img', { src: p.url, alt: p.legende || `Photo ${i + 1}` }),
-              bouton('', { ico: 'fermer', cls: 'btn-icone cr-photo-x', label: `Retirer la photo ${i + 1}`, onclick: () => actions[b.q]?.retirer(i) }))),
-            el('button', { type: 'button', class: 'cr-photo ajouter', onclick: async () => {
-              const v = await demanderChoix('Ajouter des photos', [{ valeur: 'camera', texte: 'Prendre une photo', ico: 'camera' }, { valeur: 'galerie', texte: 'Choisir dans la galerie', ico: 'image' }]);
-              if (v) actions[b.q]?.ajouter(v === 'camera');
-            } }, icone('plus'), 'Photo')));
-      }
-      case 'signatures': return el('div', { class: 'cr-signatures' + (b.cases.length === 1 ? ' une' : '') }, b.cases.map(c => {
-        const q = questionDe(m, c.q), s = rep[c.q];
-        return el('div', { class: 'cr-sig' }, el('strong', { text: c.titre || 'Signature' }), c.mention ? el('small', { text: 'Mention « Lu et approuvé »' }) : null,
-          el('button', { type: 'button', class: 'cr-sig-zone ' + (s ? 'signee' : 'signable'), 'aria-label': `${c.titre || 'Signature'} : ${s ? 'signé, toucher pour refaire' : 'toucher pour signer'}`, onclick: () => actions[c.q]?.signer() },
-            s ? [el('img', { src: s.png, alt: '' }), s.tampon ? el('img', { src: s.tampon, alt: '' }) : null] : (q?.qui === 'entreprise' ? 'Toucher pour signer (entreprise)' : 'Toucher pour faire signer le client')),
-          s ? el('small', {}, s.nom || '', ' ', el('button', { type: 'button', class: 'lien-effacer', text: 'Effacer', onclick: () => actions[c.q]?.effacer() })) : null);
-      }));
-      case 'saut': return el('div', { class: 'cr-saut', text: 'Saut de page' });
-    }
-    return null;
-  };
-  const logo = lireTampons().find(t => t.id === e.logoId);
-  if (m.entete !== 'aucun' && (logo || e.nom)) page.append(el('div', { class: 'cr-entete' },
-    el('div', { class: 'cr-entete-g' }, logo ? el('img', { src: logo.png, alt: 'Logo' }) : null,
-      el('div', {}, el('strong', { text: e.nom || '' }), el('span', { text: [e.adresse, e.cpVille].filter(Boolean).join(', ') }), el('span', { text: [e.tel, e.email].filter(Boolean).join(' · ') }))),
-    el('div', { class: 'cr-entete-d', text: dateLongue() })));
-  for (const b of m.blocs) { const n = bloc(b); if (n) page.append(el('div', { class: 'cr-bloc-rempli' }, n)); }
-  if (m.pied !== 'aucun') page.append(el('div', { class: 'cr-pied-doc' }, el('span', { text: [e.nom, e.siret ? 'SIRET ' + e.siret : '', e.mentions].filter(Boolean).join(' · ') }), el('span', {})));
-  return page;
-}
-
 /* ---------- Le PDF dessiné à partir des blocs ---------- */
 async function genererPdfDocument(m, rep) {
+  normaliserModeleDoc(m);
   const doc = await PDFDocument.create(); doc.setProducer('Atelier PDF'); doc.setTitle(versWinAnsi(m.nom || 'Document'));
   const [W, H] = A4, mg = 50, largeur = W - 2 * mg, e = entreprise(), th = themeDe(m);
   const classique = th.police === 'classique';
@@ -6373,6 +6386,37 @@ async function genererPdfDocument(m, rep) {
         for (const l of b.lignes) await rangee(l, false);
         y -= 10; break;
       }
+      case 'section': {
+        y -= 8; await place(48);
+        await ecrireLignes(lignesDe([{ runs: [{ t: b.texte || '', b: true }] }], largeur, 12), mg, { couleur: c1 });
+        page.drawLine({ start: { x: mg, y: y + 1 }, end: { x: W - mg, y: y + 1 }, thickness: 0.9, color: c1 });
+        y -= 8; break;
+      }
+      case 'question': {
+        const q = questionDe(m, b.q); if (!q) break;
+        const v = valeurChampDoc(m, b.q, rep), titre = b.sansTitre ? '' : (q.label || '');
+        if (q.type === 'photos') { await dessinerBloc({ ...b, type: 'photos' }); break; }
+        if (q.type === 'choix') {
+          if (titre) { await place(36); await ecrireLignes(lignesDe([{ runs: [{ t: titre, b: true }] }], largeur), mg); y += 1; }
+          await dessinerBloc({ ...b, type: 'choix' }); break;
+        }
+        if (q.type === 'ouinon') {
+          // La question à gauche, les deux cases à droite sur la même ligne
+          const ls = lignesDe([{ runs: [{ t: titre }] }], largeur - 116);
+          await place(ls.length * T * LH);
+          const yb = y - T * 1.12 - 0.5; let x = W - mg - 104;
+          for (const o of ['Oui', 'Non']) { caseCochee(x, yb, rep[b.q] === o); page.drawText(o, { x: x + 13, y: yb + 1, size: T, font: rep[b.q] === o ? F.b : F.n, color: encre }); x += 54; }
+          for (const l of ls) { dessinerLigne(l, mg, y); y -= l.h; }
+          y -= 5; break;
+        }
+        if (q.type === 'long') {
+          if (titre) { await place(36); await ecrireLignes(lignesDe([{ runs: [{ t: titre + ' :' }] }], largeur), mg); y += 2; }
+          await ecrireLignes(lignesDe(v ? v.split('\n').map(l => ({ runs: [{ t: l, b: true }] })) : [{ runs: [{ t: '………………………………………………', vide: true }] }], largeur - 10), mg + 10);
+          y -= 4; break;
+        }
+        await ecrireLignes(lignesDe([{ runs: [...(titre ? [{ t: titre + ' : ' }] : []), v ? { t: v, b: true } : { t: '……………', vide: true }] }], largeur), mg);
+        y -= 2; break;
+      }
       case 'choix': {
         const q = questionDe(m, b.q); if (!q) break;
         const v = rep[b.q];
@@ -6425,7 +6469,7 @@ async function genererPdfDocument(m, rep) {
   }
 
   await nouvellePage();
-  for (const b of m.blocs) await dessinerBloc(b);
+  for (const b of m.blocs) if (blocVisible(b, rep)) await dessinerBloc(b);
   // Pied de page : mentions de l'entreprise et numéro, sur chaque page
   const pages = doc.getPages();
   pages.forEach((p, i) => {
