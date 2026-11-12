@@ -1445,7 +1445,6 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
     <h2 class="titre-section">Tous les outils</h2>
     <div class="grille-outils outils-base">
       <button class="tuile seul-particulier" id="btn-lire"><svg class="ico"><use href="#i-livre"/></svg><strong>Lire un PDF</strong><span>Consulter, puis « Modifier » si besoin</span></button>
-      <button class="tuile seul-particulier" id="btn-inspecter"><svg class="ico"><use href="#i-detective"/></svg><strong>Inspecter un fichier</strong><span>Auteur, dates, appareil, lieu</span></button>
       <button class="tuile" id="btn-excel"><svg class="ico"><use href="#i-pages"/></svg><strong>Excel → PDF</strong><span>Tableurs xlsx, ods, csv</span></button>
       <button class="tuile" data-outil="images"><svg class="ico"><use href="#i-images"/></svg><strong>PDF → JPG</strong><span>Chaque page en image</span></button>
       <button class="tuile" data-outil="organiser"><svg class="ico"><use href="#i-pages"/></svg><strong>Organiser</strong><span>Trier, pivoter, supprimer des pages</span></button>
@@ -1453,6 +1452,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
       <button class="tuile" id="btn-scanner"><svg class="ico"><use href="#i-scanner"/></svg><strong>Scanner</strong><span>Une feuille papier en PDF</span></button>
       <button class="tuile" data-outil="numeros"><svg class="ico"><use href="#i-numero"/></svg><strong>Numéroter</strong><span>Ajouter les numéros de page</span></button>
       <button class="tuile" data-outil="filigrane"><svg class="ico"><use href="#i-filigrane"/></svg><strong>Filigrane</strong><span>« COPIE », « CONFIDENTIEL »…</span></button>
+      <button class="tuile" id="btn-inspecter"><svg class="ico"><use href="#i-detective"/></svg><strong>Inspecter un fichier</strong><span>Auteur, dates, appareil, lieu</span></button>
       <button class="tuile seul-entreprise" id="btn-creer-tampon"><svg class="ico"><use href="#i-tampon"/></svg><strong>Créer un tampon</strong><span>Votre société, signé dessus</span></button>
     </div>
     <h2 class="titre-section titre-plus">En plus</h2>
@@ -1542,7 +1542,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.47.0';
+const VERSION_APPLI = '1.47.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -5696,8 +5696,7 @@ function majTableauBord() {
     el('div', { class: 'tb-raccourcis' },
       raccourci('livre', 'Lire un PDF', 'Il s\'ouvre en lecture ; « Modifier » ouvre l\'éditeur', lireUnPdf),
       raccourci('scanner', 'Scanner', 'Une feuille papier ou une pièce d\'identité en PDF', () => $('#btn-scanner').click()),
-      raccourci('formulaire', 'Remplir un modèle', 'Prévisite, PV de réception, mandat…', () => ouvrirFormulaires())),
-    el('button', { type: 'button', class: 'tb-lien', onclick: inspecterFichier }, icone('detective'), 'Inspecter un fichier : ce qu\'un PDF ou une photo révèle'));
+      raccourci('formulaire', 'Remplir un modèle', 'Prévisite, PV de réception, mandat…', () => ouvrirFormulaires())));
 }
 
 /* ---------- Tableau de bord ---------- */
