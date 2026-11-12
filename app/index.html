@@ -1162,6 +1162,13 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 .cr-sig-zone.signee{background:#fff;display:flex;justify-content:space-around;gap:6px}
 .cr-sig-zone img{max-width:48%;max-height:74px;object-fit:contain}
 .lien-effacer{border:0;background:none;padding:6px 4px;color:var(--danger);text-decoration:underline;font:inherit;cursor:pointer}
+.vue-form .aide-remplir{display:none}
+.cr-form-essai{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.cr-fe-carte{background:var(--carte);border-radius:14px;box-shadow:var(--ombre);padding:6px 16px 16px}
+.cr-fe-carte h3{margin:12px 0 2px;font-size:16px;color:var(--accent-fort)}
+.cr-fe-carte .form-bloc{margin-top:12px}
+.cr-fe-carte .cr-choix{margin-top:2px}
+.cr-fe-carte .cr-sig-zone{height:96px;font-size:14px}
 /* Étiquettes de champ */
 .tag-doc{display:inline-block;max-width:100%;padding:0 7px;border-radius:99px;font:600 .82em/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:baseline;user-select:none;cursor:default}
 .src-client{background:#e6eefc;color:#1d4fb3}
@@ -1394,7 +1401,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.35.0';
+const VERSION_APPLI = '1.36.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4690,16 +4697,16 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null, e
   majVisibles();
   if (modele.doc) {
     // Modèle du créateur : on remplit en touchant les champs du document (par défaut), ou par le formulaire
-    let vue = prefs.vueRemplir === 'form' ? 'form' : 'doc';
+    let vue = prefs.vueRemplir === 'doc' ? 'doc' : 'form';
     const planDoc = el('div', { class: 'remplir-doc' });
     const majDoc = () => planDoc.replaceChildren(pageDocRemplie(modele.doc, rep, { changer, actions: actionsBloc }));
     const afficherVue = () => {
-      planDoc.hidden = vue !== 'doc'; zone.hidden = vue === 'doc';
+      planDoc.hidden = vue !== 'doc'; zone.hidden = vue === 'doc'; fe.feuille.classList.toggle('vue-form', vue !== 'doc');
       if (vue === 'doc') majDoc();
       else { blocsEls.length = 0; zone.replaceChildren(); rendreBlocs(modele.blocs, rep, zone); majVisibles(); }
     };
     surChangement = () => { if (vue === 'doc') majDoc(); };
-    const choixVue = segments('vue-remplir', [['doc', 'Sur le document'], ['form', 'Formulaire']], vue, v => { vue = v; prefs.vueRemplir = v; ecrirePrefs(prefs); afficherVue(); });
+    const choixVue = segments('vue-remplir', [['form', 'Formulaire'], ['doc', 'Sur le document']], vue, v => { vue = v; prefs.vueRemplir = v; ecrirePrefs(prefs); afficherVue(); });
     choixVue.classList.add('choix-remplir');
     fe.corps.append(choixVue, el('p', { class: 'note aide-remplir', text: 'Touchez un champ surligné pour le remplir.' }), planDoc, zone);
     fe.feuille.classList.add('remplir-createur');
@@ -6173,11 +6180,42 @@ function editerDocument(source) {
     retirer: i => { repTest[cle]?.splice(i, 1); rendreTest(); },
     signer: () => toast('La signature se fait quand vous remplissez le modèle pour de vrai (bouton « Remplir pour de vrai »).', 5000),
     effacer: () => {} }) });
+  let vueTest = 'form';
+  /** Le formulaire tel qu'il se remplit sur téléphone : une carte par section, les questions dans l'ordre de la page. */
+  function formulaireEssai() {
+    const racine = el('div', { class: 'cr-form-essai' });
+    let carte = el('div', { class: 'cr-fe-carte' }); racine.append(carte);
+    for (const b of formulaireDuDocument(m)) {
+      if (!visible(b, repTest)) continue;
+      if (b.t === 'section') { if (!carte.childElementCount) carte.remove(); carte = el('div', { class: 'cr-fe-carte' }, el('h3', { text: b.texte })); racine.append(carte); continue; }
+      const id = 'fe-' + b.id, etoile = b.requis ? el('span', { class: 'requis', 'aria-hidden': 'true', text: ' *' }) : null;
+      if (['champ', 'zone', 'date'].includes(b.t)) {
+        const c = b.t === 'zone' ? el('textarea', { class: 'champ', id, rows: 3 }) : el('input', { class: 'champ', id, type: b.t === 'date' ? 'date' : 'text', inputmode: b.clavier || null, autocomplete: 'off' });
+        c.value = typeof repTest[b.id] === 'string' ? repTest[b.id] : '';
+        c.addEventListener('input', () => { repTest[b.id] = c.value; });
+        carte.append(el('div', { class: 'form-bloc' }, el('label', { class: 'etiquette', for: id }, b.label, etoile), c));
+      } else if (b.t === 'choix') carte.append(el('div', { class: 'form-bloc' }, el('div', { class: 'etiquette' }, b.label, etoile),
+        el('div', { class: 'cr-choix' + (b.options.length <= 2 ? ' en-ligne' : ''), role: 'radiogroup', 'aria-label': b.label }, b.options.map(o =>
+          el('button', { type: 'button', class: 'cr-case' + (repTest[b.id] === o ? ' coche' : ''), role: 'radio', 'aria-checked': String(repTest[b.id] === o), onclick: () => { repTest[b.id] = repTest[b.id] === o ? '' : o; rendreTest(); } }, el('i'), el('span', { text: o }))))));
+      else if (b.t === 'photos') carte.append(el('div', { class: 'form-bloc' }, el('div', { class: 'etiquette' }, b.label, etoile),
+        (repTest[b.id] || []).length ? el('div', { class: 'cr-grille', style: { gridTemplateColumns: 'repeat(3, 1fr)' } }, repTest[b.id].map((p, i) => el('div', { class: 'cr-photo pleine' }, el('img', { src: p.url, alt: `Photo ${i + 1}` }),
+          bouton('', { ico: 'fermer', cls: 'btn-icone cr-photo-x', label: `Retirer la photo ${i + 1}`, onclick: () => actionsTest[b.id].retirer(i) })))) : null,
+        el('div', { class: 'rangee-btn' }, bouton('Prendre une photo', { ico: 'camera', onclick: () => actionsTest[b.id].ajouter(true) }), bouton('Galerie', { ico: 'image', onclick: () => actionsTest[b.id].ajouter(false) }))));
+      else if (b.t === 'signature') carte.append(el('div', { class: 'form-bloc' }, el('div', { class: 'etiquette' }, b.label, etoile),
+        el('button', { type: 'button', class: 'cr-sig-zone signable', onclick: () => actionsTest[b.id].signer() }, b.qui === 'client' ? 'Le client signe ici, au doigt (date, heure et lieu enregistrés)' : 'Signature et tampon de l\'entreprise')));
+    }
+    if (!carte.childElementCount) carte.remove();
+    if (!racine.childElementCount) racine.append(el('p', { class: 'note cr-attente', text: 'Ce modèle n\'a pas encore de question. Ajoutez-en dans « Modifier ».' }));
+    return racine;
+  }
   function rendreTest() {
     const haut = zoneTest.scrollTop;
+    const choix = segments('cr-vue-test', [['form', 'Formulaire'], ['doc', 'Sur le document']], vueTest, v => { vueTest = v; rendreTest(); });
+    choix.classList.add('choix-remplir');
     zoneTest.replaceChildren(
-      el('div', { class: 'cr-bandeau-essai' }, el('span', { text: 'Essai : touchez les champs surlignés. Rien n\'est enregistré.' }), bouton('Remplir pour de vrai', { ico: 'valider', onclick: essai })),
-      pageDocRemplie(m, repTest, { changer: rendreTest, actions: actionsTest }));
+      el('div', { class: 'cr-bandeau-essai' }, el('span', { text: 'Essai du modèle : rien n\'est enregistré.' }), bouton('Remplir pour de vrai', { ico: 'valider', onclick: essai })),
+      choix,
+      vueTest === 'form' ? formulaireEssai() : pageDocRemplie(m, repTest, { changer: rendreTest, actions: actionsTest }));
     zoneTest.scrollTop = haut;
   }
   async function rendreApercu() {
