@@ -1038,6 +1038,13 @@ body .feuille.inspecteur .feuille-corps{background:#edf3ef}
 .insp-carte h3{margin:10px 0 4px;font-size:15px;color:var(--accent-fort)}
 .insp-carte dl{margin:0}
 .insp-retenir{background:#fffaf0}
+.insp-cadre.large{max-width:1000px}
+.insp-tete.ok .insp-ico{background:rgba(31,174,118,.3)}
+.comp-pages{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:6px 0 8px}
+.comp-pages figure{margin:0;display:flex;flex-direction:column;gap:4px}
+.comp-pages canvas{width:100%;height:auto;border:1px solid var(--ligne);border-radius:6px;background:#fff}
+.comp-pages figcaption{font-size:12.5px;color:var(--doux);text-align:center}
+@media (max-width:640px){.comp-pages{grid-template-columns:1fr 1fr}.comp-pages figure:last-child{grid-column:1/-1}}
 .insp-retenir ul{margin:4px 0 6px;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .insp-retenir li{font-weight:600;line-height:1.4}
 .insp-retenir .note{margin:6px 0 4px}
@@ -1535,7 +1542,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.46.0';
+const VERSION_APPLI = '1.47.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -5373,10 +5380,17 @@ async function lireUnPdf() {
    ========================================================= */
 /** Lit les informations EXIF d'une photo JPEG (appareil, date, réglages, position GPS). Renvoie {} s'il n'y en a pas. */
 function lireExif(o) {
-  if (o[0] !== 0xFF || o[1] !== 0xD8) return {};
-  const v = new DataView(o.buffer, o.byteOffset, o.byteLength);
+  const v = new DataView(o.buffer, o.byteOffset, o.byteLength), jpeg = o[0] === 0xFF && o[1] === 0xD8;
   let base = -1;
-  for (let p = 2; p + 10 < o.length && o[p] === 0xFF;) {
+  if (!jpeg) {
+    // PNG (bloc « eXIf »), photo d'iPhone (HEIC), WebP : on cherche l'en-tête EXIF dans le fichier
+    const tiff = q => (o[q] === 0x49 && o[q + 1] === 0x49 && o[q + 2] === 0x2A && o[q + 3] === 0) || (o[q] === 0x4D && o[q + 1] === 0x4D && o[q + 2] === 0 && o[q + 3] === 0x2A);
+    for (let p = 0, fin = Math.min(o.length - 12, 6e6); p < fin; p++) {
+      if (o[p] === 0x45 && o[p + 1] === 0x78 && o[p + 2] === 0x69 && o[p + 3] === 0x66 && o[p + 4] === 0 && o[p + 5] === 0 && tiff(p + 6)) { base = p + 6; break; }
+      if (o[p] === 0x65 && o[p + 1] === 0x58 && o[p + 2] === 0x49 && o[p + 3] === 0x66 && tiff(p + 4)) { base = p + 4; break; }
+    }
+  }
+  for (let p = 2; jpeg && p + 10 < o.length && o[p] === 0xFF;) {
     const marque = o[p + 1], taille = v.getUint16(p + 2);
     if (marque === 0xE1 && v.getUint32(p + 4) === 0x45786966) { base = p + 10; break; }
     if (marque === 0xDA) break;
@@ -5437,7 +5451,22 @@ async function inspecterFichier() {
       const champs = await pdf.getFieldObjects().catch(() => null), nbChamps = champs ? Object.keys(champs).length : 0;
       // Texte sélectionnable ou scan ? (on regarde les 5 premières pages)
       const aTester = Math.min(pdf.numPages, 5); let avecTexte = 0;
-      for (let i = 1; i <= aTester; i++) { const t = await (await pdf.getPage(i)).getTextContent().catch(() => ({ items: [] })); if (t.items.some(it => (it.str || '').trim().length > 1)) avecTexte++; }
+      const polices = new Set(), ajouts = {};
+      const NOMS_AJOUTS = { Stamp: 'tampon', FreeText: 'zone de texte', Ink: 'dessin à main levée', Highlight: 'surlignage', Underline: 'soulignement', StrikeOut: 'texte barré', Square: 'forme', Circle: 'forme', Line: 'forme', Polygon: 'forme', PolyLine: 'forme', Text: 'note', Redact: 'zone masquée', FileAttachment: 'fichier joint' };
+      for (let i = 1; i <= aTester; i++) {
+        const pg = await pdf.getPage(i), t = await pg.getTextContent().catch(() => ({ items: [] }));
+        if (t.items.some(it => (it.str || '').trim().length > 1)) avecTexte++;
+        t.items.forEach(it => it.fontName && polices.add(it.fontName));
+        for (const an of await pg.getAnnotations().catch(() => [])) { const nomA = NOMS_AJOUTS[an.subtype]; if (nomA) ajouts[nomA] = (ajouts[nomA] || 0) + 1; }
+      }
+      const listeAjouts = Object.entries(ajouts).map(([k, n]) => `${n} ${k}${n > 1 && !/s$/.test(k) ? 's' : ''}`).join(', ');
+      // Versions successives : un PDF complété après coup garde ses anciennes versions à la suite (repère « %%EOF »)
+      let fins = 0;
+      for (let p = 0; p < octets.length - 4; p++) if (octets[p] === 0x25 && octets[p + 1] === 0x25 && octets[p + 2] === 0x45 && octets[p + 3] === 0x4F && octets[p + 4] === 0x46) fins++;
+      const debut = String.fromCharCode(...octets.subarray(0, 1200));
+      const versions = Math.max(1, fins - (/\/Linearized/.test(debut) ? 1 : 0));
+      if (versions > 1) retenir.push(`Il contient ${versions} versions enregistrées l'une après l'autre : il a été complété ou modifié ${versions - 1} fois après sa première version.`);
+      if (listeAjouts) retenir.push(`Des éléments ont été ajoutés par-dessus les pages : ${listeAjouts}.`);
       const nature = avecTexte === aTester ? 'Texte sélectionnable' : avecTexte === 0 ? 'Pages scannées (images)' : 'Mixte : texte et pages scannées';
       const pj = await pdf.getAttachments().catch(() => null), nbPj = pj ? Object.keys(pj).length : 0;
       const scripts = pdf.getJSActions ? await pdf.getJSActions().catch(() => null) : null, aScripts = !!scripts && Object.keys(scripts).length > 0;
@@ -5452,7 +5481,8 @@ async function inspecterFichier() {
       if (nbPj) retenir.push(`Il embarque ${nbPj} pièce${nbPj > 1 ? 's' : ''} jointe${nbPj > 1 ? 's' : ''}.`);
       section('Le document', [['Pages', String(pdf.numPages)], ['Format de la première page', `${l} × ${h} mm${a4 ? ' (A4)' : ''}`], ['Version du format PDF', info.PDFFormatVersion || ''],
         ['Formulaire à remplir', nbChamps ? `Oui, ${nbChamps} champ${nbChamps > 1 ? 's' : ''}` : 'Non'], ['Signature numérique', info.IsSignaturesPresent ? 'Oui' : 'Non'], ['Protégé par mot de passe', info.EncryptFilterName ? 'Oui' : 'Non'],
-        ['Contenu des pages', nature], ['Pièces jointes', nbPj ? String(nbPj) : ''], ['Scripts intégrés', aScripts ? 'Oui' : '']]);
+        ['Contenu des pages', nature], ['Versions enregistrées', versions > 1 ? `${versions} (modifié ${versions - 1} fois après coup)` : '1 seule'],
+        ['Ajouts par-dessus les pages', listeAjouts || 'Aucun'], ['Polices différentes', polices.size ? `${polices.size} sur ${aTester > 1 ? 'les ' + aTester + ' premières pages' : 'la page'}` : ''], ['Pièces jointes', nbPj ? String(nbPj) : ''], ['Scripts intégrés', aScripts ? 'Oui' : '']]);
       section('Son origine', [['Titre', info.Title], ['Auteur', info.Author, true], ['Sujet', info.Subject], ['Mots-clés', info.Keywords], ['Créé avec', info.Creator], ['Fabriqué par', info.Producer], ['Créé le', datePdf(info.CreationDate)], ['Modifié le', datePdf(info.ModDate)], ['Modifié après sa création', apres]],
         'Ce PDF ne contient aucune information sur son origine.');
     } else {
@@ -5501,7 +5531,91 @@ async function inspecterFichier() {
   };
   fe.pied.append(...[bouton('Fermer', { onclick: () => fe.fermer() }),
     bouton('Copie sans ces informations', { ico: 'masque', label: 'Enregistrer une copie sans ces informations', onclick: copieSansInfos }),
+    bouton('Comparer…', { ico: 'copier', label: 'Comparer ce fichier avec un autre', onclick: async () => { await fe.fermer(); comparerFichiers(f); } }),
     estPdf(f) ? bouton('Ouvrir le PDF', { ico: 'livre', cls: 'btn principal', onclick: async () => { await fermerTout(); ouvrirPdf(octets, f.name, { lecture: true }); } }) : null].filter(Boolean));
+}
+/* COMPARER DEUX FICHIERS : identiques ou non, et où sont les différences (texte et aspect, page par page). */
+function differencePixels(c1, c2) {
+  const w = Math.min(c1.width, c2.width), h = Math.min(c1.height, c2.height);
+  const a = c1.getContext('2d').getImageData(0, 0, w, h).data, b = c2.getContext('2d').getImageData(0, 0, w, h).data;
+  const sortie = el('canvas', { width: w, height: h }), g = sortie.getContext('2d'), img = g.createImageData(w, h), d = img.data;
+  let n = 0, x0 = w, y0 = h, x1 = 0, y1 = 0;
+  for (let i = 0; i < a.length; i += 4) {
+    const ecart = Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]);
+    if (ecart > 70) { n++; d[i] = 224; d[i + 1] = 40; d[i + 2] = 40; d[i + 3] = 255; const px = (i / 4) % w, py = Math.floor(i / 4 / w); if (px < x0) x0 = px; if (px > x1) x1 = px; if (py < y0) y0 = py; if (py > y1) y1 = py; }
+    else { const gris = 255 - (255 - (a[i] + a[i + 1] + a[i + 2]) / 3) * 0.28; d[i] = d[i + 1] = d[i + 2] = gris; d[i + 3] = 255; }
+  }
+  g.putImageData(img, 0, 0);
+  // Un cadre rouge entoure la zone modifiée, pour qu'une petite différence se voie
+  if (n) { g.strokeStyle = '#e02828'; g.lineWidth = 2; g.strokeRect(Math.max(1, x0 - 8), Math.max(1, y0 - 8), Math.min(w - 2, x1 - x0 + 16), Math.min(h - 2, y1 - y0 + 16)); }
+  const taillesDifferentes = c1.width !== c2.width || Math.abs(c1.height - c2.height) > 2;
+  return { n, pct: n / (w * h) * 100, canvas: sortie, taillesDifferentes };
+}
+async function comparerFichiers(premier = null) {
+  const accept = 'application/pdf,.pdf,image/*';
+  let fs;
+  if (premier) { const [f2] = await choisirFichiers({ accept }); if (!f2) return; fs = [premier, f2]; }
+  else {
+    fs = await choisirFichiers({ accept, multiple: true });
+    if (!fs.length) return;
+    if (fs.length !== 2) { toast('Sélectionnez exactement deux fichiers à comparer (maintenez Ctrl, ou touchez les deux).', 5500); return; }
+  }
+  if (fs.some(f => !estPdf(f) && !estImage(f))) { toast('On ne peut comparer que des PDF ou des images.'); return; }
+  occupe('Comparaison des deux fichiers…');
+  const pagesDiff = []; let identiques = false, totaux = [0, 0], limite = false;
+  try {
+    const octets = await Promise.all(fs.map(async f => new Uint8Array(await f.arrayBuffer())));
+    const empreinte = async o => [...new Uint8Array(await crypto.subtle.digest('SHA-256', o))].map(x => x.toString(16).padStart(2, '0')).join('');
+    identiques = (await empreinte(octets[0])) === (await empreinte(octets[1]));
+    // Chaque page devient une petite image et son texte
+    const rendus = async (f, o) => {
+      const res = [];
+      if (estPdf(f)) {
+        const pdf = await pdfjsLib.getDocument({ data: o.slice() }).promise;
+        res.total = pdf.numPages;
+        for (let i = 1; i <= Math.min(pdf.numPages, 30); i++) {
+          const p = await pdf.getPage(i), vp = p.getViewport({ scale: 640 / p.getViewport({ scale: 1 }).width });
+          const c = el('canvas', { width: Math.round(vp.width), height: Math.round(vp.height) });
+          await p.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+          res.push({ c, t: (await p.getTextContent()).items.map(it => it.str).join(' ').replace(/\s+/g, ' ').trim() });
+        }
+      } else {
+        const c0 = await chargerImage(f, 1280), c = el('canvas', { width: 640, height: Math.round(c0.height * 640 / c0.width) });
+        c.getContext('2d').drawImage(c0, 0, 0, c.width, c.height);
+        res.total = 1; res.push({ c, t: '' });
+      }
+      return res;
+    };
+    if (!identiques) {
+      const ra = await rendus(fs[0], octets[0]), rb = await rendus(fs[1], octets[1]);
+      totaux = [ra.total, rb.total]; limite = Math.max(ra.total, rb.total) > 30;
+      for (let i = 0; i < Math.max(ra.length, rb.length); i++) {
+        const pa = ra[i], pb = rb[i];
+        if (!pa || !pb) { pagesDiff.push({ n: i + 1, raison: pa ? 'présente seulement dans le premier fichier' : 'présente seulement dans le second fichier', a: pa?.c, b: pb?.c }); continue; }
+        const d = differencePixels(pa.c, pb.c), texte = pa.t !== pb.t, aspect = d.n > 3 || d.taillesDifferentes;
+        if (texte || aspect) pagesDiff.push({ n: i + 1, a: pa.c, b: pb.c, d: d.canvas,
+          raison: [texte ? 'texte différent' : '', d.taillesDifferentes ? 'format de page différent' : '', d.n > 3 ? (d.pct < 0.5 ? 'une petite zone modifiée' : `aspect différent sur ${d.pct < 1 ? d.pct.toFixed(1).replace('.', ',') : Math.round(d.pct)} % de la page`) : ''].filter(Boolean).join(', ') });
+      }
+    }
+  } catch (err) { console.error(err); toast(err?.name === 'PasswordException' ? 'Un des PDF est protégé par un mot de passe : il ne peut pas être comparé.' : 'Ces fichiers n\'ont pas pu être comparés.'); return; }
+  finally { libre(); }
+  const fe = feuille({ titre: 'Comparer deux fichiers', plein: true });
+  fe.feuille.classList.add('inspecteur');
+  const nb = pagesDiff.length, pdfs = fs.every(estPdf);
+  const verdict = identiques ? 'Les deux fichiers sont strictement identiques.'
+    : nb ? `Les fichiers sont différents : ${nb} ${pdfs ? 'page' : 'image'}${nb > 1 ? 's' : ''} ${nb > 1 ? 'diffèrent' : 'diffère'}${pdfs ? ` sur ${Math.max(...totaux)}` : ''}.`
+    : 'Les fichiers sont différents, mais leur contenu visible est le même.';
+  const detail = identiques ? 'Même empreinte : pas un seul octet ne change entre les deux.'
+    : nb ? 'Les différences sont marquées en rouge ci-dessous.'
+    : 'Même texte et même aspect, page par page. La différence est dans les informations internes (date d\'enregistrement, logiciel, auteur…).';
+  fe.corps.append(el('div', { class: 'insp-cadre large' },
+    el('div', { class: 'insp-tete' + (identiques ? ' ok' : '') }, el('span', { class: 'insp-ico' }, icone(identiques ? 'valider' : 'copier')), el('div', {}, el('strong', { text: verdict }), el('span', { text: detail }))),
+    el('section', { class: 'insp-carte' }, el('h3', { text: 'Les deux fichiers' }), el('dl', {}, fs.map((f, i) => el('div', { class: 'insp-ligne' }, el('dt', { text: i ? 'Second' : 'Premier' }),
+      el('dd', { text: `${f.name} · ${tailleLisible(f.size)}${!identiques && estPdf(f) ? ` · ${totaux[i]} page${totaux[i] > 1 ? 's' : ''}` : ''}` }))))),
+    limite ? el('p', { class: 'note', text: 'Seules les 30 premières pages ont été comparées.' }) : null,
+    pagesDiff.map(p => el('section', { class: 'insp-carte' }, el('h3', { text: `${pdfs ? 'Page ' + p.n : 'Image'} : ${p.raison}` }),
+      el('div', { class: 'comp-pages' }, [['Premier', p.a], ['Second', p.b], ['Différences en rouge', p.d]].map(([lib, c]) => c ? el('figure', {}, c, el('figcaption', { text: lib })) : null))))));
+  fe.pied.append(bouton('Fermer', { cls: 'btn principal', onclick: () => fe.fermer() }));
 }
 /** Page « Outils PDF » : tous les outils au même endroit, rangés par usage. */
 function ouvrirOutils() {
@@ -5511,6 +5625,7 @@ function ouvrirOutils() {
     ['Lire et modifier un PDF', [
       [lireUnPdf, 'livre', 'Lire un PDF', 'Ouvrir pour consulter ; « Modifier » ouvre l\'éditeur'],
       [inspecterFichier, 'detective', 'Inspecter un fichier', 'Ce qu\'un PDF ou une photo révèle : auteur, dates, appareil, lieu'],
+      [comparerFichiers, 'copier', 'Comparer deux fichiers', 'Identiques ou non, et où sont les différences'],
       ['#btn-ouvrir', 'crayon', 'Modifier', 'Ajouter du texte, des photos, corriger, masquer'],
       ['#btn-signer', 'signature', 'Signer', 'Signature et tampon'],
       ['#btn-remplir', 'texte', 'Remplir un formulaire', 'Cerfa, mandat, contrat…'],
