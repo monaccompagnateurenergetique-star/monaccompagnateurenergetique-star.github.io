@@ -1542,7 +1542,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.49.0';
+const VERSION_APPLI = '1.50.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -1568,7 +1568,8 @@ function el(tag, props = {}, ...enfants) {
     else if (k === 'text') e.textContent = v;
     else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
     else if (k === 'dataset') Object.assign(e.dataset, v);
-    else if (k.startsWith('on') && typeof v === 'function') e.addEventListener(k.slice(2), v);
+    else if (k.startsWith('on')) { if (typeof v === 'function') e.addEventListener(k.slice(2), v); }
+    else if ((k === 'href' || k === 'src') && /^\s*(javascript|vbscript):|^\s*data:(?!image\/)/i.test(String(v))) continue;
     else if (typeof v !== 'string' && k in e) e[k] = v;
     else e.setAttribute(k, v === true ? '' : v);
   }
@@ -1718,9 +1719,13 @@ function ecrireTampons(liste) {
    ========================================================= */
 const pile = []; const attentesRetour = [];
 let feuillesOuvertes = 0;
-function ouvrirCouche(fermer) { pile.push(fermer); history.pushState({ couche: pile.length }, ''); }
+const SESSION_NAV = Date.now().toString(36); let sauterRetour = false;
+function ouvrirCouche(fermer) { pile.push(fermer); history.pushState({ couche: pile.length, s: SESSION_NAV }, ''); }
 function fermerCouche() { return new Promise(res => { attentesRetour.push(res); history.back(); }); }
-addEventListener('popstate', () => {
+addEventListener('popstate', e => {
+  if (sauterRetour) { sauterRetour = false; return; }
+  // Bouton « Suivant » du navigateur vers une fenêtre déjà fermée : on revient en arrière sans rien fermer
+  if (e.state?.s === SESSION_NAV && e.state.couche > pile.length) { sauterRetour = true; history.back(); return; }
   const f = pile.pop(); if (f) f();
   const r = attentesRetour.shift(); if (r) r();
 });
@@ -1772,7 +1777,7 @@ function feuille({ titre, plein = false, pied = true, surFermeture, page = null,
   requestAnimationFrame(() => { voile.classList.add('ouvert'); f.classList.add('ouverte'); });
   function retirer() {
     if (ferme) return; ferme = true; feuillesOuvertes--;
-    f.classList.add('fermee');
+    f.classList.add('fermee'); f.style.pointerEvents = 'none'; // plus de clic possible pendant qu'elle disparaît
     if (page) {
       rubriqueCourante = pagesOuvertes().pop()?.dataset.page || 'accueil'; majMenu();
       if (rouvrir) dernierePage = { rouvrir, t: Date.now() };
@@ -1786,7 +1791,27 @@ function feuille({ titre, plein = false, pied = true, surFermeture, page = null,
     if (surFermeture) surFermeture();
   }
   ouvrirCouche(retirer);
-  api.fermer = () => { if (ferme || enFermeture) return Promise.resolve(); enFermeture = fermetureVoulue = true; return fermerCouche(); };
+  let promesseFermeture = null, finFermeture = null;
+  api.fermer = () => {
+    if (ferme) return Promise.resolve();
+    if (enFermeture) return promesseFermeture;
+    const rang = pile.indexOf(retirer); if (rang < 0) return Promise.resolve();
+    enFermeture = fermetureVoulue = true;
+    promesseFermeture = new Promise(res => { finFermeture = res; });
+    // Une fenêtre posée par-dessus (réglages d'un bloc…) se ferme d'abord : on recule d'autant de crans qu'il faut,
+    // sans compter les retours déjà demandés par ailleurs
+    (async () => {
+      const avant = navigationEnCours; let garde = 12;
+      try {
+        while (!ferme && garde--) {
+          const crans = pile.length - pile.indexOf(retirer) - attentesRetour.length;
+          if (crans > 1) navigationEnCours = true; // les fenêtres du dessus se ferment sans déclencher leur propre « retour »
+          if (crans > 0) await fermerCouche(); else await new Promise(r => setTimeout(r, 40));
+        }
+      } finally { navigationEnCours = avant; finFermeture(); }
+    })();
+    return promesseFermeture;
+  };
   return api;
 }
 /** Petite fenêtre de choix : renvoie la valeur choisie, ou null. */
@@ -4626,6 +4651,8 @@ function ajouterDeLaBibliotheque(x) {
 }
 /** Formulaire officiel vierge : il s'ouvre dans l'éditeur, la partie « entreprise » déjà remplie depuis les Paramètres.
     On complète, on coche, on pose son tampon, puis « Enregistrer le modèle ». */
+/** Téléphone en chiffres seulement, comme l'attendent les cases des formulaires (+33 6… devient 06…). */
+const telChiffres = t => String(t || '').replace(/^\s*(\+|00)33\s*\(?0?\)?/, '0').replace(/\D/g, '');
 async function preparerModeleOfficiel(x) {
   occupe('Ouverture du formulaire…');
   let octets;
@@ -4635,8 +4662,8 @@ async function preparerModeleOfficiel(x) {
     if (x.entreprise && e.nom) {
       const doc = await PDFDocument.load(octets, { updateMetadata: false }), form = doc.getForm();
       const [, cp = '', ville = ''] = String(e.cpVille || '').match(/^\s*(\d{4,5})?\s*(.*)$/) || [];
-      const v = { nom: e.nom, adresse: e.adresse, cp, ville, email: e.email, tel: e.tel };
-      for (const [champ, cle] of Object.entries(x.entreprise)) { try { if (v[cle]) form.getTextField(champ).setText(versWinAnsi(v[cle])); } catch (err) { console.warn('Champ non rempli', champ, err); } }
+      const v = { nom: e.nom, adresse: e.adresse, cp, ville, email: e.email, tel: telChiffres(e.tel) };
+      for (const [champ, cle] of Object.entries(x.entreprise)) { try { if (v[cle]) { const c = form.getTextField(champ), max = c.getMaxLength(), t = versWinAnsi(String(v[cle])); c.setText(max ? t.slice(0, max) : t); } } catch (err) { console.warn('Champ non rempli', champ, err); } }
       octets = await doc.save();
     }
   } catch (err) { console.error(err); toast('Le formulaire n\'a pas pu être ouvert.'); return; } finally { libre(); }
@@ -4649,7 +4676,7 @@ async function apercuBibliotheque(x, apres) {
   let pdf;
   try {
     const octets = x.type === 'doc' ? await genererPdfDocument(x.creer(), {}) : x.type === 'officiel' || x.type === 'vierge' ? new Uint8Array(await (await fetch(x.fichier || x.m.fichier)).arrayBuffer()) : await genererPdfFormulaire(x.m, {});
-    pdf = await pdfjsLib.getDocument({ data: octets }).promise;
+    pdf = await chargerPdfjs(octets, { demanderMotDePasse: false });
   } catch (err) { console.error(err); toast('L\'aperçu n\'est pas disponible pour ce modèle.'); return; } finally { libre(); }
   const fe = feuille({ titre: x.nom, plein: true });
   fe.feuille.classList.add('apercu-biblio');
@@ -4659,6 +4686,7 @@ async function apercuBibliotheque(x, apres) {
     const c = el('canvas', { class: 'cr-page-pdf', width: Math.round(vp.width), height: Math.round(vp.height), role: 'img', 'aria-label': `Page ${i}` });
     fe.corps.append(c); await p.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
   }
+  pdf.destroy();
   fe.pied.append(...[bouton('Fermer', { onclick: () => fe.fermer() }),
     x.type === 'vierge' ? bouton('Préparer mon modèle', { ico: 'crayon', cls: 'btn principal', onclick: async () => { await fe.fermer(); preparerModeleOfficiel(x); } })
     : estAjoute(x) ? null : bouton('Ajouter à mes modèles', { ico: 'plus', cls: 'btn principal', onclick: async () => { ajouterDeLaBibliotheque(x); toast('Modèle ajouté à « Mes modèles »'); await fe.fermer(); apres?.(); } })].filter(Boolean));
@@ -4813,9 +4841,9 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null, e
   const initialiser = (blocs, r) => blocs.forEach(b => {
     if (b.t === 'date' && b.auto && !r[b.id]) r[b.id] = aujourdhuiIso();
     if (b.t === 'faitA' && !r[b.id]) r[b.id] = { lieu: '', date: aujourdhuiIso() };
+    if (b.memo && r[b.id] == null && prefs.memoForm?.[b.id] != null) r[b.id] = prefs.memoForm[b.id]; // la réponse retenue passe avant la valeur par défaut
     if (b.t === 'choix' && b.defaut && r[b.id] == null) r[b.id] = b.defaut;
     if (b.t === 'case' && b.defaut && r[b.id] == null) r[b.id] = true;
-    if (b.memo && r[b.id] == null && prefs.memoForm?.[b.id] != null) r[b.id] = prefs.memoForm[b.id];
     if (b.t === 'repeter' && !Array.isArray(r[b.id])) r[b.id] = [{}];
   });
   initialiser(modele.blocs, rep);
@@ -4830,7 +4858,7 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null, e
   async function sauverBrouillon(pdf = false) {
     if (essai) return; // « Essayer » depuis le créateur : rien n'est gardé
     if (!pdf && !touche && !(prefs.brouillonsForm || []).some(b => b.id === id)) return;
-    const vide = !Object.entries(rep).some(([k, v]) => v && (typeof v === 'string' ? v.trim() && !/^\d{4}-\d{2}-\d{2}$/.test(v) : typeof v === 'object' && !(v.date && !v.lieu) && JSON.stringify(v) !== '[{}]'));
+    const vide = !Object.entries(rep).some(([k, v]) => v && (v === true || (typeof v === 'string' ? v.trim() && !/^\d{4}-\d{2}-\d{2}$/.test(v) : typeof v === 'object' && !(v.date && !v.lieu) && JSON.stringify(v) !== '[{}]')));
     if (vide) return;
     try {
       await bdPut('fichiers', { modele: modele.id, rep, dossier }, 'brouillon:' + id);
@@ -4905,7 +4933,7 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null, e
         return el('div', { class: 'form-bloc form-duo' }, el('div', {}, lab('Fait à'), lieu), el('div', {}, el('label', { class: 'etiquette', for: fid + '-d', text: 'Le' }), date));
       }
       case 'photos': {
-        const liste = r[b.id] ||= [];
+        const liste = Array.isArray(r[b.id]) ? r[b.id] : (r[b.id] = []);
         const grille = el('div', { class: 'form-photos' });
         const majPhotos = () => grille.replaceChildren(...liste.map((p, i) => el('figure', {},
           el('img', { src: p.url, alt: p.legende || `Photo ${i + 1}` }),
@@ -5265,7 +5293,8 @@ const MODELES_PDF = [
     ],
     async remplir(doc, rep, e) {
       const form = doc.getForm();
-      const ecrire = (nom, v) => { try { if (!v) return; const f = form.getTextField(nom), max = f.getMaxLength(), t = versWinAnsi(String(v)).replace(/\n/g, ' '); f.setText(max ? t.slice(0, max) : t); } catch (err) { console.warn('Champ non rempli :', nom, err); } };
+      const coupes = [];
+      const ecrire = (nom, v) => { try { if (!v) return; const f = form.getTextField(nom), max = f.getMaxLength(), t = versWinAnsi(String(v)).replace(/\n/g, ' '); if (max && t.length > max) coupes.push(nom); f.setText(max ? t.slice(0, max) : t); } catch (err) { console.warn('Champ non rempli :', nom, err); } };
       const cocher = (debut, oui) => { try { const f = form.getFields().find(x => x.getName().startsWith(debut)); if (!f) return; oui ? f.check() : f.uncheck(); } catch (err) { console.warn('Case non cochée :', debut, err); } };
       // Le mandant
       cocher(rep.civ === 'Mme' ? 'ou Madame' : 'Monsieur', true);
@@ -5274,13 +5303,13 @@ const MODELES_PDF = [
       if (numero) { let l1 = 4; try { l1 = form.getTextField('N du dossier MPR (partie 1)').getMaxLength() || 4; } catch {} ecrire('N du dossier MPR (partie 1)', numero.slice(0, l1)); ecrire('N du dossier MPR (partie 2)', numero.slice(l1)); }
       cocher('Propriétaire ou titulaire', rep.proprio !== false);
       ecrire('Adresse postale du logement à rénover', rep.adresse); ecrire('Code postal du logement à rénover', rep.cp); ecrire('Commune du logement à rénover', rep.ville);
-      ecrire('Adresse mail', rep.email); ecrire('Téléphone mobile ou fixe', String(rep.tel || '').replace(/\s/g, ''));
+      ecrire('Adresse mail', rep.email); ecrire('Téléphone mobile ou fixe', telChiffres(rep.tel));
       // Le mandataire
       cocher(rep.mCiv === 'Mme' ? 'Madame (mandataire)' : 'Monsieur (mandataire)', true);
       ecrire('Nom mandataire', (rep.mNom || '').toUpperCase()); ecrire('Prénom mandataire', rep.mPrenom);
       const [, cpE = '', villeE = ''] = String(e.cpVille || '').match(/^\s*(\d{4,5})?\s*(.*)$/) || [];
       ecrire('Raison sociale si personne morale', e.nom); ecrire('Adresse postale mandataire', e.adresse); ecrire('Code postal mandataire', cpE); ecrire('Commune mandataire', villeE);
-      ecrire('Adresse mail mandataire', e.email); ecrire('Téléphone mobile ou fixe mandataire', String(e.tel || '').replace(/\s/g, ''));
+      ecrire('Adresse mail mandataire', e.email); ecrire('Téléphone mobile ou fixe mandataire', telChiffres(e.tel));
       // L'objet du mandat
       cocher('Mandat ADMINISTRATIF', rep.administratif !== false); cocher('Mandat FINANCIER', !!rep.financier);
       // Fait à … le … et les noms sous les signatures
@@ -5297,6 +5326,7 @@ const MODELES_PDF = [
       await poser(zc, rep['sig-client']?.png);
       await poser(zm, se?.png, 0, se?.tampon ? 0.5 : 1);
       await poser(zm, se?.tampon, 0.5, 1);
+      if (coupes.length) toast(`Texte trop long pour la case du formulaire, il a été coupé : ${[...new Set(coupes)].join(', ')}.`, 8000);
     } }
 ];
 
@@ -5437,14 +5467,14 @@ function lireExif(o) {
   try {
     const le = v.getUint16(base) === 0x4949, u16 = q => v.getUint16(q, le), u32 = q => v.getUint32(q, le);
     const lire = (ifd, noms) => {
-      const n = u16(base + ifd), out = {};
+      const n = Math.min(u16(base + ifd), 200), out = {};
       for (let i = 0; i < n; i++) {
         const e = base + ifd + 2 + i * 12, tag = u16(e), type = u16(e + 2), nb = u32(e + 4);
         const t = [0, 1, 1, 2, 4, 8, 1, 1, 2, 4, 8][type] || 1, pos = t * nb > 4 ? base + u32(e + 8) : e + 8;
         if (!(tag in noms) || pos + t * nb > v.byteLength) continue;
         let val;
-        if (type === 2) { val = ''; for (let k = 0; k < nb - 1; k++) val += String.fromCharCode(v.getUint8(pos + k)); val = val.replace(/\0/g, '').trim(); }
-        else if (type === 5 || type === 10) val = Array.from({ length: nb }, (_, k) => { const a = type === 5 ? u32(pos + k * 8) : v.getInt32(pos + k * 8, le), b = type === 5 ? u32(pos + k * 8 + 4) : v.getInt32(pos + k * 8 + 4, le); return b ? a / b : 0; });
+        if (type === 2) { val = ''; for (let k = 0; k < Math.min(nb - 1, 2000); k++) val += String.fromCharCode(v.getUint8(pos + k)); val = val.replace(/\0/g, '').trim(); }
+        else if (type === 5 || type === 10) val = Array.from({ length: Math.min(nb, 16) }, (_, k) => { const a = type === 5 ? u32(pos + k * 8) : v.getInt32(pos + k * 8, le), b = type === 5 ? u32(pos + k * 8 + 4) : v.getInt32(pos + k * 8 + 4, le); return b ? a / b : 0; });
         else if (type === 3) val = u16(pos); else if (type === 4) val = u32(pos); else if (type === 1) val = v.getUint8(pos);
         out[noms[tag]] = Array.isArray(val) && val.length === 1 ? val[0] : val;
       }
@@ -5480,7 +5510,7 @@ async function inspecterFichier() {
     const empreinte = [...new Uint8Array(await crypto.subtle.digest('SHA-256', octets))].map(o => o.toString(16).padStart(2, '0')).join('');
     section('Le fichier', [['Nom', f.name], ['Type', estPdf(f) ? 'Document PDF' : (f.type || 'Image').replace('image/', 'Image ').toUpperCase().replace('IMAGE', 'Image')], ['Poids', tailleLisible(f.size)], ['Dernière modification', dateLisible(new Date(f.lastModified))], ['Empreinte (SHA-256)', empreinte]]);
     if (estPdf(f)) {
-      const pdf = pdfOuvert = await pdfjsLib.getDocument({ data: octets.slice() }).promise;
+      const pdf = pdfOuvert = await chargerPdfjs(octets, { demanderMotDePasse: false });
       const info = (await pdf.getMetadata().catch(() => ({}))).info || {};
       const [x0, y0, x1, y1] = (await pdf.getPage(1)).view, l = Math.round((x1 - x0) / 72 * 25.4), h = Math.round((y1 - y0) / 72 * 25.4);
       const a4 = Math.abs(Math.min(l, h) - 210) <= 2 && Math.abs(Math.max(l, h) - 297) <= 2;
@@ -5538,7 +5568,7 @@ async function inspecterFichier() {
         ['Carte', { lien: `https://www.openstreetmap.org/?mlat=${x.gps.lat.toFixed(5)}&mlon=${x.gps.lon.toFixed(5)}#map=16/${x.gps.lat.toFixed(5)}/${x.gps.lon.toFixed(5)}`, texte: 'Voir ce lieu sur une carte' }]]);
     }
   } catch (err) { console.error(err); toast(err?.name === 'PasswordException' ? 'Ce PDF est protégé par un mot de passe : il ne peut pas être inspecté.' : 'Ce fichier n\'a pas pu être lu.'); return; }
-  finally { libre(); }
+  finally { libre(); pdfOuvert?.destroy(); }
   sensible = sections.some(sec => sec.lignes.some(l => l[2]));
   const fe = feuille({ titre: 'Inspecteur de fichier', plein: true });
   fe.feuille.classList.add('inspecteur');
@@ -5557,6 +5587,7 @@ async function inspecterFichier() {
       if (estPdf(f)) {
         const doc = await PDFDocument.load(octets, { updateMetadata: false });
         doc.setTitle(''); doc.setAuthor(''); doc.setSubject(''); doc.setKeywords([]); doc.setCreator(''); doc.setProducer('');
+        try { const N = window.PDFLib.PDFName, infos = doc.getInfoDict(); for (const k of ['CreationDate', 'ModDate']) infos.delete(N.of(k)); doc.catalog.delete(N.of('Metadata')); } catch (err) { console.warn('Dates ou bloc XMP non retirés', err); }
         libre(); if (await enregistrer(await doc.save(), nomSansExt(f.name) + ' (sans infos).pdf')) toast('Copie enregistrée sans les informations d\'origine');
       } else {
         const png = /png$/i.test(f.type) || /\.png$/i.test(f.name), c = await chargerImage(f, 8000);
@@ -5598,7 +5629,7 @@ async function comparerFichiers(premier = null) {
   }
   if (fs.some(f => !estPdf(f) && !estImage(f))) { toast('On ne peut comparer que des PDF ou des images.'); return; }
   occupe('Comparaison des deux fichiers…');
-  const pagesDiff = []; let identiques = false, totaux = [0, 0], limite = false;
+  const pagesDiff = []; let identiques = false, totaux = [0, 0], limite = false, pagesEnPlus = false;
   try {
     const octets = await Promise.all(fs.map(async f => new Uint8Array(await f.arrayBuffer())));
     const empreinte = async o => [...new Uint8Array(await crypto.subtle.digest('SHA-256', o))].map(x => x.toString(16).padStart(2, '0')).join('');
@@ -5607,16 +5638,18 @@ async function comparerFichiers(premier = null) {
     const rendus = async (f, o) => {
       const res = [];
       if (estPdf(f)) {
-        const pdf = await pdfjsLib.getDocument({ data: o.slice() }).promise;
-        res.total = pdf.numPages;
-        for (let i = 1; i <= Math.min(pdf.numPages, 30); i++) {
-          const p = await pdf.getPage(i), vp = p.getViewport({ scale: 640 / p.getViewport({ scale: 1 }).width });
-          const c = el('canvas', { width: Math.round(vp.width), height: Math.round(vp.height) });
-          await p.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
-          res.push({ c, t: (await p.getTextContent()).items.map(it => it.str).join(' ').replace(/\s+/g, ' ').trim() });
-        }
+        const pdf = await chargerPdfjs(o, { demanderMotDePasse: false });
+        try {
+          res.total = pdf.numPages;
+          for (let i = 1; i <= Math.min(pdf.numPages, 30); i++) {
+            const p = await pdf.getPage(i), vp = p.getViewport({ scale: 640 / p.getViewport({ scale: 1 }).width });
+            const c = el('canvas', { width: Math.round(vp.width), height: Math.min(4000, Math.round(vp.height)) }); // une page démesurée est coupée, pas dessinée en entier
+            await p.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+            res.push({ c, t: (await p.getTextContent()).items.map(it => it.str).join(' ').replace(/\s+/g, ' ').trim() });
+          }
+        } finally { pdf.destroy(); }
       } else {
-        const c0 = await chargerImage(f, 1280), c = el('canvas', { width: 640, height: Math.round(c0.height * 640 / c0.width) });
+        const c0 = await chargerImage(f, 1280), c = el('canvas', { width: 640, height: Math.min(4000, Math.round(c0.height * 640 / c0.width)) });
         c.getContext('2d').drawImage(c0, 0, 0, c.width, c.height);
         res.total = 1; res.push({ c, t: '' });
       }
@@ -5624,7 +5657,7 @@ async function comparerFichiers(premier = null) {
     };
     if (!identiques) {
       const ra = await rendus(fs[0], octets[0]), rb = await rendus(fs[1], octets[1]);
-      totaux = [ra.total, rb.total]; limite = Math.max(ra.total, rb.total) > 30;
+      totaux = [ra.total, rb.total]; limite = Math.max(ra.total, rb.total) > 30; pagesEnPlus = ra.total !== rb.total;
       for (let i = 0; i < Math.max(ra.length, rb.length); i++) {
         const pa = ra[i], pb = rb[i];
         if (!pa || !pb) { pagesDiff.push({ n: i + 1, raison: pa ? 'présente seulement dans le premier fichier' : 'présente seulement dans le second fichier', a: pa?.c, b: pb?.c }); continue; }
@@ -5640,9 +5673,13 @@ async function comparerFichiers(premier = null) {
   const nb = pagesDiff.length, pdfs = fs.every(estPdf);
   const verdict = identiques ? 'Les deux fichiers sont strictement identiques.'
     : nb ? `Les fichiers sont différents : ${nb} ${pdfs ? 'page' : 'image'}${nb > 1 ? 's' : ''} ${nb > 1 ? 'diffèrent' : 'diffère'}${pdfs ? ` sur ${Math.max(...totaux)}` : ''}.`
+    : pagesEnPlus ? `Les fichiers sont différents : ils n'ont pas le même nombre de pages (${totaux[0]} et ${totaux[1]}).`
+    : limite ? 'Aucune différence sur les 30 premières pages. La suite n\'a pas été comparée.'
     : 'Les fichiers sont différents, mais leur contenu visible est le même.';
   const detail = identiques ? 'Même empreinte : pas un seul octet ne change entre les deux.'
     : nb ? 'Les différences sont marquées en rouge ci-dessous.'
+    : pagesEnPlus ? 'Les 30 premières pages ont le même texte et le même aspect.'
+    : limite ? 'Pour comparer la suite, gardez d\'abord seulement les pages voulues avec l\'outil « Pages ».'
     : 'Même texte et même aspect, page par page. La différence est dans les informations internes (date d\'enregistrement, logiciel, auteur…).';
   fe.corps.append(el('div', { class: 'insp-cadre large' },
     el('div', { class: 'insp-tete' + (identiques ? ' ok' : '') }, el('span', { class: 'insp-ico' }, icone(identiques ? 'valider' : 'copier')), el('div', {}, el('strong', { text: verdict }), el('span', { text: detail }))),
@@ -6174,7 +6211,8 @@ function jaugeFormulaire() {
     for (const b of blocs) {
       if (!b.id || b.t === 'section' || !visible(b, rep)) continue;
       n++; const v = rep[b.id];
-      if (Array.isArray(v) ? v.length : typeof v === 'string' ? v.trim() : v && typeof v === 'object' ? (b.t === 'faitA' ? v.lieu : true) : v) ok++;
+      const plein = x => x && (typeof x !== 'object' || Object.keys(x).length > 0);
+      if (Array.isArray(v) ? v.some(plein) : typeof v === 'string' ? v.trim() : v && typeof v === 'object' ? (b.t === 'faitA' ? v.lieu : Object.keys(v).length) : v) ok++;
     }
     const pct = n ? Math.round(ok / n * 100) : 0;
     trait.style.width = pct + '%'; barre.setAttribute('aria-valuenow', String(pct));
@@ -6531,6 +6569,10 @@ function modeleDocAttestationHonneur() {
   return m;
 }
 /** Crée un bloc (et sa question s'il en faut une). « q:ouinon » = question Oui / Non, etc. */
+function purgerConditions(m, q) {
+  const vals = q.type === 'ouinon' ? ['Oui', 'Non'] : q.type === 'choix' ? q.options || [] : [];
+  for (const x of m.blocs) if (x.si?.q === q.cle && !vals.includes(x.si.val)) delete x.si;
+}
 function creerBlocDoc(cle, m) {
   const b = { id: idUnique(), type: cle };
   const nouvelleQ = o => { const q = { cle: 'q-' + idUnique() + Math.random().toString(36).slice(2, 5), requis: false, ...o }; m.questions.push(q); return q.cle; };
@@ -6721,10 +6763,10 @@ function editerDocument(source) {
       champ = el('div', { class: 'cr-options' },
         q.options.map((o, i) => {
           const z = el('div', { class: 'cr-option-texte', contenteditable: 'true', 'data-plat': '1', 'data-vide': 'Réponse', text: o });
-          z.addEventListener('input', () => { q.options[i] = z.textContent.replace(/\s+/g, ' ').trim(); modifie(); });
+          z.addEventListener('input', () => { const anc = q.options[i], nv = z.textContent.replace(/\s+/g, ' ').trim(); q.options[i] = nv; for (const x of m.blocs) if (x.si?.q === q.cle && x.si.val === anc) x.si.val = nv; modifie(); });
           z.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); q.options.splice(i + 1, 0, 'Réponse ' + (q.options.length + 1)); modifie(); rendrePage(); viser(i + 1); } });
           return el('div', { class: 'cr-option' }, el('i'), z,
-            q.options.length > 1 ? el('button', { type: 'button', class: 'cr-option-x', 'aria-label': `Retirer la réponse « ${o} »`, title: 'Retirer', onclick: () => { q.options.splice(i, 1); modifie(); rendrePage(); rafraichirPanneaux(); } }, icone('fermer')) : null);
+            q.options.length > 1 ? el('button', { type: 'button', class: 'cr-option-x', 'aria-label': `Retirer la réponse « ${o} »`, title: 'Retirer', onclick: () => { q.options.splice(i, 1); purgerConditions(m, q); modifie(); rendrePage(); rafraichirPanneaux(); } }, icone('fermer')) : null);
         }),
         el('button', { type: 'button', class: 'cr-option-plus', onclick: () => { q.options.push('Réponse ' + (q.options.length + 1)); modifie(); rendrePage(); viser(q.options.length - 1); } }, icone('plus'), 'Ajouter une réponse'));
     } else if (q.type === 'photos') {
@@ -6764,7 +6806,7 @@ function editerDocument(source) {
     }
     const aTexte = ['texte', 'colonnes', 'encadre', 'tableau'].includes(b.type);
     const ob = (contenu, label, action, cls = '') => el('button', { type: 'button', class: 'cr-ob ' + cls, 'aria-label': label, title: label, onpointerdown: e => e.preventDefault(), onclick: e => { e.stopPropagation(); action(e); } }, contenu);
-    const format = cmd => () => { document.execCommand(cmd); if (zoneActive?.isConnected) sauverZone(blocDeZone(zoneActive), zoneActive); };
+    const format = cmd => () => { document.execCommand('styleWithCSS', false, false); document.execCommand(cmd); if (zoneActive?.isConnected) sauverZone(blocDeZone(zoneActive), zoneActive); };
     const poignee = el('span', { class: 'cr-ob cr-glisser', title: 'Glisser pour déplacer', 'aria-hidden': 'true' }, icone('deplacer'));
     poignee.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); choisir(b.id); demarrerGlisse(e, poignee, { id: b.id, libelle: nomBloc(b) }); });
     const outils = el('div', { class: 'cr-outils-bloc' },
@@ -6796,11 +6838,11 @@ function editerDocument(source) {
         const bouger = ev => {
           const voulu = (ev.clientX - gauche) / ligne.width * 6;
           f = [2, 3, 4, 6].reduce((a, c) => Math.abs(c - voulu) < Math.abs(a - voulu) ? c : a);
-          fantome.textContent = 'Largeur : ' + NOMS[f]; fantome.style.transform = `translate(${ev.clientX + 14}px, ${ev.clientY + 10}px)`;
+          fantome.textContent = 'Largeur : ' + NOMS[f]; fantome.style.transform = `translate(${Math.max(8, Math.min(ev.clientX + 14, innerWidth - fantome.offsetWidth - 8))}px, ${Math.max(8, ev.clientY - 56)}px)`;
           if (hote) n.style.gridColumn = 'span ' + f; else n.style.width = f === 6 ? '' : (f / 6 * 100) + '%';
         };
         const fin = () => {
-          fantome.remove(); redim.removeEventListener('pointermove', bouger); redim.removeEventListener('pointerup', fin); redim.removeEventListener('pointercancel', fin);
+          fantome.remove(); redim.removeEventListener('pointermove', bouger); redim.removeEventListener('pointerup', fin); redim.removeEventListener('pointercancel', annule);
           const avant = fractionBloc(m, b);
           if (f !== avant) {
             // À deux sur la ligne : le voisin prend la place qui reste
@@ -6811,7 +6853,8 @@ function editerDocument(source) {
           }
           rendrePage(); rafraichirPanneaux();
         };
-        redim.addEventListener('pointermove', bouger); redim.addEventListener('pointerup', fin); redim.addEventListener('pointercancel', fin);
+        const annule = () => { f = fractionBloc(m, b); fin(); };
+        redim.addEventListener('pointermove', bouger); redim.addEventListener('pointerup', fin); redim.addEventListener('pointercancel', annule);
         bouger(e);
       });
       n.append(redim);
@@ -6865,7 +6908,7 @@ function editerDocument(source) {
     const dependants = b.q ? m.blocs.filter(x => x.si?.q === b.q) : [];
     dependants.forEach(x => { x.siAvant = x.si; delete x.si; });
     modifie(); await fermerOutil(); rendrePage(); rafraichirPanneaux();
-    toast(`Bloc « ${nomBloc(b)} » supprimé.`, { action: 'Annuler', onAction: () => { m.blocs.splice(i, 0, b); dependants.forEach(x => { x.si = x.siAvant; delete x.siAvant; }); choisi = b.id; modifie(); rendrePage(); rafraichirPanneaux(); } });
+    toast(`Bloc « ${nomBloc(b)} » supprimé.`, { action: 'Annuler', onAction: () => { if (blocDe(b.id)) return; m.blocs.splice(Math.min(i, m.blocs.length), 0, b); dependants.forEach(x => { x.si = x.siAvant; delete x.siAvant; }); choisi = b.id; modifie(); rendrePage(); rafraichirPanneaux(); } });
   }
 
   /* ----- Glisser-déposer : la poignée d'un bloc, ou une tuile de la palette (ordinateur) ----- */
@@ -6907,10 +6950,11 @@ function editerDocument(source) {
       hote.classList.add(cible.apres ? 'cible-apres' : 'cible-avant');
     };
     const bouger = ev => { x = ev.clientX; y = ev.clientY; viser(); const pr = plan.getBoundingClientRect(); vDefile = x > pr.left && x < pr.right ? (y < pr.top + 60 ? -12 : y > pr.bottom - 60 ? 12 : 0) : 0; };
-    const defile = setInterval(() => { if (vDefile) { plan.scrollBy(0, vDefile); viser(); } }, 16);
+    const defile = setInterval(() => { if (!prise.isConnected) { cible = null; return fin(); } if (vDefile) { plan.scrollBy(0, vDefile); viser(); } }, 16);
+    const annule = () => { cible = null; fin(); };
     const fin = () => {
       clearInterval(defile); fantome.remove();
-      prise.removeEventListener('pointermove', bouger); prise.removeEventListener('pointerup', fin); prise.removeEventListener('pointercancel', fin);
+      prise.removeEventListener('pointermove', bouger); prise.removeEventListener('pointerup', fin); prise.removeEventListener('pointercancel', annule);
       nettoyer(); page.classList.remove('en-glisse');
       if (!cible) return rendrePage();
       const b = id ? blocDe(id) : creerBlocDoc(nouveau, m);
@@ -6929,7 +6973,7 @@ function editerDocument(source) {
       choisi = b.id; placeChoisie = null; modifie(); rendrePage(); rendreCote();
       if (nouveau) viserBloc(b.id);
     };
-    prise.addEventListener('pointermove', bouger); prise.addEventListener('pointerup', fin); prise.addEventListener('pointercancel', fin);
+    prise.addEventListener('pointermove', bouger); prise.addEventListener('pointerup', fin); prise.addEventListener('pointercancel', annule);
     viser();
   }
 
@@ -6982,6 +7026,7 @@ function editerDocument(source) {
       const s = getSelection(); s.removeAllRanges(); s.addRange(range);
       document.execCommand('styleWithCSS', false, true);
       document.execCommand('foreColor', false, c);
+      document.execCommand('styleWithCSS', false, false);
       sauverZone(blocDeZone(zoneActive), zoneActive);
     };
     pop = el('div', { class: 'cr-pop cr-pop-couleur', role: 'dialog', 'aria-label': 'Couleur du texte' },
@@ -7123,14 +7168,16 @@ function editerDocument(source) {
     zoneApercu.replaceChildren(el('p', { class: 'note cr-attente', text: 'Préparation de l\'aperçu…' }));
     try {
       const octets = await genererPdfDocument(JSON.parse(JSON.stringify(m)), repTest);
-      const pdf = await pdfjsLib.getDocument({ data: octets }).promise, pages = [];
-      for (let i = 1; i <= pdf.numPages; i++) {
-        const p = await pdf.getPage(i), vp = p.getViewport({ scale: 1.6 });
-        const c = el('canvas', { class: 'cr-page-pdf', width: Math.round(vp.width), height: Math.round(vp.height), role: 'img', 'aria-label': `Page ${i} du PDF` });
-        await p.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise; pages.push(c);
-      }
+      const pdf = await chargerPdfjs(octets, { demanderMotDePasse: false }), pages = [], nbPages = pdf.numPages;
+      try {
+        for (let i = 1; i <= nbPages; i++) {
+          const p = await pdf.getPage(i), vp = p.getViewport({ scale: 1.6 });
+          const c = el('canvas', { class: 'cr-page-pdf', width: Math.round(vp.width), height: Math.round(vp.height), role: 'img', 'aria-label': `Page ${i} du PDF` });
+          await p.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise; pages.push(c);
+        }
+      } finally { pdf.destroy(); }
       if (jeton !== jetonApercu) return;
-      zoneApercu.replaceChildren(el('p', { class: 'note cr-attente', text: `Le PDF tel qu'il sortira (${pdf.numPages} page${pdf.numPages > 1 ? 's' : ''}), avec les réponses saisies dans « Remplir ».` }), ...pages);
+      zoneApercu.replaceChildren(el('p', { class: 'note cr-attente', text: `Le PDF tel qu'il sortira (${nbPages} page${nbPages > 1 ? 's' : ''}), avec les réponses saisies dans « Remplir ».` }), ...pages);
     } catch (err) { console.error(err); if (jeton === jetonApercu) zoneApercu.replaceChildren(el('p', { class: 'note cr-attente', text: 'L\'aperçu n\'a pas pu être préparé.' })); }
   }
   mqPc.addEventListener('change', rendreTout); mqLarge.addEventListener('change', rendreTout);
@@ -7158,7 +7205,7 @@ function editerDocument(source) {
         const q = questionDe(m, b.q); if (!q) break;
         const idT = 'cr-type-' + b.id;
         const type = el('select', { class: 'champ', id: idT }, TYPES_Q_BLOC.map(t => el('option', { value: t, text: TYPES_Q[t], selected: t === q.type })));
-        type.addEventListener('change', () => { q.type = type.value; if (['choix', 'multi'].includes(q.type) && !q.options?.length) q.options = ['Réponse 1', 'Réponse 2']; if (q.type === 'photos') b.parLigne ||= 3; apres(); });
+        type.addEventListener('change', () => { q.type = type.value; if (['choix', 'multi'].includes(q.type) && !q.options?.length) q.options = ['Réponse 1', 'Réponse 2']; if (q.type === 'photos') b.parLigne ||= 3; purgerConditions(m, q); apres(); });
         parts.push(el('div', { class: 'cr-reglage' }, el('label', { class: 'etiquette', for: idT, text: 'Type de réponse' }), type),
           coche('Réponse obligatoire', q, 'requis'));
         if (['texte', 'long'].includes(q.type)) {
@@ -7692,10 +7739,10 @@ async function genererPdfDocument(m, rep) {
   await nouvellePage();
   /** Hauteur d'un bloc : il est dessiné à blanc sur une page provisoire, aussitôt retirée. */
   async function mesurer(b) {
-    const garde = { page, y, numPage }; enMesure = true;
+    const garde = { page, y, numPage }, n0 = doc.getPageCount(); enMesure = true;
     page = doc.addPage([W, H]); y = H - 46; const y0 = y;
     try { await dessinerBloc(b); } finally { enMesure = false; }
-    const h = y0 - y; doc.removePage(doc.getPageCount() - 1);
+    const h = y0 - y; while (doc.getPageCount() > n0) doc.removePage(doc.getPageCount() - 1);
     ({ page, y, numPage } = garde);
     return h;
   }
@@ -8294,6 +8341,10 @@ function ouvrirParametres() {
     el('div', { class: 'rangee-btn' }, bouton('Effacer toutes mes données', { ico: 'poubelle', cls: 'btn danger', onclick: async () => {
       const ok = await confirmer({ titre: 'Effacer toutes vos données ?', texte: 'Signatures, tampons, réglages, documents gardés, historique et modèles seront supprimés de cet appareil. Cette action est définitive.', action: 'Tout effacer' });
       if (!ok) return;
+      const jeton = jetonDrive || prefs.jetonDrive?.jeton;
+      if (jeton) fetch('https://oauth2.googleapis.com/revoke?token=' + encodeURIComponent(jeton), { method: 'POST' }).catch(() => {});
+      jetonDrive = null; expirationJeton = 0;
+      try { await caches.delete('atelier-partage'); } catch {}
       localStorage.removeItem(CLE_TAMPONS); localStorage.removeItem(CLE_PREFS); prefs = lirePrefs(); prefs.mode = 'particulier'; ecrirePrefs(prefs); appliquerMode(); majListe();
       try { (await bd()).close(); } catch {}
       bdPromesse = null; indexedDB.deleteDatabase('atelierpdf');
@@ -8719,7 +8770,7 @@ async function tableurVersPdf(wb, { feuilles, orientation, ajuster, quadrillage 
     let lignes = [];
     for (let r = plage.s.r; r <= finLigne; r++) {
       const ligne = [];
-      for (let c = plage.s.c; c <= plage.e.c; c++) {
+      for (let c = plage.s.c; c <= Math.min(plage.e.c, plage.s.c + 199); c++) {
         const cell = ws[XLSX.utils.encode_cell({ r, c })];
         const brut = cell ? celluleEnFrancais(cell) : '';
         ligne.push({ t: versWinAnsi(brut).replace(/\n/g, ' ').trim(), n: !!cell && cell.t === 'n' });
@@ -9788,7 +9839,7 @@ $('#btn-signer').addEventListener('click', async () => {
   if (D) $('#barre-editer [data-action="signature"]').click(); // on enchaîne directement sur le choix de la signature
 });
 $$('[data-outil]').forEach(b => b.addEventListener('click', () => lancerOutil(b.dataset.outil)));
-$('#doc-retour').addEventListener('click', () => { terminerEdition(); fermerCouche(); });
+$('#doc-retour').addEventListener('click', () => { terminerEdition(); if (!attentesRetour.length) fermerCouche(); });
 $('#doc-annuler').addEventListener('click', () => { if (D) annulerAction(); });
 $('#doc-partager').addEventListener('click', () => exporter('partager'));
 $('#doc-enregistrer').addEventListener('click', () => exporter('enregistrer'));

@@ -2,7 +2,7 @@
    - garde l'appli en mémoire pour qu'elle fonctionne sans connexion ;
    - reçoit les fichiers envoyés depuis le menu « Partager » d'Android.
    À CHAQUE MODIFICATION DE app/ : augmenter VERSION (atelier-v1 → atelier-v2…). */
-const VERSION = 'atelier-v96';
+const VERSION = 'atelier-v97';
 const CACHE_PARTAGE = 'atelier-partage';
 // Bibliothèques lourdes et facultatives (Excel, OCR) : téléchargées à la première utilisation,
 // puis gardées hors ligne dans un cache à part, qui n'est PAS vidé à chaque nouvelle version de l'appli.
@@ -44,6 +44,8 @@ self.addEventListener('fetch', event => {
 
   // Fichiers reçus depuis « Partager » : on les garde en mémoire locale, puis on ouvre l'appli.
   if (req.method === 'POST' && url.pathname.endsWith('/share-target')) {
+    // Seul le partage du téléphone est accepté : un autre site web ne peut pas pousser de fichiers dans l'appli
+    if (req.headers.get('Sec-Fetch-Site') === 'cross-site') { event.respondWith(Response.redirect('./', 303)); return; }
     event.respondWith(recevoirPartage(req));
     return;
   }
