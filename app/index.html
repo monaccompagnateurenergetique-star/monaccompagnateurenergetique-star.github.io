@@ -965,6 +965,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
 .picker-dialog{z-index:9991!important;max-width:100vw}
 .secours-selecteur{position:fixed;left:0;right:0;top:0;z-index:9995;display:flex;justify-content:center;gap:8px;padding:calc(8px + var(--haut-sur)) 8px 8px;background:rgba(27,33,48,.92)}
 .secours-selecteur .btn{background:#fff;white-space:nowrap;font-size:13px}
+@media (max-width:640px){.page-outils .grille-formulaires{grid-template-columns:1fr 1fr;gap:8px}.page-outils .carte-form{padding:12px 10px}}
 /* ---------- Créateur de documents ---------- */
 body .feuille.createur .feuille-corps{padding:0;overflow:hidden;display:flex;flex-direction:column;background:#e8ecea}
 .cr-barre{display:flex;align-items:flex-end;gap:10px 12px;flex-wrap:wrap;padding:8px 14px 10px;background:var(--carte);border-bottom:1px solid var(--ligne)}
@@ -1321,7 +1322,7 @@ body .feuille.createur.cr-mode-form .cr-pied{display:none}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.29.0';
+const VERSION_APPLI = '1.30.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4331,7 +4332,7 @@ const aujourdhuiIso = () => { const d = new Date(); return `${d.getFullYear()}-$
 
 /* ---------- Liste des formulaires et des brouillons ---------- */
 async function ouvrirFormulaires() {
-  const fe = feuille({ titre: 'Rédiger un document', plein: true, pied: false, page: 'rediger', rouvrir: () => ouvrirFormulaires() });
+  const fe = feuille({ titre: 'Modèles', plein: true, pied: false, page: 'rediger', rouvrir: () => ouvrirFormulaires() });
   fe.feuille.classList.add('large');
   const brouillons = (prefs.brouillonsForm || []).slice().sort((a, b) => b.maj - a.maj);
   const e = entreprise();
@@ -4347,18 +4348,34 @@ async function ouvrirFormulaires() {
         if (!(await confirmer({ titre: `Supprimer le brouillon « ${b.titre} » ?`, texte: 'Les réponses et les photos de ce formulaire seront effacées. Les PDF déjà créés ne changent pas.', action: 'Supprimer le brouillon' }))) return;
         await supprimerBrouillon(b.id); await fe.fermer(); ouvrirFormulaires();
       } })))));
-  fe.corps.append(el('h3', { class: 'titre-section', text: 'Nouveau document' }),
-    el('div', { class: 'grille-formulaires' }, tousLesModeles().filter(m => !m.officiel).map(m => el('div', { class: 'case-form' },
-      el('button', { type: 'button', class: 'carte-form', onclick: async () => { await fe.fermer(); saisirFormulaire(m); } },
-        el('span', { class: 'carte-form-ico' }, icone(m.perso ? 'copier' : 'formulaire')), el('strong', { text: m.nom }), el('span', { text: m.resume || (m.perso ? 'Mon modèle' : '') })),
-      m.perso ? bouton('', { ico: 'crayon', cls: 'btn-icone carte-form-modif', label: `Modifier le modèle « ${m.nom} »`, onclick: async () => { await fe.fermer(); m.doc ? editerDocument(m.doc) : editerModeleFormulaire(m); } }) : null)),
+  const ouvrirPuis = async fn => { await fe.fermer(); fn(); };
+  const carte = (m, ico, cls = '') => el('div', { class: 'case-form' },
+    el('button', { type: 'button', class: 'carte-form', onclick: () => ouvrirPuis(() => saisirFormulaire(m)) },
+      el('span', { class: 'carte-form-ico ' + cls }, icone(ico)), el('strong', { text: m.nom }), el('span', { text: m.resume || (m.perso ? 'Mon modèle' : '') })),
+    m.perso ? bouton('', { ico: 'crayon', cls: 'btn-icone carte-form-modif', label: `Modifier le modèle « ${m.nom} »`, onclick: () => ouvrirPuis(() => m.doc ? editerDocument(m.doc) : editerModeleFormulaire(m)) }) : null);
+  const miens = tousLesModeles().filter(m => m.perso);
+  let pdfs = [];
+  try { pdfs = (await bdAll('documents')).filter(d => d.modele).sort((a, b) => b.maj - a.maj); } catch (err) { console.error(err); }
+  if (fe.ferme()) return;
+  fe.corps.append(el('h3', { class: 'titre-section', text: 'Mes modèles' }),
+    el('div', { class: 'grille-formulaires' },
+      miens.map(m => carte(m, 'copier')),
+      pdfs.map(d => el('div', { class: 'case-form' },
+        el('button', { type: 'button', class: 'carte-form', onclick: () => ouvrirPuis(() => ouvrirSauvegarde(d, { modele: true })) },
+          el('span', { class: 'carte-form-ico officiel' }, icone('doc')), el('strong', { text: nomSansExt(d.nom) }), el('span', { text: `PDF déjà rempli · ${d.pages} page${d.pages > 1 ? 's' : ''}` })),
+        bouton('', { ico: 'poubelle', cls: 'btn-icone carte-form-modif', label: `Supprimer le modèle « ${nomSansExt(d.nom)} »`, onclick: async () => {
+          if (!(await confirmer({ titre: `Supprimer le modèle « ${nomSansExt(d.nom)} » ?`, texte: 'Les documents déjà créés à partir de ce modèle ne changent pas.', action: 'Supprimer le modèle' }))) return;
+          await supprimerSauvegarde(d); toast('Modèle supprimé'); await fe.fermer(); ouvrirFormulaires();
+        } }))),
       el('button', { type: 'button', class: 'carte-form nouveau', onclick: async () => { const d = await choisirDepartDocument(); if (!d) return; await fe.fermer(); editerDocument(d); } },
-        el('span', { class: 'carte-form-ico' }, icone('plus')), el('strong', { text: 'Créer mon modèle' }), el('span', { text: 'Page blanche, ou à partir d\'un exemple' }))),
+        el('span', { class: 'carte-form-ico' }, icone('plus')), el('strong', { text: 'Créer mon modèle' }), el('span', { text: 'Page blanche, ou à partir d\'un exemple' })),
+      el('button', { type: 'button', class: 'carte-form nouveau', onclick: () => nouveauModele(ouvrirPuis) },
+        el('span', { class: 'carte-form-ico' }, icone('doc')), el('strong', { text: 'À partir d\'un PDF' }), el('span', { text: 'Un PDF déjà rempli, prêt à réutiliser' }))),
+    el('h3', { class: 'titre-section', text: 'Modèles prêts à l\'emploi' }),
+    el('div', { class: 'grille-formulaires' }, MODELES_FORMULAIRES.map(m => carte(m, 'formulaire'))),
     el('h3', { class: 'titre-section', text: 'Documents officiels' }),
     el('p', { class: 'note', text: 'Le formulaire officiel est rempli à votre place : lettres dans les cases, croix, date, signatures.' }),
-    el('div', { class: 'grille-formulaires' }, MODELES_PDF.map(m => el('div', { class: 'case-form' },
-      el('button', { type: 'button', class: 'carte-form', onclick: async () => { await fe.fermer(); saisirFormulaire(m); } },
-        el('span', { class: 'carte-form-ico officiel' }, icone('doc')), el('strong', { text: m.nom }), el('span', { text: m.resume }))))));
+    el('div', { class: 'grille-formulaires' }, MODELES_PDF.map(m => carte(m, 'doc', 'officiel'))));
 }
 async function supprimerBrouillon(id) {
   prefs.brouillonsForm = (prefs.brouillonsForm || []).filter(b => b.id !== id); ecrirePrefs(prefs);
@@ -4380,7 +4397,7 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null, e
   initialiser(modele.blocs, rep);
   const fe = feuille({ titre: modele.nom, plein: true, page: 'rediger',
     rouvrir: () => essai ? essai() : dossier ? ouvrirDossier(dossier.id) : ouvrirFormulaires(),
-    retour: { label: essai ? 'Revenir au modèle' : dossier ? 'Revenir au client' : 'Revenir à la liste des documents', action: async () => { await fe.fermer(); await enregistrement; if (essai) return; dossier ? ouvrirDossier(dossier.id) : ouvrirFormulaires(); } },
+    retour: { label: essai ? 'Revenir au modèle' : dossier ? 'Revenir au client' : 'Revenir aux modèles', action: async () => { await fe.fermer(); await enregistrement; if (essai) return; dossier ? ouvrirDossier(dossier.id) : ouvrirFormulaires(); } },
     surFermeture: () => { clearTimeout(minuteur); enregistrement = sauverBrouillon(); } });
   fe.feuille.classList.add('large', 'saisie-form');
   let minuteur, enregistrement = Promise.resolve();
@@ -4816,24 +4833,24 @@ const ouvrirParam = onglet => { prefs.ongletParametres = onglet; ecrirePrefs(pre
 /** Les entrées du menu, rangées en espaces. Le mode Particulier n'affiche pas l'espace Clients. */
 function groupesMenu() {
   const it = (texte, ico, action, badge = 0, alerte = false) => ({ texte, ico, action, badge, alerte });
-  const modifier = it('Modifier un PDF', 'crayon', () => $('#btn-ouvrir').click());
-  const signer = it('Signer un PDF', 'signature', () => $('#btn-signer').click());
-  const mesDocs = it('Mes documents', 'doc', () => ouvrirMesDocuments('documents'));
-  const outils = it('Tous les outils', 'pages', allerAuxOutils);
+  const mesDocs = it('Fichiers', 'dossier', () => ouvrirMesDocuments('documents'));
+  const outils = { ...it('Outils PDF', 'pages', () => ouvrirOutils()), page: 'outils' };
   // Une entrée = une page ; chaque fonction n'apparaît qu'une fois
   const param = { ...it('Paramètres', 'reglages', () => ouvrirParametres()), page: 'parametres' };
   if (enEntreprise()) {
     return [
-      { items: [{ ...it('Tableau de bord', 'maison', allerEnHaut), page: 'accueil' }] },
-      { groupe: 'Clients', items: [{ ...it('Clients', 'clients', () => ouvrirDossiers(), dossiers().length), page: 'clients' }, it('Pièces à demander', 'horloge', () => ouvrirDossiers('actifs'), dossiers().reduce((n, d) => n + d.pieces.filter(p => p.etat !== 'recu').length, 0), aRelancer().length > 0)] },
-      { groupe: 'Documents', items: [{ ...it('Rédiger un document', 'formulaire', () => ouvrirFormulaires(), (prefs.brouillonsForm || []).filter(b => !b.pdf).length), page: 'rediger' }, { ...mesDocs, page: 'documents' }] },
-      { groupe: 'Outils PDF', items: [modifier, signer, outils] },
+      { items: [
+        { ...it('Tableau de bord', 'maison', allerEnHaut), page: 'accueil' },
+        { ...it('Clients', 'clients', () => ouvrirDossiers(), aRelancer().length, true), page: 'clients' },
+        { ...it('Modèles', 'formulaire', () => ouvrirFormulaires(), (prefs.brouillonsForm || []).filter(b => !b.pdf).length), page: 'rediger' },
+        { ...mesDocs, page: 'documents' },
+        outils] },
       { items: [param] }];
   }
   return [
     { items: [{ ...it('Accueil', 'maison', allerEnHaut), page: 'accueil' }] },
     // Particulier : l'accueil montre déjà Modifier, Fusionner et tous les outils ; le menu ne garde que ce qui n'y est pas
-    { groupe: 'Documents', items: [{ ...mesDocs, page: 'documents' }, signer] },
+    { items: [{ ...mesDocs, page: 'documents' }] },
     { items: [param] }];
 }
 function majMenu() {
@@ -4851,9 +4868,9 @@ function majMenu() {
   const bas = el('div', { class: 'menu-bas' },
     entree({ texte: 'Accueil', ico: 'maison', action: allerEnHaut, page: 'accueil' }, ''),
     ent ? entree({ texte: 'Clients', ico: 'clients', action: () => ouvrirDossiers(), badge: aRelancer().length, alerte: true, page: 'clients' }, '')
-        : entree({ texte: 'Outils', ico: 'pages', action: allerAuxOutils }, ''),
+        : entree({ texte: 'Outils', ico: 'pages', action: () => ouvrirOutils(), page: 'outils' }, ''),
     el('button', { type: 'button', class: 'creer', onclick: menuCreer }, icone('plus'), el('span', { text: 'Créer' })),
-    entree({ texte: 'Documents', ico: 'doc', action: () => ouvrirMesDocuments('documents'), page: 'documents' }, ''),
+    entree({ texte: 'Fichiers', ico: 'dossier', action: () => ouvrirMesDocuments('documents'), page: 'documents' }, ''),
     el('button', { type: 'button', onclick: menuComplet }, icone('lignes'), el('span', { text: 'Menu' })));
   nav.replaceChildren(lateral, bas);
   // Les pages s'arrêtent au-dessus de la barre du bas (téléphone)
@@ -4864,12 +4881,38 @@ function mesurerBarreBas() {
   if (h) document.documentElement.style.setProperty('--h-menu-bas', h + 'px');
 }
 addEventListener('resize', () => requestAnimationFrame(mesurerBarreBas));
+/** Page « Outils PDF » : tous les outils au même endroit, rangés par usage. */
+function ouvrirOutils() {
+  const fe = feuille({ titre: 'Outils PDF', plein: true, pied: false, page: 'outils', rouvrir: () => ouvrirOutils() });
+  fe.feuille.classList.add('large', 'page-outils');
+  const groupes = [
+    ['Modifier un PDF', [
+      ['#btn-ouvrir', 'crayon', 'Modifier', 'Ajouter du texte, des photos, corriger, masquer'],
+      ['#btn-signer', 'signature', 'Signer', 'Signature et tampon'],
+      ['#btn-remplir', 'texte', 'Remplir un formulaire', 'Cerfa, mandat, contrat…'],
+      ['[data-outil="organiser"]', 'pages', 'Organiser les pages', 'Trier, pivoter, supprimer']]],
+    ['Créer un PDF', [
+      ['#btn-scanner', 'scanner', 'Scanner', 'Une feuille papier en PDF'],
+      ['#btn-photos', 'image', 'Photos → PDF', 'Carte d\'identité, justificatifs, chantier'],
+      ['#btn-excel', 'pages', 'Excel → PDF', 'Tableurs xlsx, ods, csv'],
+      ['[data-outil="fusion"]', 'fusion', 'Fusionner', 'Plusieurs PDF et photos en un seul']]],
+    ['Transformer', [
+      ['[data-outil="compresser"]', 'compresser', 'Compresser', 'Alléger un PDF trop lourd'],
+      ['[data-outil="images"]', 'images', 'PDF → JPG', 'Chaque page en image'],
+      ['[data-outil="numeros"]', 'numero', 'Numéroter', 'Ajouter les numéros de page'],
+      ['[data-outil="filigrane"]', 'filigrane', 'Filigrane', '« COPIE », « CONFIDENTIEL »…'],
+      ...(enEntreprise() ? [['#btn-creer-tampon', 'tampon', 'Créer un tampon', 'Votre société, signé dessus']] : [])]]];
+  for (const [titre, outils] of groupes) fe.corps.append(el('h3', { class: 'titre-section', text: titre }),
+    el('div', { class: 'grille-formulaires' }, outils.map(([sel, ico, nom, detail]) => el('div', { class: 'case-form' },
+      el('button', { type: 'button', class: 'carte-form', onclick: () => naviguer(() => $('#ecran-accueil ' + sel)?.click()) },
+        el('span', { class: 'carte-form-ico' }, icone(ico)), el('strong', { text: nom }), el('span', { text: detail }))))));
+}
 /** Bouton « Créer » (téléphone) : les façons de commencer un document. */
 async function menuCreer() {
   const ent = enEntreprise();
   const v = await demanderChoix('Créer', [
     { valeur: 'pdf', texte: 'Modifier un PDF', ico: 'crayon' },
-    ...(ent ? [{ valeur: 'rediger', texte: 'Rédiger un document (PV, attestation, mandat…)', ico: 'formulaire' }, { valeur: 'client', texte: 'Nouveau client', ico: 'clients' }] : []),
+    ...(ent ? [{ valeur: 'rediger', texte: 'Remplir un modèle (PV, attestation, mandat…)', ico: 'formulaire' }, { valeur: 'client', texte: 'Nouveau client', ico: 'clients' }] : []),
     { valeur: 'signer', texte: 'Signer un PDF', ico: 'signature' },
     { valeur: 'scan', texte: 'Scanner une feuille', ico: 'scanner' },
     { valeur: 'photos', texte: 'Photos en PDF', ico: 'image' },
@@ -5225,7 +5268,7 @@ const TYPES_BLOCS = [
 const nomType = t => (TYPES_BLOCS.find(x => x[0] === t) || [t, t === 'repeter' ? 'Groupe répétable' : t])[1];
 function editerModeleFormulaire(existant = null) {
   const m = existant ? JSON.parse(JSON.stringify(existant)) : { id: 'perso-' + idUnique(), nom: '', resume: '', perso: true, blocs: [{ t: 'titre', texte: 'Titre du document' }] };
-  const fe = feuille({ titre: existant ? 'Modifier mon modèle' : 'Créer mon modèle', plein: true, page: 'rediger', retour: { label: 'Revenir à la liste des documents', action: async () => { await fe.fermer(); ouvrirFormulaires(); } } });
+  const fe = feuille({ titre: existant ? 'Modifier mon modèle' : 'Créer mon modèle', plein: true, page: 'rediger', retour: { label: 'Revenir aux modèles', action: async () => { await fe.fermer(); ouvrirFormulaires(); } } });
   fe.feuille.classList.add('large', 'editeur-form');
   const nom = el('input', { class: 'champ', id: 'fm-nom', placeholder: 'Ex. : Bon d\'intervention', maxlength: 60 }); nom.value = m.nom;
   const resume = el('input', { class: 'champ', id: 'fm-resume', placeholder: 'Une phrase pour le reconnaître (facultatif)', maxlength: 80 }); resume.value = m.resume || '';
@@ -5509,7 +5552,7 @@ function editerDocument(source) {
   const mq = matchMedia('(min-width:1000px)'), estPc = () => mq.matches;
   const fe = feuille({ titre: m.nom || 'Nouveau modèle', plein: true, page: 'rediger',
     rouvrir: () => editerDocument(modelesDoc().find(x => x.id === m.id) || m),
-    retour: { label: 'Revenir à la liste des documents', action: async () => { await fe.fermer(); ouvrirFormulaires(); } },
+    retour: { label: 'Revenir aux modèles', action: async () => { await fe.fermer(); ouvrirFormulaires(); } },
     surFermeture: () => {
       fermerPop(); clearTimeout(minuteur);
       if (!sauve && !supprime) enregistrerModeleDoc(m);
@@ -7576,10 +7619,11 @@ function ouvrirJournal(doc) {
 
 /** Écran « Mes documents » : Documents, Historique, Modèles. */
 async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
-  const fe = feuille({ titre: 'Mes documents', plein: true, pied: false, page: 'documents', rouvrir: () => ouvrirMesDocuments(courant, filtreDoc) });
+  if (onglet === 'modeles' && enEntreprise()) return ouvrirFormulaires();
+  const fe = feuille({ titre: 'Fichiers', plein: true, pied: false, page: 'documents', rouvrir: () => ouvrirMesDocuments(courant, filtreDoc) });
   const zone = el('div', { class: 'liste-docs' });
   let courant = onglet;
-  const onglets = [['documents', 'Documents'], ['historique', 'Historique'], ['modeles', 'Modèles']];
+  const onglets = [['documents', 'Documents'], ['historique', 'Historique'], ...(enEntreprise() ? [] : [['modeles', 'Modèles']])];
   if (driveConfigure()) onglets.push(['drive', 'Drive']);
   const barreOnglets = segments('mesdocs', onglets, courant, v => { courant = v; filtreDoc = null; afficher(); });
   barreOnglets.classList.add('onglets');
