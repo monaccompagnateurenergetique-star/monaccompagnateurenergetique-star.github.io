@@ -1028,8 +1028,10 @@ body .feuille.createur.cr-mode-form .cr-pied{display:none}
 .cr-ob{border:0;background:none;color:#fff;min-width:36px;height:36px;padding:0 4px;border-radius:7px;display:grid;place-items:center;font:600 15px/1 Georgia,serif}
 .cr-ob .ico{width:18px;height:18px}
 .cr-ob:hover{background:rgba(255,255,255,.14)}
-.cr-ob.cr-glisser{cursor:grab}
-@media (pointer:coarse){.cr-ob{min-width:40px;height:40px}.cr-ob.pc,.cr-ob.cr-glisser{display:none}}
+.cr-ob.cr-glisser{cursor:grab;touch-action:none}
+.cr-page.en-glisse{user-select:none}
+.cr-page.en-glisse .cr-bloc.glisse{outline:2px dashed #1fae76}
+@media (pointer:coarse){.cr-ob{min-width:40px;height:40px}.cr-ob.pc{display:none}}
 .cr-bloc.glisse{opacity:.4}
 .cr-bloc.cible-avant{box-shadow:0 -3px 0 #1fae76}
 .cr-bloc.cible-apres{box-shadow:0 3px 0 #1fae76}
@@ -1068,6 +1070,29 @@ body .feuille.createur.cr-mode-form .cr-pied{display:none}
 .cr-sig-zone{height:84px;border:1px solid #cfd5dc;border-radius:6px;background:repeating-linear-gradient(-45deg,#f6f7f8 0 6px,#fff 6px 12px);display:grid;place-items:center;color:#8a92a0;font-size:.78em;text-align:center;padding:4px}
 .cr-saut{display:flex;align-items:center;gap:10px;color:#8a92a0;font-size:.8em;margin:6px 0}
 .cr-saut::before,.cr-saut::after{content:"";flex:1;border-top:1.5px dashed #c3cbd3}
+/* Remplir sur le document */
+.choix-remplir{justify-content:center;margin:0 0 6px}
+.aide-remplir{text-align:center;margin:0 0 10px}
+body .feuille.remplir-createur .feuille-corps{background:#e8ecea}
+.remplir-doc{padding:0 0 24px}
+.champ-doc{background:#fff3c9;border-bottom:1.5px dashed #b7791f;border-radius:4px 4px 0 0;padding:1px 5px;cursor:pointer;color:#7a5200;font-weight:600;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.champ-doc.requis:not(.rempli)::after{content:" *"}
+.champ-doc.rempli{background:#e6f4ec;border-bottom:1.5px solid #1fae76;color:inherit;font-weight:inherit}
+.champ-doc:hover{filter:brightness(.96)}
+.cr-page.remplie .cr-case{width:100%;min-height:40px;align-items:center;padding:4px 6px;border:0;border-radius:8px;background:#fff3c9;font:inherit;color:inherit;text-align:left;cursor:pointer}
+.cr-page.remplie .cr-case i{margin-top:0;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;line-height:1}
+.cr-page.remplie .cr-choix:has(.coche) .cr-case{background:none}
+.cr-page.remplie .cr-case.coche{background:#e6f4ec;font-weight:700}
+.cr-page.remplie .cr-case.coche i::after{content:"✓"}
+.cr-photo.pleine{position:relative;border:0;padding:0;overflow:hidden}
+.cr-photo.pleine img{width:100%;height:100%;object-fit:cover;display:block}
+.cr-photo-x{position:absolute;top:2px;right:2px;width:36px;height:36px;background:rgba(255,255,255,.9);border-radius:50%}
+.cr-photo.ajouter{border-color:#b7791f;background:#fff3c9;color:#7a5200;font:inherit;font-weight:600;gap:2px;cursor:pointer;grid-auto-flow:row;align-content:center;justify-items:center}
+button.cr-sig-zone{width:100%;font:inherit;font-size:.82em;cursor:pointer}
+.cr-sig-zone.signable{border:1.5px dashed #b7791f;background:#fff3c9;color:#7a5200;font-weight:600}
+.cr-sig-zone.signee{background:#fff;display:flex;justify-content:space-around;gap:6px}
+.cr-sig-zone img{max-width:48%;max-height:74px;object-fit:contain}
+.lien-effacer{border:0;background:none;padding:6px 4px;color:var(--danger);text-decoration:underline;font:inherit;cursor:pointer}
 /* Étiquettes de champ */
 .tag-doc{display:inline-block;max-width:100%;padding:0 7px;border-radius:99px;font:600 .82em/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:baseline;user-select:none;cursor:default}
 .src-client{background:#e6eefc;color:#1d4fb3}
@@ -1322,7 +1347,7 @@ body .feuille.createur.cr-mode-form .cr-pied{display:none}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.30.0';
+const VERSION_APPLI = '1.31.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4416,7 +4441,8 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null, e
       prefs.brouillonsForm = l; ecrirePrefs(prefs); majMenu();
     } catch (e) { console.warn('Brouillon non gardé', e); }
   }
-  const changer = () => { touche = true; clearTimeout(minuteur); minuteur = setTimeout(sauverBrouillon, 800); majVisibles(); };
+  let surChangement = null; const actionsBloc = {};
+  const changer = () => { touche = true; clearTimeout(minuteur); minuteur = setTimeout(sauverBrouillon, 800); majVisibles(); surChangement?.(); };
   const zone = el('div', { class: 'form-blocs' });
   const blocsEls = [];
   function rendreBlocs(blocs, r, parent, prefixe = '') {
@@ -4486,6 +4512,7 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null, e
           majPhotos(); changer();
         };
         majPhotos();
+        actionsBloc[b.id] = { ajouter, retirer: i => { liste.splice(i, 1); majPhotos(); changer(); } };
         return el('div', { class: 'form-bloc' }, el('div', { class: 'etiquette', text: b.label }), grille,
           el('div', { class: 'rangee-btn' }, bouton('Prendre une photo', { ico: 'camera', cls: 'btn', onclick: () => ajouter(true) }), bouton('Galerie', { ico: 'image', cls: 'btn', onclick: () => ajouter(false) })));
       }
@@ -4513,6 +4540,7 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null, e
             r[b.id] = { png: sig.png, tampon: tam?.png || null, nom: [e.representant, e.nom].filter(Boolean).join(' – '), date: Date.now() }; maj(); changer();
           }
         };
+        actionsBloc[b.id] = { signer, effacer: () => { delete r[b.id]; maj(); changer(); } };
         return el('div', { class: 'form-bloc' }, el('div', { class: 'etiquette', text: b.label }), boite,
           el('div', { class: 'rangee-btn' },
             bouton(b.qui === 'client' ? 'Faire signer' : 'Signer (entreprise)', { ico: 'signature', cls: 'btn', onclick: signer }),
@@ -4537,7 +4565,23 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null, e
   }
   rendreBlocs(modele.blocs, rep, zone);
   majVisibles();
-  fe.corps.append(zone);
+  if (modele.doc) {
+    // Modèle du créateur : on remplit en touchant les champs du document (par défaut), ou par le formulaire
+    let vue = prefs.vueRemplir === 'form' ? 'form' : 'doc';
+    const planDoc = el('div', { class: 'remplir-doc' });
+    const majDoc = () => planDoc.replaceChildren(pageDocRemplie(modele.doc, rep, { changer, actions: actionsBloc }));
+    const afficherVue = () => {
+      planDoc.hidden = vue !== 'doc'; zone.hidden = vue === 'doc';
+      if (vue === 'doc') majDoc();
+      else { blocsEls.length = 0; zone.replaceChildren(); rendreBlocs(modele.blocs, rep, zone); majVisibles(); }
+    };
+    surChangement = () => { if (vue === 'doc') majDoc(); };
+    const choixVue = segments('vue-remplir', [['doc', 'Sur le document'], ['form', 'Formulaire']], vue, v => { vue = v; prefs.vueRemplir = v; ecrirePrefs(prefs); afficherVue(); });
+    choixVue.classList.add('choix-remplir');
+    fe.corps.append(choixVue, el('p', { class: 'note aide-remplir', text: 'Touchez un champ surligné pour le remplir.' }), planDoc, zone);
+    fe.feuille.classList.add('remplir-createur');
+    afficherVue();
+  } else fe.corps.append(zone);
   fe.pied.append(
     bouton('Fermer', { onclick: () => fe.fermer() }),
     bouton('Créer le PDF', { ico: 'valider', cls: 'btn principal', onclick: async () => {
@@ -5683,7 +5727,7 @@ function editerDocument(source) {
     const aTexte = ['texte', 'colonnes', 'encadre', 'tableau'].includes(b.type);
     const ob = (contenu, label, action, cls = '') => el('button', { type: 'button', class: 'cr-ob ' + cls, 'aria-label': label, title: label, onpointerdown: e => e.preventDefault(), onclick: e => { e.stopPropagation(); action(); } }, contenu);
     const format = cmd => () => { document.execCommand(cmd); if (zoneActive?.isConnected) sauverZone(blocDeZone(zoneActive), zoneActive); };
-    const poignee = el('span', { class: 'cr-ob cr-glisser', draggable: 'true', title: 'Glisser pour déplacer', 'aria-hidden': 'true' }, icone('deplacer'));
+    const poignee = el('span', { class: 'cr-ob cr-glisser', title: 'Glisser pour déplacer', 'aria-hidden': 'true' }, icone('deplacer'));
     const outils = el('div', { class: 'cr-outils-bloc' },
       poignee,
       aTexte ? [ob(el('b', { text: 'B' }), 'Gras', format('bold')), ob(el('i', { text: 'I' }), 'Italique', format('italic')), ob(el('u', { text: 'U' }), 'Souligné', format('underline'), 'pc'), ob(icone('lignes'), 'Liste à puces', format('insertUnorderedList'))] : [],
@@ -5696,8 +5740,33 @@ function editerDocument(source) {
     n.addEventListener('pointerdown', () => choisir(b.id));
     n.addEventListener('focusin', () => choisir(b.id));
     // Ordinateur : glisser la poignée (ou une tuile « Ajouter ») sur la page
-    poignee.addEventListener('dragstart', e => { e.dataTransfer.setData('text/cr-bloc', b.id); e.dataTransfer.effectAllowed = 'move'; n.classList.add('glisse'); });
-    poignee.addEventListener('dragend', () => n.classList.remove('glisse'));
+    poignee.addEventListener('pointerdown', e => {
+      e.preventDefault(); e.stopPropagation(); choisir(b.id);
+      try { poignee.setPointerCapture(e.pointerId); } catch {}
+      n.classList.add('glisse'); page.classList.add('en-glisse');
+      let cible = null, dernierY = e.clientY, vDefile = 0;
+      const viser = () => {
+        const blocs = [...page.querySelectorAll('.cr-bloc')];
+        blocs.forEach(x => x.classList.remove('cible-avant', 'cible-apres'));
+        let mieux = null, dist = Infinity;
+        for (const x of blocs) { const rc = x.getBoundingClientRect(), d = dernierY < rc.top ? rc.top - dernierY : dernierY > rc.bottom ? dernierY - rc.bottom : 0; if (d < dist) { dist = d; mieux = { x, apres: dernierY > rc.top + rc.height / 2 }; } }
+        cible = mieux && mieux.x.dataset.id !== b.id ? { id: mieux.x.dataset.id, apres: mieux.apres } : null;
+        if (cible) mieux.x.classList.add(cible.apres ? 'cible-apres' : 'cible-avant');
+      };
+      const bouger = ev => {
+        dernierY = ev.clientY; viser();
+        // Près du haut ou du bas : la page défile toute seule
+        const pr = plan.getBoundingClientRect(); vDefile = dernierY < pr.top + 60 ? -12 : dernierY > pr.bottom - 60 ? 12 : 0;
+      };
+      const defile = setInterval(() => { if (vDefile) { plan.scrollBy(0, vDefile); viser(); } }, 16);
+      const fin = () => {
+        clearInterval(defile); poignee.removeEventListener('pointermove', bouger); poignee.removeEventListener('pointerup', fin); poignee.removeEventListener('pointercancel', fin);
+        n.classList.remove('glisse'); page.classList.remove('en-glisse');
+        if (cible) { const j = idx(b.id); const [x] = m.blocs.splice(j, 1); let i = idx(cible.id) + (cible.apres ? 1 : 0); m.blocs.splice(i, 0, x); modifie(); }
+        rendrePage();
+      };
+      poignee.addEventListener('pointermove', bouger); poignee.addEventListener('pointerup', fin); poignee.addEventListener('pointercancel', fin);
+    });
     n.addEventListener('dragover', e => {
       if (![...e.dataTransfer.types].some(t => t.startsWith('text/cr-'))) return;
       e.preventDefault(); const r = n.getBoundingClientRect(), apres = e.clientY > r.top + r.height / 2;
@@ -6030,6 +6099,86 @@ function editerDocument(source) {
     toast('Modèle supprimé'); await fe.fermer(); ouvrirFormulaires();
   }
   rendreTout();
+}
+
+/* ---------- Remplir sur le document : la page telle qu'elle sera, les champs se touchent ---------- */
+function saisirValeurChamp(m, cle, rep) {
+  return new Promise(res => {
+    const c = infoChamp(m, cle), q = c.q, type = q?.type || 'texte';
+    let val = null;
+    const fe = feuille({ titre: c.label, surFermeture: () => res(val) });
+    if (type === 'ouinon') {
+      fe.corps.append(el('div', { class: 'menu-liste' }, ['Oui', 'Non'].map(o => bouton(o, { onclick: () => { val = o; fe.fermer(); } }))));
+      fe.pied.append(bouton('Annuler', { onclick: () => fe.fermer() }));
+      return;
+    }
+    const id = 'vc-' + idUnique();
+    const champ = type === 'long' ? el('textarea', { class: 'champ', id, rows: 5 })
+      : el('input', { class: 'champ', id, type: type === 'date' ? 'date' : 'text', inputmode: type === 'nombre' ? 'decimal' : CHAMPS_DOC[cle]?.clavier || null, autocomplete: 'off' });
+    champ.value = typeof rep[cle] === 'string' ? rep[cle] : '';
+    const valider = () => { val = champ.value; fe.fermer(); };
+    if (type !== 'long') champ.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); valider(); } });
+    fe.corps.append(el('label', { class: 'etiquette', for: id, text: q?.aide ? `${c.label} (${q.aide})` : c.label }), champ);
+    fe.pied.append(bouton('Annuler', { onclick: () => fe.fermer() }), bouton('Valider', { ico: 'valider', cls: 'btn principal', onclick: valider }));
+    setTimeout(() => champ.focus(), 120);
+  });
+}
+function pageDocRemplie(m, rep, { changer, actions }) {
+  const th = themeDe(m), e = entreprise();
+  const page = el('div', { class: `cr-page remplie theme-${th.style} police-${th.police}` });
+  page.style.setProperty('--doc-c1', th.c1);
+  const champ = cle => {
+    const c = infoChamp(m, cle), v = valeurChampDoc(m, cle, rep);
+    if (c.source !== 'client' && c.source !== 'question') return v ? document.createTextNode(v) : el('span', { class: 'tag-doc src-' + c.source, text: c.label, title: c.source === 'entreprise' ? 'À renseigner dans Paramètres → Mon entreprise' : null });
+    const ouvrir = async () => { const nv = await saisirValeurChamp(m, cle, rep); if (nv == null) return; rep[cle] = nv; changer(); };
+    const s = el('span', { class: 'champ-doc' + (v ? ' rempli' : '') + (c.q?.requis ? ' requis' : ''), role: 'button', tabindex: '0', 'aria-label': `${c.label} : ${v || 'à remplir'}`, onclick: ouvrir, onkeydown: ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); ouvrir(); } } });
+    if (v) v.split('\n').forEach((l, i) => { if (i) s.append(el('br')); s.append(l); }); else s.textContent = c.label;
+    return s;
+  };
+  const riche = html => { const d = el('div', { class: 'cr-zone-texte' }); d.innerHTML = nettoyerHtml(html); d.querySelectorAll('[data-champ]').forEach(t => t.replaceWith(champ(t.dataset.champ))); return d; };
+  const bloc = b => {
+    switch (b.type) {
+      case 'titre': { const g = b.align === 'gauche' ? ' gauche' : ''; return el('div', {}, el('div', { class: 'cr-titre' + g, text: b.texte || '' }), b.sous ? el('div', { class: 'cr-sous' + g, text: b.sous }) : null); }
+      case 'texte': return riche(b.html);
+      case 'colonnes': return el('div', { class: `cr-colonnes n${b.cols.length}${b.separees ? ' separees' : ''}` }, b.cols.map(riche));
+      case 'ligne': return el('div', { class: 'cr-ligne', style: { borderTopWidth: (b.ep || 1) + 'px', borderTopColor: b.coul === 'gris' ? '#cfd5dc' : 'var(--doc-c1)' } });
+      case 'encadre': return el('div', { class: 'cr-encadre ' + (b.fond === 'bord' ? 'bord' : 'pale') }, riche(b.html));
+      case 'tableau': return el('table', { class: 'cr-tableau' }, el('thead', {}, el('tr', {}, b.entetes.map(h => el('th', {}, riche(h))))), el('tbody', {}, b.lignes.map(l => el('tr', {}, l.map(c => el('td', {}, riche(c)))))));
+      case 'choix': {
+        const q = questionDe(m, b.q);
+        return el('div', { class: 'cr-choix', role: 'radiogroup', 'aria-label': q?.label || 'Choix' }, (q?.options || []).map(o =>
+          el('button', { type: 'button', class: 'cr-case' + (rep[b.q] === o ? ' coche' : ''), role: 'radio', 'aria-checked': String(rep[b.q] === o), onclick: () => { rep[b.q] = rep[b.q] === o ? '' : o; changer(); } }, el('i'), el('span', { text: o }))));
+      }
+      case 'photos': {
+        const q = questionDe(m, b.q), liste = Array.isArray(rep[b.q]) ? rep[b.q] : [], n = b.parLigne || 3;
+        return el('div', { class: 'cr-photos' }, el('strong', { text: q?.label || 'Photos' }),
+          el('div', { class: 'cr-grille', style: { gridTemplateColumns: `repeat(${n}, 1fr)` } },
+            liste.map((p, i) => el('div', { class: 'cr-photo pleine' }, el('img', { src: p.url, alt: p.legende || `Photo ${i + 1}` }),
+              bouton('', { ico: 'fermer', cls: 'btn-icone cr-photo-x', label: `Retirer la photo ${i + 1}`, onclick: () => actions[b.q]?.retirer(i) }))),
+            el('button', { type: 'button', class: 'cr-photo ajouter', onclick: async () => {
+              const v = await demanderChoix('Ajouter des photos', [{ valeur: 'camera', texte: 'Prendre une photo', ico: 'camera' }, { valeur: 'galerie', texte: 'Choisir dans la galerie', ico: 'image' }]);
+              if (v) actions[b.q]?.ajouter(v === 'camera');
+            } }, icone('plus'), 'Photo')));
+      }
+      case 'signatures': return el('div', { class: 'cr-signatures' + (b.cases.length === 1 ? ' une' : '') }, b.cases.map(c => {
+        const q = questionDe(m, c.q), s = rep[c.q];
+        return el('div', { class: 'cr-sig' }, el('strong', { text: c.titre || 'Signature' }), c.mention ? el('small', { text: 'Mention « Lu et approuvé »' }) : null,
+          el('button', { type: 'button', class: 'cr-sig-zone ' + (s ? 'signee' : 'signable'), 'aria-label': `${c.titre || 'Signature'} : ${s ? 'signé, toucher pour refaire' : 'toucher pour signer'}`, onclick: () => actions[c.q]?.signer() },
+            s ? [el('img', { src: s.png, alt: '' }), s.tampon ? el('img', { src: s.tampon, alt: '' }) : null] : (q?.qui === 'entreprise' ? 'Toucher pour signer (entreprise)' : 'Toucher pour faire signer le client')),
+          s ? el('small', {}, s.nom || '', ' ', el('button', { type: 'button', class: 'lien-effacer', text: 'Effacer', onclick: () => actions[c.q]?.effacer() })) : null);
+      }));
+      case 'saut': return el('div', { class: 'cr-saut', text: 'Saut de page' });
+    }
+    return null;
+  };
+  const logo = lireTampons().find(t => t.id === e.logoId);
+  if (m.entete !== 'aucun' && (logo || e.nom)) page.append(el('div', { class: 'cr-entete' },
+    el('div', { class: 'cr-entete-g' }, logo ? el('img', { src: logo.png, alt: 'Logo' }) : null,
+      el('div', {}, el('strong', { text: e.nom || '' }), el('span', { text: [e.adresse, e.cpVille].filter(Boolean).join(', ') }), el('span', { text: [e.tel, e.email].filter(Boolean).join(' · ') }))),
+    el('div', { class: 'cr-entete-d', text: dateLongue() })));
+  for (const b of m.blocs) { const n = bloc(b); if (n) page.append(el('div', { class: 'cr-bloc-rempli' }, n)); }
+  if (m.pied !== 'aucun') page.append(el('div', { class: 'cr-pied-doc' }, el('span', { text: [e.nom, e.siret ? 'SIRET ' + e.siret : '', e.mentions].filter(Boolean).join(' · ') }), el('span', {})));
+  return page;
 }
 
 /* ---------- Le PDF dessiné à partir des blocs ---------- */
