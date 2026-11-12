@@ -842,7 +842,8 @@ body.mode-entreprise .seul-particulier{display:none!important}
 .tb-lien:hover{background:rgba(255,255,255,.08);color:#fff}
 .tb-lien .ico{width:18px;height:18px}
 .tb-raccourci{display:flex;align-items:center;gap:12px;min-height:72px;padding:12px 14px;border:0;border-radius:14px;background:rgba(255,255,255,.08);color:#fff;text-align:left}
-.tb-raccourci:hover{background:rgba(255,255,255,.14)}
+@media (hover:hover){.tb-raccourci:hover{background:rgba(255,255,255,.14)}}
+.tb-raccourci:active{background:rgba(255,255,255,.2)}
 .tb-raccourci:focus-visible{outline:2px solid #1fae76;outline-offset:2px}
 .tb-raccourci-ico{flex:none;width:44px;height:44px;border-radius:12px;background:rgba(31,174,118,.22);display:grid;place-items:center}
 .tb-raccourci-ico .ico{width:24px;height:24px;color:#3fd39a}
@@ -1096,7 +1097,8 @@ body .feuille.createur.cr-hors-edition .cr-pied,.cr-hors-edition .cr-btn-theme{d
 .cr-rangee-blocs>*{min-width:0}
 .cr-place-libre{display:flex;align-items:center;justify-content:center;gap:6px;align-self:stretch;min-height:56px;padding:6px 8px;border:1.5px dashed #c3cbd3;border-radius:10px;background:none;color:#8a92a0;font:500 12.5px/1.3 system-ui,sans-serif;text-align:center;cursor:pointer}
 .cr-place-libre .ico{width:16px;height:16px;flex:none}
-.cr-place-libre:hover,.cr-place-libre.active,.cr-place-libre.cible-place{border-color:#1fae76;background:#e6f4ec;color:#0a5540}
+.cr-place-libre.active,.cr-place-libre.cible-place{border-color:#1fae76;background:#e6f4ec;color:#0a5540}
+@media (hover:hover){.cr-place-libre:hover{border-color:#1fae76;background:#e6f4ec;color:#0a5540}}
 .cr-place-libre.active{border-style:solid}
 .cr-bloc.cible-gauche::before,.cr-bloc.cible-droite::before{content:"";position:absolute;top:-5px;bottom:-5px;width:50%;border-radius:8px;background:rgba(31,174,118,.22);z-index:2;pointer-events:none}
 .cr-bloc.cible-gauche::before{left:-5px}
@@ -1196,8 +1198,8 @@ body .feuille.apercu-biblio .feuille-corps{background:#e8ecea}
 .cr-ob{border:0;background:none;color:#fff;min-width:36px;height:36px;padding:0 4px;border-radius:7px;display:grid;place-items:center;font:600 15px/1 Georgia,serif}
 .cr-ob.texte{font:600 13px/1 system-ui,sans-serif;padding:0 10px;background:#2c7a5e;margin:0 3px}
 .cr-ob .ico{width:18px;height:18px}
-.cr-ob:hover{background:rgba(255,255,255,.16)}
-.cr-ob.texte:hover{background:#34906f}
+@media (hover:hover){.cr-ob:hover{background:rgba(255,255,255,.16)}.cr-ob.texte:hover{background:#34906f}}
+.cr-ob:active{background:rgba(255,255,255,.28)}
 .cr-ob.cr-glisser{cursor:grab;touch-action:none;background:rgba(255,255,255,.1)}
 @media (pointer:coarse){.cr-ob{min-width:38px;height:40px}.cr-ob.pc{display:none}}
 .cr-page.en-glisse{user-select:none}
@@ -1320,11 +1322,12 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 .cr-feuille .cr-tuiles{grid-template-columns:repeat(3,1fr);gap:8px}
 .cr-tuile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:64px;padding:8px 4px;border:1px solid var(--ligne);border-radius:12px;background:#fbfcfb;font-weight:600;font-size:12.5px;line-height:1.2;text-align:center;color:var(--encre);touch-action:manipulation}
 .cr-tuile .ico{color:var(--accent);width:20px;height:20px}
-.cr-tuile:hover{border-color:var(--accent);background:var(--accent-pale)}
+@media (hover:hover){.cr-tuile:hover{border-color:var(--accent);background:var(--accent-pale)}}
+.cr-tuile:active,.cr-champ:active{background:var(--accent-pale)}
 @media (min-width:1000px){.cr-tuile{cursor:grab}}
 .cr-champs{display:flex;flex-direction:column}
 .cr-champ{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:4px 8px;border:0;background:none;border-radius:10px;text-align:left;color:var(--encre)}
-.cr-champ:hover{background:var(--fond)}
+@media (hover:hover){.cr-champ:hover{background:var(--fond)}}
 .cr-champ small{color:var(--doux);font-size:12px;flex:none}
 .cr-nq{display:flex;flex-direction:column;gap:6px;margin-top:10px}
 .cr-pop{position:fixed;width:300px;max-height:380px;overflow:auto;background:#fff;border:1px solid var(--ligne);border-radius:14px;box-shadow:0 16px 40px rgba(27,33,48,.18);padding:4px 10px 12px}
@@ -1339,6 +1342,45 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 .cr-pastille[aria-pressed="true"]{box-shadow:0 0 0 2px var(--encre)}
 .cr-couleur{width:48px;height:38px;border:1px solid var(--ligne);border-radius:10px;padding:2px;background:#fff}
 .cr-vide-reglages{border:1px dashed var(--ligne);border-radius:12px;padding:14px;color:var(--doux);font-size:14px}
+/* ----- Téléphone : cibles de 40 px au moins, textes de 12 px au moins, rien hors de l'écran ----- */
+@media (pointer:coarse){.cr-ob{min-width:40px}}
+@media (max-width:999px){
+  .cr-ob.pas-large{display:none} /* le bouton « Réglages » est déjà dans la barre du bas */
+  .cr-outils-bloc{width:max-content;max-width:calc(100vw - 16px);flex-wrap:wrap;justify-content:flex-end}
+  /* la barre du bas compte déjà la zone sûre de l'iPhone : on ne la compte pas deux fois */
+  .feuille.page-app .feuille-pied{padding-bottom:10px}
+  body .feuille.createur.page-app .cr-pied{padding-bottom:6px}
+}
+.champ-doc{position:relative}
+.champ-doc::before{content:"";position:absolute;inset:-10px -4px}
+.cr-option{min-height:40px}
+.cr-option-x{width:40px;height:40px;pointer-events:none}
+.cr-bloc.choisi .cr-option-x,.cr-option-x:focus-visible{pointer-events:auto}
+.cr-option-plus{min-height:40px}
+.cr-entete.masque,.cr-pied-doc.masque{min-height:40px;align-items:center;font-size:12px}
+.cr-pied-doc.cliquable{min-height:40px;align-items:center}
+.cr-redim::before{inset:-12px}
+.cr-photo-x{width:40px;height:40px}
+.lien-effacer{display:inline-flex;align-items:center;min-height:40px;padding:0 8px;font-size:13px}
+.cr-pastille{width:40px;height:40px}
+.cr-pastille-theme{min-height:40px}
+.cr-couleur{height:40px}
+.cr-pilules span{flex:0 1 76px;min-width:0}
+.cr-bloc.conditionnel{padding-left:2px}
+.tb-tete .btn-icone{color:#b9c0cf}
+.tb-tete .btn-icone:active{background:rgba(255,255,255,.12)}
+.menu-bas button{font-size:12px}
+.menu-bas .badge,.menu-lateral .badge,.badge-doc{font-size:12px}
+@media (hover:none){.cr-entete.cliquable,.cr-pied-doc.cliquable{outline-color:#c3cbd3}}
+@media (max-width:640px){
+  .cr-page.remplie .cr-zone-texte{line-height:1.9}
+  .cr-entete,.cr-pied-doc{font-size:12px}
+  .cr-entete-d small{font-size:1em}
+  .cr-q-note,.cr-sig small,.cr-sig-zone,button.cr-sig-zone,.cr-saut,.cr-photo,.tag-doc{font-size:12px}
+  .outils-modeles input[type=search]{order:1;flex:1 1 100px;min-width:0}
+  .outils-modeles .choix-vue{order:2;margin-left:0}
+  .outils-modeles .tri-modeles{order:3}
+}
 </style>
 </head>
 <body>
@@ -1542,7 +1584,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.50.0';
+const VERSION_APPLI = '1.50.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -6697,6 +6739,7 @@ function editerDocument(source) {
 
   /* ----- La page ----- */
   function rendrePage() {
+    requestAnimationFrame(calerOutils);
     const th = themeDe(m), e = entreprise(), logo = lireTampons().find(t => t.id === e.logoId);
     page.className = `cr-page theme-${th.style} police-${th.police}`;
     page.style.setProperty('--doc-c1', th.c1);
@@ -6869,6 +6912,15 @@ function editerDocument(source) {
     if (placeChoisie) { placeChoisie = null; page.querySelectorAll('.cr-place-libre.active').forEach(x => { x.classList.remove('active'); x.lastChild.textContent = 'Place libre : ajoutez un bloc ici'; }); }
     page.querySelectorAll('.cr-bloc').forEach(x => x.classList.toggle('choisi', x.dataset.id === id));
     if (mqLarge.matches) rendreCote();
+    calerOutils();
+  }
+  /** Sur un petit écran, la barre d'outils d'un bloc étroit dépasserait à gauche : on la décale pour qu'elle reste visible. */
+  function calerOutils() {
+    const o = page.querySelector('.cr-bloc.choisi .cr-outils-bloc'); if (!o) return;
+    o.style.transform = '';
+    const r = o.getBoundingClientRect(), pr = plan.getBoundingClientRect();
+    const d = r.left < pr.left + 6 ? pr.left + 6 - r.left : r.right > pr.right - 6 ? pr.right - 6 - r.right : 0;
+    if (d) o.style.transform = `translateX(${d}px)`;
   }
   function viserBloc(id, editer = true) {
     requestAnimationFrame(() => {
