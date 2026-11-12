@@ -1007,6 +1007,10 @@ body.mode-entreprise .seul-particulier{display:none!important}
   .outils-modeles .choix-vue{margin-left:auto}
   .outils-modeles input[type=search]{flex:1 1 70%}
 }
+.tete-modeles{display:flex;align-items:center;justify-content:space-between;gap:10px 14px;flex-wrap:wrap;margin:0 0 14px}
+.tete-modeles .segments.onglets-capsule{margin:0}
+.btn-creer-modele{min-height:48px;padding:0 20px;font-size:15px;border-radius:14px;box-shadow:0 2px 8px rgba(13,107,79,.28)}
+@media (max-width:640px){.tete-modeles .segments.onglets-capsule{flex:1 1 100%}.btn-creer-modele{flex:1 1 100%}}
 /* ---------- Créateur de documents ---------- */
 body .feuille.createur .feuille-corps{padding:0;overflow:hidden;display:flex;flex-direction:column;background:#e8ecea}
 .cr-barre{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:8px 12px;background:var(--carte);border-bottom:1px solid var(--ligne)}
@@ -1491,7 +1495,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.43.0';
+const VERSION_APPLI = '1.43.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4641,7 +4645,9 @@ async function ouvrirFormulaires(onglet = 'miens') {
   }
   champR.addEventListener('input', appliquerTri);
   tri.addEventListener('change', () => { prefs.triModeles = tri.value; ecrirePrefs(prefs); appliquerTri(); });
-  fe.corps.append(barreOnglets, el('div', { class: 'barre-recherche-docs outils-modeles' }, el('label', { for: 'recherche-modeles', class: 'lib-recherche' }, icone('zoom'), 'Rechercher'), champR, filtre, tri, choixVueM), infoR, zone);
+  // « Créer un modèle » : bouton principal, toujours visible en haut à droite
+  const btnCreer = bouton('Créer un modèle', { ico: 'plus', cls: 'btn principal btn-creer-modele', onclick: async () => { const d = await choisirDepartDocument(); if (!d) return; await fe.fermer(); editerDocument(d); } });
+  fe.corps.append(el('div', { class: 'tete-modeles' }, barreOnglets, btnCreer), el('div', { class: 'barre-recherche-docs outils-modeles' }, el('label', { for: 'recherche-modeles', class: 'lib-recherche' }, icone('zoom'), 'Rechercher'), champR, filtre, tri, choixVueM), infoR, zone);
   appliquerVueM(['liste', 'rect'].includes(prefs.vueModeles) ? prefs.vueModeles : 'cartes');
   const carteModele = (ico, cls, nom, detail, actions, badge) => el('div', { class: 'case-form carte-modele', dataset: { nom } }, el('div', { class: 'carte-form' },
     el('span', { class: 'carte-form-ico ' + cls }, icone(ico)), badge ? el('small', { class: 'badge-ajoute', text: badge }) : null,
@@ -4664,8 +4670,6 @@ async function ouvrirFormulaires(onglet = 'miens') {
     majDe = new Map([...miens.map(x => [x.nom, x.doc?.maj || 0]), ...pdfs.map(d => [nomSansExt(d.nom), d.maj || 0])]);
     zone.append(...[
       el('div', { class: 'grille-formulaires' },
-        el('button', { type: 'button', class: 'carte-form nouveau', onclick: async () => { const d = await choisirDepartDocument(); if (!d) return; await fe.fermer(); editerDocument(d); } },
-          el('span', { class: 'carte-form-ico' }, icone('plus')), el('strong', { text: 'Créer un modèle' }), el('span', { text: 'Page blanche, ou à partir d\'un exemple' })),
         miens.map(m => carteModele('formulaire', '', m.nom, m.resume || 'Mon modèle', [
           bouton('Remplir', { cls: 'btn principal', label: `Remplir « ${m.nom} »`, onclick: () => ouvrirPuis(() => saisirFormulaire(m)) }),
           bouton('Modifier', { label: `Modifier le modèle « ${m.nom} »`, onclick: () => ouvrirPuis(() => m.doc ? editerDocument(m.doc) : editerModeleFormulaire(m)) }),
