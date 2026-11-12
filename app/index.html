@@ -976,6 +976,7 @@ body.mode-entreprise .seul-particulier{display:none!important}
 .secours-selecteur{position:fixed;left:0;right:0;top:0;z-index:9995;display:flex;justify-content:center;gap:8px;padding:calc(8px + var(--haut-sur)) 8px 8px;background:rgba(27,33,48,.92)}
 .secours-selecteur .btn{background:#fff;white-space:nowrap;font-size:13px}
 @media (max-width:640px){.page-outils .grille-formulaires{grid-template-columns:1fr 1fr;gap:8px}.page-outils .carte-form{padding:12px 10px}}
+.btn-completer{width:100%;margin:0 0 10px;font-size:14px;background:var(--accent-pale);border-color:transparent;color:var(--accent-fort)}
 /* ---------- Créateur de documents ---------- */
 body .feuille.createur .feuille-corps{padding:0;overflow:hidden;display:flex;flex-direction:column;background:#e8ecea}
 .cr-barre{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:8px 12px;background:var(--carte);border-bottom:1px solid var(--ligne)}
@@ -1460,7 +1461,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.40.0';
+const VERSION_APPLI = '1.40.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -7438,7 +7439,14 @@ function tamponTexte() {
     };    // Une case par ligne (plus clair qu'un grand champ de texte) ; les cases vides sont ignorées
     const CHAMPS = [['societe', 'Société', 'Ex. SARL DUPONT RÉNOVATION'], ['adresse', 'Adresse', 'Ex. 12 rue des Lilas'], ['ville', 'Code postal et ville', 'Ex. 75011 Paris'], ['siret', 'SIRET', 'Ex. 123 456 789 00012'], ['autre', 'Autre ligne (facultatif)', 'Ex. Tél. 06 12 34 56 78']];
     const entrees = {};
-    const blocChamps = el('div', { class: 'bloc-blanc' }, el('h3', { class: 'titre-bloc', text: 'Ce qui est écrit' }),
+    // Entreprise déjà renseignée dans les Paramètres : un bouton recopie ses coordonnées
+    const ent = entreprise();
+    const completer = ent.nom ? bouton('Compléter avec les coordonnées de mon entreprise', { ico: 'copier', cls: 'btn btn-completer', onclick: () => {
+      const v = { societe: ent.nom, adresse: ent.adresse, ville: ent.cpVille, siret: ent.siret, autre: ent.tel ? 'Tél. ' + ent.tel : '' };
+      for (const k in v) if (v[k]) entrees[k].value = String(v[k]).slice(0, 60);
+      maj(); toast('Coordonnées recopiées : vous pouvez les modifier.');
+    } }) : null;
+    const blocChamps = el('div', { class: 'bloc-blanc' }, el('h3', { class: 'titre-bloc', text: 'Ce qui est écrit' }), completer,
       ...CHAMPS.map(([k, lib, ex]) => {
         entrees[k] = el('input', { class: 'champ', id: 'tampon-' + k, placeholder: ex, maxlength: 60, autocomplete: k === 'societe' ? 'organization' : 'off', oninput: () => maj() });
         return el('div', { class: 'ligne-champ' }, el('label', { class: 'etiquette', for: 'tampon-' + k, text: lib }), entrees[k]);
