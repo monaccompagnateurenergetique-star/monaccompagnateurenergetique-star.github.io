@@ -1035,7 +1035,16 @@ body .feuille.createur.cr-hors-edition .cr-pied,.cr-hors-edition .cr-btn-theme{d
 .cr-pastille-theme{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px 0 6px;border:1px solid var(--ligne);border-radius:99px;background:#fff;font:600 13px/1 system-ui,sans-serif;color:var(--encre)}
 .cr-pastille-theme i{width:22px;height:22px;border-radius:50%}
 .cr-pastille-theme[aria-pressed="true"]{border-color:var(--encre);box-shadow:0 0 0 1px var(--encre)}
-.onglets-modeles{margin:0 0 12px}
+/* Les deux onglets de la page Modèles : un sélecteur compact, l'onglet actif en blanc */
+.onglets-modeles{display:inline-flex;flex-wrap:nowrap;gap:4px;margin:0 0 14px;padding:4px;border-radius:16px;background:#e2e8e4}
+.onglets-modeles label{flex:1}
+.onglets-modeles span{justify-content:center;gap:8px;width:100%;box-sizing:border-box;min-height:44px;padding:0 24px;border:0;border-radius:12px;background:none;font-size:15px;font-weight:600;color:var(--doux);white-space:nowrap;cursor:pointer;transition:background .12s,color .12s}
+.onglets-modeles span .ico{width:20px;height:20px}
+.onglets-modeles label:hover span{color:var(--encre)}
+.onglets-modeles input:checked+span{background:#fff;border:0;color:var(--accent-fort);box-shadow:0 1px 3px rgba(20,24,35,.16)}
+.onglets-modeles input:focus-visible+span{outline:3px solid var(--edition);outline-offset:2px}
+@media (max-width:640px){.onglets-modeles{display:flex}.onglets-modeles span{padding:0 10px}}
+@media (prefers-reduced-motion:reduce){.onglets-modeles span{transition:none}}
 .outils-modeles{margin-bottom:6px}
 .outils-modeles .tri-modeles{flex:0 0 auto;width:auto;min-width:170px}
 @media (max-width:640px){.outils-modeles{flex-wrap:wrap}.outils-modeles .tri-modeles{flex:1 1 100%}}
@@ -1449,7 +1458,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.39.0';
+const VERSION_APPLI = '1.39.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4518,7 +4527,8 @@ async function ouvrirFormulaires(onglet = 'miens') {
       } })))));
 
   const barreOnglets = segments('onglet-modeles', [['miens', 'Mes modèles'], ['biblio', 'Bibliothèque']], onglet, v => { onglet = v; afficher(); });
-  barreOnglets.classList.add('onglets', 'onglets-modeles');
+  barreOnglets.classList.add('onglets-modeles');
+  barreOnglets.querySelectorAll('span').forEach((sp, i) => sp.prepend(icone(i ? 'livre' : 'formulaire')));
   const zone = el('div', {});
   const sansAccentM = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const champR = el('input', { type: 'search', class: 'champ', id: 'recherche-modeles', placeholder: 'Nom du modèle…', autocomplete: 'off', enterkeyhint: 'search' });
