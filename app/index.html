@@ -1011,6 +1011,21 @@ body .feuille.createur.cr-hors-edition .cr-pied,.cr-hors-edition .cr-btn-theme{d
 .cr-pastille-theme{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px 0 6px;border:1px solid var(--ligne);border-radius:99px;background:#fff;font:600 13px/1 system-ui,sans-serif;color:var(--encre)}
 .cr-pastille-theme i{width:22px;height:22px;border-radius:50%}
 .cr-pastille-theme[aria-pressed="true"]{border-color:var(--encre);box-shadow:0 0 0 1px var(--encre)}
+.onglets-modeles{margin:0 0 16px}
+.page-modeles .grille-formulaires{margin-bottom:8px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.carte-modele-actions .btn{min-width:0;gap:5px}
+.carte-modele-actions .btn .ico{width:18px;height:18px}
+.carte-modele .carte-form{position:relative}
+.badge-ajoute{position:absolute;top:12px;right:12px;padding:2px 9px;border-radius:99px;background:var(--accent-pale);color:var(--accent-fort);font-size:12px;font-weight:700}
+.carte-modele-actions .btn.deja{background:var(--accent-pale);border-color:transparent;color:var(--accent-fort)}
+.vide-modeles{display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin:14px 0;padding:18px;border-radius:14px;background:var(--carte);box-shadow:var(--ombre)}
+.vide-modeles span{color:var(--doux)}
+.vide-modeles .btn{margin-top:6px}
+.pied-modeles{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px;padding-top:14px;border-top:1px solid var(--ligne)}
+.pied-modeles .btn{font-size:14px;min-height:42px}
+body .feuille.apercu-biblio .feuille-corps{background:#e8ecea}
+.cr-a-couleur{font:700 15px/1 system-ui,sans-serif;border-bottom:3px solid #e2574c;padding:0 2px 1px}
+.cr-pop-couleur{width:auto;max-width:300px;padding:10px}
 .carte-modele .carte-form{cursor:default;height:100%}
 .carte-modele-actions{display:flex;align-items:center;gap:6px;width:100%;margin-top:auto;padding-top:12px}
 .carte-modele-actions .btn{flex:1;min-height:40px;padding:0 10px;font-size:14px}
@@ -1058,7 +1073,7 @@ body .feuille.createur.cr-hors-edition .cr-pied,.cr-hors-edition .cr-btn-theme{d
 .cr-fantome{position:fixed;left:0;top:0;pointer-events:none;background:#1b2130;color:#fff;font:600 13px/1 system-ui,sans-serif;padding:9px 12px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.25)}
 .cr-si{display:inline-flex;align-items:center;gap:5px;margin:0 0 4px;padding:2px 9px 2px 6px;border-radius:99px;background:#fff3c9;color:#7a5200;font:600 12px/1.5 system-ui,sans-serif}
 .cr-si .ico{width:14px;height:14px}
-.cr-bloc.conditionnel{padding-left:10px;border-left:3px solid #f0c95a;border-radius:0 8px 8px 0}
+.cr-bloc.conditionnel{padding-left:14px}
 .cr-zone-texte{outline:none;min-height:1.45em}
 .cr-zone-texte p{margin:0 0 6px}
 .cr-zone-texte p:last-child{margin-bottom:0}
@@ -1070,7 +1085,7 @@ body .feuille.createur.cr-hors-edition .cr-pied,.cr-hors-edition .cr-btn-theme{d
 .theme-sobre .cr-titre{color:#1d222c}
 .cr-sous{text-align:center;color:#5b6270;font-size:.9em}
 .cr-titre.gauche,.cr-sous.gauche{text-align:left}
-.cr-section{font-weight:700;font-size:1.08em;color:var(--doc-c1);margin-top:8px;padding:7px 12px;border-left:4px solid var(--doc-c1);background:color-mix(in srgb,var(--doc-c1) 10%,#fff)}
+.cr-section{font-weight:700;font-size:1.08em;color:var(--doc-c1);margin-top:8px;padding:7px 12px;border-radius:6px;background:color-mix(in srgb,var(--doc-c1) 10%,#fff)}
 .cr-colonnes{display:grid;gap:22px}
 .cr-colonnes.n2{grid-template-columns:1fr 1fr}
 .cr-colonnes.n3{grid-template-columns:1fr 1fr 1fr}
@@ -1376,7 +1391,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.33.0';
+const VERSION_APPLI = '1.34.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4385,14 +4400,54 @@ const dateFr = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('fr-F
 const aujourdhuiIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
 /* ---------- Liste des formulaires et des brouillons ---------- */
-async function ouvrirFormulaires() {
-  const fe = feuille({ titre: 'Modèles', plein: true, pied: false, page: 'rediger', rouvrir: () => ouvrirFormulaires() });
-  fe.feuille.classList.add('large');
+/* Bibliothèque : les modèles proposés par l'appli. On n'ajoute à « Mes modèles » que ceux qu'on veut. */
+function bibliotheque() {
+  const doc = (id, categorie, creer) => { const m = creer(); return { id, type: 'doc', categorie, nom: m.nom, resume: m.resume, creer }; };
+  const base = (id, categorie) => { const m = MODELES_FORMULAIRES.find(x => x.id === id); return { id, type: 'form', categorie, nom: m.nom, resume: m.resume, m }; };
+  return [
+    doc('bib-previsite', 'Chantier', modeleDocExemplePrevisite),
+    doc('bib-pv', 'Chantier', modeleDocExemplePv),
+    base('aft', 'Chantier'), base('visite', 'Chantier'), base('edl', 'Logement'),
+    ...MODELES_PDF.map(m => ({ id: m.id, type: 'officiel', categorie: 'Documents officiels', nom: m.nom, resume: m.resume, m }))];
+}
+/** Modèles de base déjà ajoutés. Ceux qui utilisaient déjà l'appli gardent tout ; les nouveaux partent d'une liste vide. */
+function modelesAjoutes() {
+  if (!Array.isArray(prefs.modelesAjoutes)) {
+    prefs.modelesAjoutes = (prefs.dossiers?.length || prefs.brouillonsForm?.length) ? [...MODELES_FORMULAIRES, ...MODELES_PDF].map(m => m.id) : [];
+    ecrirePrefs(prefs);
+  }
+  return prefs.modelesAjoutes;
+}
+const estAjoute = x => x.type === 'doc' ? (prefs.modelesDoc || []).some(m => m.origine === x.id) : modelesAjoutes().includes(x.id);
+function ajouterDeLaBibliotheque(x) {
+  if (estAjoute(x)) return;
+  if (x.type === 'doc') { const m = x.creer(); m.origine = x.id; enregistrerModeleDoc(m); }
+  else { prefs.modelesAjoutes = [...modelesAjoutes(), x.id]; ecrirePrefs(prefs); }
+}
+async function apercuBibliotheque(x, apres) {
+  occupe('Préparation de l\'aperçu…');
+  let pdf;
+  try {
+    const octets = x.type === 'doc' ? await genererPdfDocument(x.creer(), {}) : x.type === 'officiel' ? new Uint8Array(await (await fetch(x.m.fichier)).arrayBuffer()) : await genererPdfFormulaire(x.m, {});
+    pdf = await pdfjsLib.getDocument({ data: octets }).promise;
+  } catch (err) { console.error(err); toast('L\'aperçu n\'est pas disponible pour ce modèle.'); return; } finally { libre(); }
+  const fe = feuille({ titre: x.nom, plein: true });
+  fe.feuille.classList.add('apercu-biblio');
+  fe.corps.append(el('p', { class: 'note cr-attente', text: `Modèle vierge, ${pdf.numPages} page${pdf.numPages > 1 ? 's' : ''}. ${x.type === 'doc' ? 'Une fois ajouté, vous pouvez tout modifier.' : ''}` }));
+  for (let i = 1; i <= Math.min(pdf.numPages, 4); i++) {
+    const p = await pdf.getPage(i), vp = p.getViewport({ scale: 1.5 });
+    const c = el('canvas', { class: 'cr-page-pdf', width: Math.round(vp.width), height: Math.round(vp.height), role: 'img', 'aria-label': `Page ${i}` });
+    fe.corps.append(c); await p.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+  }
+  fe.pied.append(bouton('Fermer', { onclick: () => fe.fermer() }),
+    estAjoute(x) ? null : bouton('Ajouter à mes modèles', { ico: 'plus', cls: 'btn principal', onclick: async () => { ajouterDeLaBibliotheque(x); toast('Modèle ajouté à « Mes modèles »'); await fe.fermer(); apres?.(); } }));
+}
+async function ouvrirFormulaires(onglet = 'miens') {
+  const fe = feuille({ titre: 'Modèles', plein: true, pied: false, page: 'rediger', rouvrir: () => ouvrirFormulaires(onglet) });
+  fe.feuille.classList.add('large', 'page-modeles');
   const brouillons = (prefs.brouillonsForm || []).slice().sort((a, b) => b.maj - a.maj);
-  const e = entreprise();
-  if (!e.nom) fe.corps.append(el('div', { class: 'conseil-ent' },
-    el('p', { text: 'Conseil : renseignez d\'abord votre entreprise (nom, adresse, logo, signature…). Elle sera reprise automatiquement dans tous vos documents.' }),
-    bouton('Renseigner mon entreprise', { ico: 'reglages', onclick: async () => { prefs.ongletParametres = 'p-entreprise'; ecrirePrefs(prefs); await fe.fermer(); ouvrirParametres(); } })));
+  const ouvrirPuis = async fn => { await fe.fermer(); fn(); };
+  const rouvrir = async quoi => { await fe.fermer(); ouvrirFormulaires(quoi); };
   const enCours = el('div', {});
   if (brouillons.length) enCours.append(el('h3', { class: 'titre-section', text: 'Documents en cours de remplissage' }),
     el('div', { class: 'liste-docs' }, brouillons.map(b => el('div', { class: 'ligne-doc' },
@@ -4403,47 +4458,69 @@ async function ouvrirFormulaires() {
         if (!(await confirmer({ titre: `Supprimer le brouillon « ${b.titre} » ?`, texte: 'Les réponses et les photos de ce formulaire seront effacées. Les PDF déjà créés ne changent pas.', action: 'Supprimer le brouillon' }))) return;
         await supprimerBrouillon(b.id); await fe.fermer(); ouvrirFormulaires();
       } })))));
-  const ouvrirPuis = async fn => { await fe.fermer(); fn(); };
-  const carte = (m, ico, cls = '') => el('div', { class: 'case-form' },
-    el('button', { type: 'button', class: 'carte-form', onclick: () => ouvrirPuis(() => saisirFormulaire(m)) },
-      el('span', { class: 'carte-form-ico ' + cls }, icone(ico)), el('strong', { text: m.nom }), el('span', { text: m.resume || (m.perso ? 'Mon modèle' : '') })),
-    m.perso ? bouton('', { ico: 'crayon', cls: 'btn-icone carte-form-modif', label: `Modifier le modèle « ${m.nom} »`, onclick: () => ouvrirPuis(() => m.doc ? editerDocument(m.doc) : editerModeleFormulaire(m)) }) : null);
-  const miens = tousLesModeles().filter(m => m.perso);
-  /* Un de mes modèles : deux boutons clairs (Remplir, Modifier) et un menu (Dupliquer, Supprimer) */
-  const carteMien = m => el('div', { class: 'case-form carte-modele' }, el('div', { class: 'carte-form' },
-    el('span', { class: 'carte-form-ico' }, icone('formulaire')), el('strong', { text: m.nom }), el('span', { text: m.resume || 'Mon modèle' }),
-    el('div', { class: 'carte-modele-actions' },
-      bouton('Remplir', { cls: 'btn principal', label: `Remplir « ${m.nom} »`, onclick: () => ouvrirPuis(() => saisirFormulaire(m)) }),
-      bouton('Modifier', { label: `Modifier le modèle « ${m.nom} »`, onclick: () => ouvrirPuis(() => m.doc ? editerDocument(m.doc) : editerModeleFormulaire(m)) }),
-      bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: `Supprimer le modèle « ${m.nom} »`, onclick: async () => {
-        if (!(await confirmer({ titre: `Supprimer le modèle « ${m.nom} » ?`, texte: 'Le modèle disparaît de la liste. Les PDF déjà créés ne changent pas.', action: 'Supprimer le modèle' }))) return;
-        if (m.doc) prefs.modelesDoc = (prefs.modelesDoc || []).filter(x => x.id !== m.id); else prefs.formulairesPerso = (prefs.formulairesPerso || []).filter(x => x.id !== m.id);
-        ecrirePrefs(prefs); toast('Modèle supprimé'); await fe.fermer(); ouvrirFormulaires();
-      } }))));
+
+  const barreOnglets = segments('onglet-modeles', [['miens', 'Mes modèles'], ['biblio', 'Bibliothèque']], onglet, v => { onglet = v; afficher(); });
+  barreOnglets.classList.add('onglets', 'onglets-modeles');
+  const zone = el('div', {});
+  fe.corps.append(barreOnglets, zone);
+  const carteModele = (ico, cls, nom, detail, actions, badge) => el('div', { class: 'case-form carte-modele' }, el('div', { class: 'carte-form' },
+    el('span', { class: 'carte-form-ico ' + cls }, icone(ico)), badge ? el('small', { class: 'badge-ajoute', text: badge }) : null,
+    el('strong', { text: nom }), el('span', { text: detail }), el('div', { class: 'carte-modele-actions' }, actions)));
   let pdfs = [];
   try { pdfs = (await bdAll('documents')).filter(d => d.modele).sort((a, b) => b.maj - a.maj); } catch (err) { console.error(err); }
   if (fe.ferme()) return;
-  fe.corps.append(el('h3', { class: 'titre-section', text: 'Mes modèles' }),
-    el('div', { class: 'grille-formulaires' },
-      el('button', { type: 'button', class: 'carte-form nouveau', onclick: async () => { const d = await choisirDepartDocument(); if (!d) return; await fe.fermer(); editerDocument(d); } },
-        el('span', { class: 'carte-form-ico' }, icone('plus')), el('strong', { text: 'Créer un modèle' }), el('span', { text: 'Page blanche, ou à partir d\'un exemple (prévisite, PV…)' })),
-      miens.map(carteMien),
-      pdfs.map(d => el('div', { class: 'case-form carte-modele' }, el('div', { class: 'carte-form' },
-        el('span', { class: 'carte-form-ico officiel' }, icone('doc')), el('strong', { text: nomSansExt(d.nom) }), el('span', { text: `PDF déjà rempli · ${d.pages} page${d.pages > 1 ? 's' : ''}` }),
-        el('div', { class: 'carte-modele-actions' },
+  function afficher() {
+    zone.replaceChildren();
+    if (onglet === 'biblio') return afficherBibliotheque();
+    const e = entreprise();
+    const supprimerMien = async m => {
+      if (!(await confirmer({ titre: `Supprimer le modèle « ${m.nom} » ?`, texte: 'Le modèle disparaît de votre liste. Les PDF déjà créés ne changent pas.', action: 'Supprimer le modèle' }))) return;
+      if (m.doc) prefs.modelesDoc = (prefs.modelesDoc || []).filter(x => x.id !== m.id); else prefs.formulairesPerso = (prefs.formulairesPerso || []).filter(x => x.id !== m.id);
+      ecrirePrefs(prefs); toast('Modèle supprimé'); afficher();
+    };
+    const miens = tousLesModeles().filter(m => m.perso);
+    const ajoutes = [...MODELES_FORMULAIRES, ...MODELES_PDF].filter(m => modelesAjoutes().includes(m.id));
+    const vide = !miens.length && !ajoutes.length && !pdfs.length;
+    zone.append(...[
+      el('div', { class: 'grille-formulaires' },
+        el('button', { type: 'button', class: 'carte-form nouveau', onclick: async () => { const d = await choisirDepartDocument(); if (!d) return; await fe.fermer(); editerDocument(d); } },
+          el('span', { class: 'carte-form-ico' }, icone('plus')), el('strong', { text: 'Créer un modèle' }), el('span', { text: 'Page blanche, ou à partir d\'un exemple' })),
+        miens.map(m => carteModele('formulaire', '', m.nom, m.resume || 'Mon modèle', [
+          bouton('Remplir', { cls: 'btn principal', label: `Remplir « ${m.nom} »`, onclick: () => ouvrirPuis(() => saisirFormulaire(m)) }),
+          bouton('Modifier', { label: `Modifier le modèle « ${m.nom} »`, onclick: () => ouvrirPuis(() => m.doc ? editerDocument(m.doc) : editerModeleFormulaire(m)) }),
+          bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: `Supprimer le modèle « ${m.nom} »`, onclick: () => supprimerMien(m) })])),
+        ajoutes.map(m => carteModele(m.officiel ? 'doc' : 'formulaire', m.officiel ? 'officiel' : '', m.nom, m.resume, [
+          bouton('Remplir', { cls: 'btn principal', label: `Remplir « ${m.nom} »`, onclick: () => ouvrirPuis(() => saisirFormulaire(m)) }),
+          bouton('', { ico: 'fermer', cls: 'btn-icone', label: `Retirer « ${m.nom} » de mes modèles`, onclick: () => {
+            prefs.modelesAjoutes = modelesAjoutes().filter(id => id !== m.id); ecrirePrefs(prefs); afficher();
+            toast(`« ${m.nom} » retiré de vos modèles.`, { action: 'Annuler', onAction: () => { prefs.modelesAjoutes = [...modelesAjoutes(), m.id]; ecrirePrefs(prefs); afficher(); } });
+          } })])),
+        pdfs.map(d => carteModele('doc', 'officiel', nomSansExt(d.nom), `PDF déjà rempli · ${d.pages} page${d.pages > 1 ? 's' : ''}`, [
           bouton('Utiliser', { cls: 'btn principal', label: `Utiliser le modèle « ${nomSansExt(d.nom)} »`, onclick: () => ouvrirPuis(() => ouvrirSauvegarde(d, { modele: true })) }),
           bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: `Supprimer le modèle « ${nomSansExt(d.nom)} »`, onclick: async () => {
             if (!(await confirmer({ titre: `Supprimer le modèle « ${nomSansExt(d.nom)} » ?`, texte: 'Les documents déjà créés à partir de ce modèle ne changent pas.', action: 'Supprimer le modèle' }))) return;
-            await supprimerSauvegarde(d); toast('Modèle supprimé'); await fe.fermer(); ouvrirFormulaires();
-          } }))))),
-      el('button', { type: 'button', class: 'carte-form nouveau', onclick: () => nouveauModele(ouvrirPuis) },
-        el('span', { class: 'carte-form-ico' }, icone('doc')), el('strong', { text: 'Modèle à partir d\'un PDF' }), el('span', { text: 'Un PDF déjà rempli, prêt à réutiliser' }))),
-    enCours,
-    el('h3', { class: 'titre-section', text: 'Modèles prêts à l\'emploi' }),
-    el('div', { class: 'grille-formulaires' }, MODELES_FORMULAIRES.map(m => carte(m, 'formulaire'))),
-    el('h3', { class: 'titre-section', text: 'Documents officiels' }),
-    el('p', { class: 'note', text: 'Le formulaire officiel est rempli à votre place : lettres dans les cases, croix, date, signatures.' }),
-    el('div', { class: 'grille-formulaires' }, MODELES_PDF.map(m => carte(m, 'doc', 'officiel'))));
+            await supprimerSauvegarde(d); pdfs = pdfs.filter(x => x !== d); toast('Modèle supprimé'); afficher();
+          } })]))),
+      vide ? el('div', { class: 'vide-modeles' }, el('strong', { text: 'Vous n\'avez pas encore de modèle.' }), el('span', { text: 'Choisissez-en dans la bibliothèque (prévisite, PV de réception, attestation…) ou créez le vôtre.' }),
+        bouton('Voir la bibliothèque', { ico: 'livre', cls: 'btn principal', onclick: () => { onglet = 'biblio'; barreOnglets.querySelector('input[value="biblio"]').checked = true; afficher(); } })) : null,
+      enCours,
+      el('div', { class: 'pied-modeles' },
+        bouton('Modèle à partir d\'un PDF déjà rempli', { ico: 'doc', onclick: () => nouveauModele(ouvrirPuis) }),
+        !e.nom ? bouton('Renseigner mon entreprise (logo, adresse)', { ico: 'reglages', onclick: async () => { prefs.ongletParametres = 'p-entreprise'; ecrirePrefs(prefs); await fe.fermer(); ouvrirParametres(); } }) : null)].filter(Boolean));
+  }
+  function afficherBibliotheque() {
+    const tous = bibliotheque();
+    zone.append(el('p', { class: 'note', text: 'Des modèles prêts à l\'emploi. Regardez l\'aperçu, puis ajoutez seulement ceux qui vous servent : ils arrivent dans « Mes modèles ».' }));
+    for (const cat of [...new Set(tous.map(x => x.categorie))]) zone.append(el('h3', { class: 'titre-section', text: cat }),
+      el('div', { class: 'grille-formulaires' }, tous.filter(x => x.categorie === cat).map(x => {
+        const ok = estAjoute(x);
+        return carteModele(x.type === 'officiel' ? 'doc' : 'formulaire', x.type === 'officiel' ? 'officiel' : '', x.nom, x.resume, [
+          bouton('Aperçu', { ico: 'oeil', label: `Aperçu de « ${x.nom} »`, onclick: () => apercuBibliotheque(x, afficher) }),
+          ok ? bouton('Ajouté', { ico: 'valider', cls: 'btn deja', label: `« ${x.nom} » est déjà dans mes modèles`, onclick: () => { onglet = 'miens'; barreOnglets.querySelector('input[value="miens"]').checked = true; afficher(); } })
+             : bouton('Ajouter', { ico: 'plus', cls: 'btn principal', label: `Ajouter « ${x.nom} » à mes modèles`, onclick: () => { ajouterDeLaBibliotheque(x); toast('Modèle ajouté à « Mes modèles »'); afficher(); } })], ok ? 'Dans mes modèles' : null);
+      })));
+  }
+  afficher();
 }
 async function supprimerBrouillon(id) {
   prefs.brouillonsForm = (prefs.brouillonsForm || []).filter(b => b.id !== id); ecrirePrefs(prefs);
@@ -5486,6 +5563,12 @@ function infoChamp(m, cle) {
 }
 
 /** Garde seulement le texte, gras, italique, souligné, paragraphes, listes et étiquettes (rien d'autre n'est enregistré). */
+function couleurVersHex(c) {
+  if (!c) return null;
+  const i = document.createElement('i'); i.style.color = c;
+  const v = i.style.color.match(/\d+/g);
+  return v && v.length >= 3 ? '#' + v.slice(0, 3).map(x => (+x).toString(16).padStart(2, '0')).join('') : /^#[0-9a-f]{6}$/i.test(c) ? c : null;
+}
 const BALISES_DOC = { P: 'p', DIV: 'p', BR: 'br', B: 'b', STRONG: 'b', I: 'i', EM: 'i', U: 'u', UL: 'ul', OL: 'ol', LI: 'li' };
 function nettoyerHtml(html) {
   const t = document.createElement('template'); t.innerHTML = html || '';
@@ -5495,6 +5578,9 @@ function nettoyerHtml(html) {
       if (n.nodeType === 3) { dst.append(n.textContent); continue; }
       if (n.nodeType !== 1) continue;
       if (n.dataset?.champ) { const s = document.createElement('span'); s.dataset.champ = n.dataset.champ; dst.append(s); continue; }
+      // Couleur du texte : gardée sous forme simple (data-c="#rrggbb")
+      const coul = /^#[0-9a-f]{6}$/i.test(n.dataset?.c || '') ? n.dataset.c : couleurVersHex(n.style?.color || (n.tagName === 'FONT' ? n.getAttribute('color') : ''));
+      if (coul && !BALISES_DOC[n.tagName]) { const s = document.createElement('span'); s.dataset.c = coul; s.style.color = coul; dst.append(s); copier(n, s); continue; }
       const nv = BALISES_DOC[n.tagName];
       if (!nv) { copier(n, dst); continue; }
       if (nv === 'p' && dst.closest('p,li,b,i,u')) { copier(n, dst); dst.append(document.createElement('br')); continue; }
@@ -5634,7 +5720,7 @@ function modeleDocExemplePrevisite() {
   return m;
 }
 function modeleDocExemplePv() {
-  const { m, b, q, question } = fabriqueModeleDoc('PV de réception (mon modèle)', 'Réception des travaux, avec ou sans réserves');
+  const { m, b, q, question } = fabriqueModeleDoc('PV de réception des travaux', 'Réception avec ou sans réserves, photos, signatures');
   const travaux = question('Nature des travaux', 'texte', { aide: 'ex. : isolation des combles perdus', requis: true });
   const devis = question('Numéro du devis', 'texte'), dateDevis = question('Date du devis', 'date');
   const visite = question('Date de la visite de réception', 'date', { auto: true });
@@ -5854,7 +5940,9 @@ function editerDocument(source) {
     const outils = el('div', { class: 'cr-outils-bloc' },
       poignee,
       aTexte ? [ob('Champ', 'Insérer un champ : nom du client, date, réponse…', e => { const r = e.currentTarget.getBoundingClientRect(); if (mqPc.matches) ouvrirPop(r.left, r.bottom + 6); else ouvrirOutil('champs'); }, 'texte'),
-        ob(el('b', { text: 'G' }), 'Gras', format('bold')), ob(el('i', { text: 'I' }), 'Italique', format('italic'), 'pc'), ob(icone('lignes'), 'Liste à puces', format('insertUnorderedList'))] : [],
+        ob(el('b', { text: 'G' }), 'Gras', format('bold')), ob(el('i', { text: 'I' }), 'Italique', format('italic'), 'pc'),
+        ob(el('span', { class: 'cr-a-couleur', text: 'A' }), 'Couleur du texte', e => { const r = e.currentTarget.getBoundingClientRect(); ouvrirPopCouleur(r.left, r.bottom + 6); }),
+        ob(icone('lignes'), 'Liste à puces', format('insertUnorderedList'), 'pc')] : [],
       ob(icone('haut'), 'Monter le bloc', () => deplacer(b.id, -1)),
       ob(icone('bas'), 'Descendre le bloc', () => deplacer(b.id, 1)),
       ob(icone('reglages'), 'Réglages du bloc', () => { choisir(b.id); ouvrirOutil('bloc'); }, 'pas-large'),
@@ -5982,6 +6070,24 @@ function editerDocument(source) {
     pop.style.left = clamp(x, 8, innerWidth - 308) + 'px'; pop.style.top = clamp(y, 8, Math.max(8, innerHeight - 400)) + 'px';
   }
   function fermerPop() { pop?.remove(); pop = null; }
+  /** Couleur du texte sélectionné (sélectionnez d'abord les mots). */
+  function ouvrirPopCouleur(x, y) {
+    fermerPop();
+    const appliquer = c => {
+      fermerPop();
+      if (!zoneActive?.isConnected || !range || range.collapsed) { toast('Sélectionnez d\'abord les mots à colorer.', 4000); return; }
+      zoneActive.focus({ preventScroll: true });
+      const s = getSelection(); s.removeAllRanges(); s.addRange(range);
+      document.execCommand('styleWithCSS', false, true);
+      document.execCommand('foreColor', false, c);
+      sauverZone(blocDeZone(zoneActive), zoneActive);
+    };
+    pop = el('div', { class: 'cr-pop cr-pop-couleur', role: 'dialog', 'aria-label': 'Couleur du texte' },
+      el('div', { class: 'cr-pastilles' }, ['#1d222c', themeDe(m).c1, ...COULEURS_DOC.filter(c => c !== themeDe(m).c1), '#b42318', '#8a92a0'].map(c =>
+        el('button', { type: 'button', class: 'cr-pastille', 'aria-label': 'Couleur ' + c, style: { background: c }, onpointerdown: e => e.preventDefault(), onclick: () => appliquer(c) }))));
+    pop.style.zIndex = zFeuille + 5; document.body.append(pop);
+    pop.style.left = clamp(x - 120, 8, innerWidth - 308) + 'px'; pop.style.top = clamp(y, 8, Math.max(8, innerHeight - 120)) + 'px';
+  }
   function horsPop(e) { if (pop && !pop.contains(e.target)) fermerPop(); }
   document.addEventListener('pointerdown', horsPop, true);
   fe.feuille.addEventListener('keydown', e => { if (e.key === 'Escape' && pop) { fermerPop(); e.stopPropagation(); } });
@@ -6346,7 +6452,7 @@ async function genererPdfDocument(m, rep) {
         if (tag === 'BR') { if (!cur) nouveau(puce); cur.runs.push({ br: true }); continue; }
         if (tag === 'P') { nouveau(puce); marche(n, st, puce); cur = null; continue; }
         if (tag === 'UL' || tag === 'OL') { let k = 0; for (const li of n.children) { k++; nouveau(tag === 'UL' ? '•' : k + '.'); marche(li, st); cur = null; } continue; }
-        marche(n, { ...st, b: st.b || tag === 'B', i: st.i || tag === 'I', u: st.u || tag === 'U' }, puce);
+        marche(n, { ...st, b: st.b || tag === 'B', i: st.i || tag === 'I', u: st.u || tag === 'U', c: n.dataset.c || st.c }, puce);
       }
     };
     marche(t.content, { b: !!base.b, i: false, u: false });
@@ -6370,10 +6476,10 @@ async function genererPdfDocument(m, rep) {
           if (!espace && lw + w > lmax && ligne.length) pousser(false);
           while (!espace && w > lmax && mot.length > 1) { // mot plus long que la ligne : coupé
             let k = mot.length; while (k > 1 && f.widthOfTextAtSize(mot.slice(0, k), taille) > lmax) k--;
-            const bout = mot.slice(0, k); ligne.push({ t: bout, f, u: r.u, gris: r.vide, w: f.widthOfTextAtSize(bout, taille) }); pousser(false);
+            const bout = mot.slice(0, k); ligne.push({ t: bout, f, u: r.u, c: r.c, gris: r.vide, w: f.widthOfTextAtSize(bout, taille) }); pousser(false);
             mot = mot.slice(k); w = f.widthOfTextAtSize(mot, taille);
           }
-          ligne.push({ t: mot, f, u: r.u, gris: r.vide, w, espace }); lw += w;
+          ligne.push({ t: mot, f, u: r.u, c: r.c, gris: r.vide, w, espace }); lw += w;
         }
       }
       pousser(true);
@@ -6387,7 +6493,7 @@ async function genererPdfDocument(m, rep) {
     let cx = align === 'centre' ? x + (larg - total) / 2 : x + l.retrait;
     if (l.puce) page.drawText(l.puce, { x: x + 2, y: base, size: l.taille, font: F.n, color: couleur });
     for (const mo of l.morceaux) {
-      if (!mo.espace) page.drawText(mo.t, { x: cx, y: base, size: l.taille, font: mo.f, color: mo.gris ? doux : couleur });
+      if (!mo.espace) page.drawText(mo.t, { x: cx, y: base, size: l.taille, font: mo.f, color: mo.gris ? doux : mo.c ? hexVersRgb(mo.c) : couleur });
       if (mo.u) page.drawLine({ start: { x: cx, y: base - 1.6 }, end: { x: cx + mo.w, y: base - 1.6 }, thickness: 0.6, color: couleur });
       cx += mo.w;
     }
@@ -6499,11 +6605,10 @@ async function genererPdfDocument(m, rep) {
         y -= 10; break;
       }
       case 'section': {
-        // Bandeau teinté avec une barre de couleur à gauche
+        // Bandeau teinté (pas de barre verticale)
         const ls = lignesDe([{ runs: [{ t: b.texte || '', b: true }] }], largeur - 24, 11.5), hb = ls.reduce((s, l) => s + l.h, 0) + 9;
         y -= 12; await place(hb + 40);
         page.drawRectangle({ x: mg, y: y - hb, width: largeur, height: hb, color: paleDe(b) });
-        page.drawRectangle({ x: mg, y: y - hb, width: 3.5, height: hb, color: coulDe(b) });
         let yy = y - 4.5; for (const l of ls) { dessinerLigne(l, mg + 12, yy, { couleur: coulDe(b) }); yy -= l.h; }
         y -= hb + 6; break;
       }
