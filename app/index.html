@@ -1542,7 +1542,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.48.0';
+const VERSION_APPLI = '1.49.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4590,9 +4590,19 @@ function bibliotheque() {
   const doc = (id, categorie, creer) => { const m = creer(); return { id, type: 'doc', categorie, nom: m.nom, resume: m.resume, creer }; };
   const base = (id, categorie) => { const m = MODELES_FORMULAIRES.find(x => x.id === id); return { id, type: 'form', categorie, nom: m.nom, resume: m.resume, m }; };
   return [
-    doc('bib-previsite', 'Chantier', modeleDocExemplePrevisite),
     doc('bib-pv', 'Chantier', modeleDocExemplePv),
-    base('aft', 'Chantier'), base('visite', 'Chantier'), base('edl', 'Logement'),
+    doc('bib-levee', 'Chantier', modeleDocLeveeReserves),
+    base('aft', 'Chantier'),
+    doc('bib-intervention', 'Chantier', modeleDocBonIntervention),
+    doc('bib-constat', 'Chantier', modeleDocConstatAvant),
+    doc('bib-previsite', 'Visites techniques', modeleDocExemplePrevisite),
+    doc('bib-visite-pac', 'Visites techniques', modeleDocVisitePac),
+    base('visite', 'Visites techniques'),
+    doc('bib-acompte', 'Administratif', modeleDocRecuAcompte),
+    doc('bib-decharge', 'Administratif', modeleDocDecharge),
+    doc('bib-honneur', 'Administratif', modeleDocAttestationHonneur),
+    doc('bib-hebergement', 'Administratif', modeleDocHebergement),
+    base('edl', 'Logement'),
     ...MODELES_PDF.map(m => ({ id: m.id, type: 'officiel', categorie: 'Documents officiels', nom: m.nom, resume: m.resume, m })),
     // Formulaires officiels à champs : on prépare son propre modèle (sa partie remplie, ses cases, son tampon)
     { id: 'vierge-mandat-mpr', type: 'vierge', categorie: 'Documents officiels', nom: 'Mandat MaPrimeRénov\' – à remplir sur le PDF',
@@ -6376,6 +6386,148 @@ function modeleDocExemplePv() {
   b('signatures', { cases: [
     { titre: 'Le maître d\'ouvrage', q: question('Signature du maître d\'ouvrage', 'signature', { qui: 'client', requis: true }), mention: true },
     { titre: 'L\'entreprise', q: question('Signature de l\'entreprise', 'signature', { qui: 'entreprise' }), mention: false }] });
+  return m;
+}
+/* ---------- Modèles de la bibliothèque (tous modifiables une fois ajoutés) ---------- */
+const BLOC_CLIENT = () => `<p><b>Client :</b> ${tagDoc('c-nom')}<br>${tagDoc('c-adresse')}<br>Tél. ${tagDoc('c-tel')}</p>`;
+const BLOC_ENTREPRISE = () => `<p><b>${tagDoc('e-nom')}</b><br>${tagDoc('e-adresse')}<br>Tél. ${tagDoc('e-tel')}</p>`;
+/** Fin commune : « Fait à …, le … » puis les signatures demandées ('client', 'entreprise'). */
+function finModeleDoc({ b, question }, signataires, { mention = false, titres = {}, labels = {} } = {}) {
+  b('texte', { html: `<p>Fait à ${tagDoc(question('Fait à (ville)', 'texte'))}, le ${tagDoc('d-date')}.</p>` });
+  b('signatures', { cases: signataires.map(qui => ({ titre: titres[qui] || (qui === 'client' ? 'Le client' : 'L\'entreprise'), mention: mention && qui === 'client',
+    q: question(labels[qui] || (qui === 'client' ? 'Signature du client' : 'Signature de l\'entreprise'), 'signature', { qui, requis: qui === 'client' }) })) });
+}
+function modeleDocBonIntervention() {
+  const f = fabriqueModeleDoc('Bon d\'intervention', 'Dépannage ou entretien : travaux faits, fournitures, durée, signature'), { m, b, q } = f;
+  b('titre', { texte: 'Bon d\'intervention', sous: null });
+  b('texte', { l: 'm', html: BLOC_ENTREPRISE() }); b('texte', { l: 'm', html: BLOC_CLIENT() });
+  q('Date de l\'intervention', 'date', { auto: true }, { l: 'm' }); q('Heure d\'arrivée', 'texte', { aide: '8 h 30' }, { l: 'm' });
+  b('section', { texte: 'L\'intervention' });
+  q('Type d\'intervention', 'choix', { options: ['Dépannage', 'Entretien', 'Mise en service', 'Autre'], requis: true });
+  q('Problème constaté', 'long');
+  q('Travaux réalisés', 'long', { requis: true });
+  q('Pièces et fournitures utilisées', 'long', { aide: 'une par ligne' });
+  q('Durée de l\'intervention', 'texte', { aide: '1 h 30' }, { l: 'm' });
+  q('L\'installation fonctionne en fin d\'intervention', 'ouinon');
+  const suite = q('Une suite est-elle à prévoir ?', 'ouinon');
+  q('Suite à prévoir', 'long', { aide: 'pièce à commander, devis, nouveau passage…' }, { si: { q: suite, val: 'Oui' } });
+  q('Photos de l\'intervention', 'photos', {}, { parLigne: 3 });
+  finModeleDoc(f, ['client', 'entreprise'], { titres: { entreprise: 'Le technicien' } });
+  return m;
+}
+function modeleDocVisitePac() {
+  const f = fabriqueModeleDoc('Visite technique – pompe à chaleur', 'Logement, chauffage actuel, emplacement, électricité, photos'), { m, b, q } = f;
+  b('titre', { texte: 'Visite technique', sous: 'Pompe à chaleur air / eau' });
+  b('texte', { html: BLOC_CLIENT() });
+  q('Date de la visite', 'date', { auto: true }, { l: 'm' });
+  b('section', { texte: 'Le logement' });
+  q('Type de logement', 'choix', { options: ['Maison', 'Appartement'] });
+  q('Année de construction', 'nombre', {}, { l: 't' }); q('Surface chauffée (m²)', 'nombre', { requis: true }, { l: 't' }); q('Nombre de niveaux', 'nombre', {}, { l: 't' });
+  q('Isolation du logement', 'choix', { options: ['Bonne', 'Moyenne', 'Faible'] });
+  b('section', { texte: 'Le chauffage actuel' });
+  q('Énergie de chauffage', 'choix', { options: ['Fioul', 'Gaz', 'Électricité', 'Bois', 'Autre'], requis: true });
+  q('Âge de la chaudière (ans)', 'nombre', {}, { l: 'm' });
+  q('Émetteurs de chaleur', 'multi', { options: ['Radiateurs en fonte', 'Radiateurs en acier', 'Plancher chauffant', 'Autre'] });
+  q('L\'eau chaude est produite par', 'choix', { options: ['La chaudière', 'Un ballon électrique', 'Autre'] });
+  b('section', { texte: 'L\'installation prévue' });
+  q('Emplacement de l\'unité extérieure', 'long', { aide: 'façade, sol, distance des voisins…' });
+  q('Distance entre unité extérieure et intérieure (m)', 'nombre', {}, { l: 'm' });
+  q('Alimentation électrique', 'choix', { options: ['Monophasé', 'Triphasé'] });
+  q('Puissance du compteur (kVA)', 'nombre', {}, { l: 'm' });
+  q('Place disponible au tableau électrique', 'ouinon');
+  const gene = q('Contrainte de bruit ou de voisinage ?', 'ouinon');
+  q('Décrire la contrainte', 'long', {}, { si: { q: gene, val: 'Oui' } });
+  b('section', { texte: 'Photos' });
+  q('Photos de la chaudière et de la chaufferie', 'photos', {}, { parLigne: 3 });
+  q('Photos de l\'emplacement extérieur', 'photos', {}, { parLigne: 3 });
+  q('Photos du tableau électrique', 'photos', {}, { parLigne: 3 });
+  b('section', { texte: 'Conclusion' });
+  q('Le projet est-il réalisable ?', 'choix', { options: ['Oui', 'Oui, avec adaptations', 'Non'], requis: true });
+  q('Observations', 'long');
+  finModeleDoc(f, ['client', 'entreprise'], { titres: { entreprise: 'Le technicien' } });
+  return m;
+}
+function modeleDocLeveeReserves() {
+  const f = fabriqueModeleDoc('PV de levée des réserves', 'Après une réception avec réserves : constat, photos, signatures'), { m, b, q, question } = f;
+  b('titre', { texte: 'Procès-verbal de levée des réserves', sous: 'Suite au procès-verbal de réception des travaux' });
+  b('colonnes', { separees: true, cols: [`<p><b>L'entreprise</b></p><p>${tagDoc('e-nom')}<br>${tagDoc('e-adresse')}<br>SIRET ${tagDoc('e-siret')}</p>`,
+    `<p><b>Le maître d'ouvrage</b></p><p>${tagDoc('c-nom')}<br>${tagDoc('c-adresse')}<br>Tél. ${tagDoc('c-tel')}</p>`] });
+  b('ligne', { ep: 1, coul: 'gris' });
+  b('texte', { html: `<p><b>Chantier :</b> ${tagDoc(question('Nature des travaux', 'texte', { requis: true }))}, situé ${tagDoc('c-adresse')}.</p><p>Procès-verbal de réception du ${tagDoc(question('Date du PV de réception', 'date'))}.</p>` });
+  b('texte', { html: `<p>Après une nouvelle visite des travaux le ${tagDoc(question('Date de la visite', 'date', { auto: true }))}, le maître d'ouvrage constate :</p>` });
+  const constat = q('Constat', 'choix', { requis: true, options: ['Toutes les réserves sont levées', 'Certaines réserves ne sont pas levées'] }, { sansTitre: true });
+  const reste = { si: { q: constat, val: 'Certaines réserves ne sont pas levées' } };
+  q('Réserves restant à lever', 'long', { aide: 'une réserve par ligne' }, reste);
+  q('À lever avant le', 'date', {}, reste);
+  q('Photos', 'photos', {}, { parLigne: 3 });
+  finModeleDoc(f, ['client', 'entreprise'], { mention: true, titres: { client: 'Le maître d\'ouvrage' } });
+  return m;
+}
+function modeleDocRecuAcompte() {
+  const f = fabriqueModeleDoc('Reçu d\'acompte', 'Somme reçue, moyen de paiement, devis concerné'), { m, b, q } = f;
+  b('titre', { texte: 'Reçu d\'acompte', sous: null });
+  b('texte', { l: 'm', html: BLOC_ENTREPRISE() }); b('texte', { l: 'm', html: BLOC_CLIENT() });
+  b('texte', { html: `<p>L'entreprise ${tagDoc('e-nom')} reconnaît avoir reçu de ${tagDoc('c-nom')} la somme indiquée ci-dessous, à titre d'acompte.</p>` });
+  q('Montant reçu (€)', 'nombre', { requis: true }, { l: 'm' }); q('Date du paiement', 'date', { auto: true }, { l: 'm' });
+  const moyen = q('Moyen de paiement', 'choix', { options: ['Chèque', 'Virement', 'Espèces', 'Carte bancaire'], requis: true });
+  q('Numéro du chèque et banque', 'texte', {}, { si: { q: moyen, val: 'Chèque' } });
+  q('Numéro du devis', 'texte', {}, { l: 'm' }); q('Montant total du devis (€)', 'nombre', {}, { l: 'm' });
+  q('Travaux concernés', 'long');
+  b('encadre', { fond: 'pale', html: '<p>Ce reçu ne remplace pas la facture.</p>' });
+  finModeleDoc(f, ['entreprise']);
+  return m;
+}
+function modeleDocHebergement() {
+  const f = fabriqueModeleDoc('Attestation d\'hébergement', 'Justificatif de domicile : qui héberge, qui est hébergé, depuis quand'), { m, b, question } = f;
+  const t = (label, type = 'texte', o = {}) => tagDoc(question(label, type, o));
+  b('titre', { texte: 'Attestation d\'hébergement', sous: null });
+  b('texte', { html: `<p>Je soussigné(e) ${t('Nom et prénom de la personne qui héberge', 'texte', { requis: true })}, né(e) le ${t('Sa date de naissance', 'date')} à ${t('Son lieu de naissance')}, demeurant :</p><p>${t('Adresse du logement', 'long', { requis: true })}</p>` });
+  b('texte', { html: `<p>atteste sur l'honneur héberger à mon domicile ${t('Nom et prénom de la personne hébergée', 'texte', { requis: true })}, né(e) le ${t('Date de naissance de la personne hébergée', 'date')} à ${t('Lieu de naissance de la personne hébergée')}, depuis le ${t('Hébergé(e) depuis le', 'date')}.</p>` });
+  b('texte', { html: '<p>J\'ai connaissance des sanctions prévues par l\'article 441-7 du Code pénal en cas de fausse attestation.</p>' });
+  b('encadre', { fond: 'pale', html: '<p>À joindre : une copie de la pièce d\'identité de la personne qui héberge et un justificatif de domicile à son nom.</p>' });
+  finModeleDoc(f, ['client'], { titres: { client: 'La personne qui héberge' }, labels: { client: 'Signature de la personne qui héberge' } });
+  return m;
+}
+function modeleDocConstatAvant() {
+  const f = fabriqueModeleDoc('Constat avant travaux', 'État des lieux en photos avant de commencer le chantier'), { m, b, q } = f;
+  b('titre', { texte: 'Constat avant travaux', sous: 'État des lieux avant le début du chantier' });
+  b('texte', { l: 'm', html: BLOC_ENTREPRISE() }); b('texte', { l: 'm', html: BLOC_CLIENT() });
+  q('Date du constat', 'date', { auto: true }, { l: 'm' });
+  b('section', { texte: 'L\'accès et les abords' });
+  q('État général des abords', 'choix', { options: ['Bon', 'Usagé', 'Dégradé'] });
+  q('Observations sur l\'accès', 'long', { aide: 'portail, allée, pelouse, stationnement…' });
+  q('Photos des abords et de l\'accès', 'photos', {}, { parLigne: 3 });
+  b('section', { texte: 'Les pièces concernées' });
+  q('Pièces concernées par les travaux', 'texte', { aide: 'cuisine, chaufferie, combles…', requis: true });
+  q('État des sols', 'choix', { options: ['Bon', 'Usagé', 'Dégradé'] });
+  q('État des murs et plafonds', 'choix', { options: ['Bon', 'Usagé', 'Dégradé'] });
+  q('Photos des pièces', 'photos', {}, { parLigne: 3 });
+  const degats = q('Y a-t-il des dégâts déjà présents ?', 'ouinon', { requis: true });
+  q('Décrire les dégâts déjà présents', 'long', {}, { si: { q: degats, val: 'Oui' } });
+  q('Photos des dégâts déjà présents', 'photos', {}, { parLigne: 3, si: { q: degats, val: 'Oui' } });
+  finModeleDoc(f, ['client', 'entreprise']);
+  return m;
+}
+function modeleDocDecharge() {
+  const f = fabriqueModeleDoc('Décharge de responsabilité', 'Le client renonce à des travaux ou précautions conseillés'), { m, b, q } = f;
+  b('titre', { texte: 'Décharge de responsabilité', sous: null });
+  b('texte', { html: `<p>Je soussigné(e) ${tagDoc('c-nom')}, demeurant ${tagDoc('c-adresse')}, reconnais avoir été informé(e) par l'entreprise ${tagDoc('e-nom')} des points suivants :</p>` });
+  q('Travaux ou précautions conseillés par l\'entreprise', 'long', { requis: true });
+  q('Risques expliqués au client', 'long');
+  b('texte', { html: '<p>Malgré ces conseils, je décide :</p>' });
+  q('Décision du client', 'choix', { requis: true, options: ['de ne pas faire réaliser ces travaux', 'de les faire réaliser plus tard', 'de les réaliser moi-même'] }, { sansTitre: true });
+  q('Motif (facultatif)', 'long');
+  b('encadre', { fond: 'pale', html: `<p>Je décharge l'entreprise ${tagDoc('e-nom')} de toute responsabilité pour les conséquences liées à cette décision.</p>` });
+  finModeleDoc(f, ['client'], { mention: true });
+  return m;
+}
+function modeleDocAttestationHonneur() {
+  const f = fabriqueModeleDoc('Attestation sur l\'honneur', 'Modèle libre : ce que le client atteste, daté et signé'), { m, b, q } = f;
+  b('titre', { texte: 'Attestation sur l\'honneur', sous: null });
+  b('texte', { html: `<p>Je soussigné(e) ${tagDoc('c-nom')}, demeurant ${tagDoc('c-adresse')}, atteste sur l'honneur :</p>` });
+  q('Ce que j\'atteste', 'long', { requis: true }, { sansTitre: true, cadre: 'bord' });
+  b('texte', { html: '<p>J\'ai connaissance des sanctions prévues par l\'article 441-7 du Code pénal en cas de fausse attestation.</p>' });
+  finModeleDoc(f, ['client']);
   return m;
 }
 /** Crée un bloc (et sa question s'il en faut une). « q:ouinon » = question Oui / Non, etc. */
