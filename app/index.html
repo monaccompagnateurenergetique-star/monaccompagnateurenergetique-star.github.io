@@ -992,6 +992,29 @@ body .feuille.createur .cr-pied .cr-outil.fort{flex:1.4;background:var(--accent)
   .cr-cote{display:block;overflow:auto;background:var(--carte);border-left:1px solid var(--ligne);padding:12px 16px 40px;overscroll-behavior:contain}
   .cr-btn-theme,.cr-ob.pas-large{display:none}
 }
+.cr-modes{flex:none;gap:4px;margin:0;padding:3px;background:#eef2ef;border-radius:26px;flex-wrap:nowrap}
+.cr-modes span{border-color:transparent;background:none;min-height:40px;padding:0 14px;white-space:nowrap}
+.cr-modes input:checked+span{background:#fff;border-color:transparent;box-shadow:0 1px 3px rgba(20,24,35,.14);color:var(--accent-fort)}
+@media (max-width:999px){.cr-barre{flex-wrap:wrap!important}.cr-modes{order:3;width:100%}.cr-modes label{flex:1}.cr-modes span{width:100%;justify-content:center;padding:0 6px}}
+.cr-essai{flex:1;min-height:0;overflow:auto;padding:14px 10px 40px;overscroll-behavior:contain}
+@media (min-width:1000px){.cr-essai{padding:22px 28px 60px}}
+body .feuille.createur.cr-hors-edition .cr-pied,.cr-hors-edition .cr-btn-theme{display:none}
+.cr-bandeau-essai{max-width:794px;margin:0 auto 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 8px 8px 14px;border-radius:12px;background:#fff3c9;color:#7a5200;font-size:14px;font-weight:600}
+.cr-bandeau-essai .btn{min-height:40px;padding:0 12px}
+.cr-attente{max-width:794px;margin:0 auto 12px;text-align:center}
+.cr-page-pdf{display:block;width:100%;max-width:794px;height:auto;margin:0 auto 16px;background:#fff;box-shadow:0 1px 2px rgba(27,33,48,.08),0 12px 32px rgba(27,33,48,.10)}
+.cr-rangee-blocs{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+@media (max-width:520px){.cr-rangee-blocs{gap:12px}}
+.cr-entete.cliquable,.cr-pied-doc.cliquable{cursor:pointer;border-radius:6px;outline:1.5px dashed transparent;outline-offset:4px}
+.cr-entete.cliquable:hover,.cr-pied-doc.cliquable:hover,.cr-entete.cliquable:focus-visible,.cr-pied-doc.cliquable:focus-visible{outline-color:#1fae76}
+.theme-bandeau .cr-entete.cliquable{outline-offset:-4px}
+.cr-pastille-theme{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px 0 6px;border:1px solid var(--ligne);border-radius:99px;background:#fff;font:600 13px/1 system-ui,sans-serif;color:var(--encre)}
+.cr-pastille-theme i{width:22px;height:22px;border-radius:50%}
+.cr-pastille-theme[aria-pressed="true"]{border-color:var(--encre);box-shadow:0 0 0 1px var(--encre)}
+.carte-modele .carte-form{cursor:default;height:100%}
+.carte-modele-actions{display:flex;align-items:center;gap:6px;width:100%;margin-top:auto;padding-top:12px}
+.carte-modele-actions .btn{flex:1;min-height:40px;padding:0 10px;font-size:14px}
+.carte-modele-actions .btn-icone{width:40px;height:40px}
 /* La page */
 .cr-page{--px:50px;--py:42px;--doc-c1:#0d6b4f;width:100%;max-width:794px;aspect-ratio:210/297;margin:0 auto;background:#fff;box-shadow:0 1px 2px rgba(27,33,48,.08),0 12px 32px rgba(27,33,48,.10);padding:var(--py) var(--px) 20px;display:flex;flex-direction:column;gap:10px;color:#1d222c;font:14px/1.45 Helvetica,Arial,sans-serif;overflow-wrap:anywhere}
 .cr-page.police-classique{font-family:"Times New Roman",Times,serif;font-size:15px}
@@ -1042,11 +1065,12 @@ body .feuille.createur .cr-pied .cr-outil.fort{flex:1.4;background:var(--accent)
 .cr-zone-texte ul,.cr-zone-texte ol{margin:0 0 6px;padding-left:22px}
 .cr-page [data-vide]:empty::before{content:attr(data-vide);color:#9aa2ae;font-weight:400}
 .cr-page [contenteditable]{outline:none;cursor:text}
-.cr-titre{font-weight:700;font-size:1.55em;line-height:1.25;text-align:center;color:var(--doc-c1)}
+.cr-titre{font-weight:700;font-size:1.7em;line-height:1.25;text-align:center;color:var(--doc-c1)}
+.cr-bloc.cr-b-titre{padding-bottom:10px;background:linear-gradient(var(--doc-c1),var(--doc-c1)) bottom center/52px 3px no-repeat}
 .theme-sobre .cr-titre{color:#1d222c}
 .cr-sous{text-align:center;color:#5b6270;font-size:.9em}
 .cr-titre.gauche,.cr-sous.gauche{text-align:left}
-.cr-section{font-weight:700;font-size:1.12em;color:var(--doc-c1);padding:8px 0 3px;border-bottom:1.5px solid var(--doc-c1)}
+.cr-section{font-weight:700;font-size:1.08em;color:var(--doc-c1);margin-top:8px;padding:7px 12px;border-left:4px solid var(--doc-c1);background:color-mix(in srgb,var(--doc-c1) 10%,#fff)}
 .cr-colonnes{display:grid;gap:22px}
 .cr-colonnes.n2{grid-template-columns:1fr 1fr}
 .cr-colonnes.n3{grid-template-columns:1fr 1fr 1fr}
@@ -1352,7 +1376,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.32.0';
+const VERSION_APPLI = '1.33.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4369,7 +4393,8 @@ async function ouvrirFormulaires() {
   if (!e.nom) fe.corps.append(el('div', { class: 'conseil-ent' },
     el('p', { text: 'Conseil : renseignez d\'abord votre entreprise (nom, adresse, logo, signature…). Elle sera reprise automatiquement dans tous vos documents.' }),
     bouton('Renseigner mon entreprise', { ico: 'reglages', onclick: async () => { prefs.ongletParametres = 'p-entreprise'; ecrirePrefs(prefs); await fe.fermer(); ouvrirParametres(); } })));
-  if (brouillons.length) fe.corps.append(el('h3', { class: 'titre-section', text: 'En cours' }),
+  const enCours = el('div', {});
+  if (brouillons.length) enCours.append(el('h3', { class: 'titre-section', text: 'Documents en cours de remplissage' }),
     el('div', { class: 'liste-docs' }, brouillons.map(b => el('div', { class: 'ligne-doc' },
       el('button', { type: 'button', class: 'ligne-doc-principal', onclick: async () => { const d = await bdGet('fichiers', 'brouillon:' + b.id).catch(() => null); const m = tousLesModeles().find(x => x.id === b.modele); if (!d || !m) { toast('Ce brouillon est introuvable.'); return; } await fe.fermer(); saisirFormulaire(m, { id: b.id, rep: d.rep, dossier: d.dossier || null }); } },
         el('span', { class: 'ligne-doc-ico' }, icone('texte')),
@@ -4384,23 +4409,36 @@ async function ouvrirFormulaires() {
       el('span', { class: 'carte-form-ico ' + cls }, icone(ico)), el('strong', { text: m.nom }), el('span', { text: m.resume || (m.perso ? 'Mon modèle' : '') })),
     m.perso ? bouton('', { ico: 'crayon', cls: 'btn-icone carte-form-modif', label: `Modifier le modèle « ${m.nom} »`, onclick: () => ouvrirPuis(() => m.doc ? editerDocument(m.doc) : editerModeleFormulaire(m)) }) : null);
   const miens = tousLesModeles().filter(m => m.perso);
+  /* Un de mes modèles : deux boutons clairs (Remplir, Modifier) et un menu (Dupliquer, Supprimer) */
+  const carteMien = m => el('div', { class: 'case-form carte-modele' }, el('div', { class: 'carte-form' },
+    el('span', { class: 'carte-form-ico' }, icone('formulaire')), el('strong', { text: m.nom }), el('span', { text: m.resume || 'Mon modèle' }),
+    el('div', { class: 'carte-modele-actions' },
+      bouton('Remplir', { cls: 'btn principal', label: `Remplir « ${m.nom} »`, onclick: () => ouvrirPuis(() => saisirFormulaire(m)) }),
+      bouton('Modifier', { label: `Modifier le modèle « ${m.nom} »`, onclick: () => ouvrirPuis(() => m.doc ? editerDocument(m.doc) : editerModeleFormulaire(m)) }),
+      bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: `Supprimer le modèle « ${m.nom} »`, onclick: async () => {
+        if (!(await confirmer({ titre: `Supprimer le modèle « ${m.nom} » ?`, texte: 'Le modèle disparaît de la liste. Les PDF déjà créés ne changent pas.', action: 'Supprimer le modèle' }))) return;
+        if (m.doc) prefs.modelesDoc = (prefs.modelesDoc || []).filter(x => x.id !== m.id); else prefs.formulairesPerso = (prefs.formulairesPerso || []).filter(x => x.id !== m.id);
+        ecrirePrefs(prefs); toast('Modèle supprimé'); await fe.fermer(); ouvrirFormulaires();
+      } }))));
   let pdfs = [];
   try { pdfs = (await bdAll('documents')).filter(d => d.modele).sort((a, b) => b.maj - a.maj); } catch (err) { console.error(err); }
   if (fe.ferme()) return;
   fe.corps.append(el('h3', { class: 'titre-section', text: 'Mes modèles' }),
     el('div', { class: 'grille-formulaires' },
-      miens.map(m => carte(m, 'copier')),
-      pdfs.map(d => el('div', { class: 'case-form' },
-        el('button', { type: 'button', class: 'carte-form', onclick: () => ouvrirPuis(() => ouvrirSauvegarde(d, { modele: true })) },
-          el('span', { class: 'carte-form-ico officiel' }, icone('doc')), el('strong', { text: nomSansExt(d.nom) }), el('span', { text: `PDF déjà rempli · ${d.pages} page${d.pages > 1 ? 's' : ''}` })),
-        bouton('', { ico: 'poubelle', cls: 'btn-icone carte-form-modif', label: `Supprimer le modèle « ${nomSansExt(d.nom)} »`, onclick: async () => {
-          if (!(await confirmer({ titre: `Supprimer le modèle « ${nomSansExt(d.nom)} » ?`, texte: 'Les documents déjà créés à partir de ce modèle ne changent pas.', action: 'Supprimer le modèle' }))) return;
-          await supprimerSauvegarde(d); toast('Modèle supprimé'); await fe.fermer(); ouvrirFormulaires();
-        } }))),
       el('button', { type: 'button', class: 'carte-form nouveau', onclick: async () => { const d = await choisirDepartDocument(); if (!d) return; await fe.fermer(); editerDocument(d); } },
-        el('span', { class: 'carte-form-ico' }, icone('plus')), el('strong', { text: 'Créer mon modèle' }), el('span', { text: 'Page blanche, ou à partir d\'un exemple' })),
+        el('span', { class: 'carte-form-ico' }, icone('plus')), el('strong', { text: 'Créer un modèle' }), el('span', { text: 'Page blanche, ou à partir d\'un exemple (prévisite, PV…)' })),
+      miens.map(carteMien),
+      pdfs.map(d => el('div', { class: 'case-form carte-modele' }, el('div', { class: 'carte-form' },
+        el('span', { class: 'carte-form-ico officiel' }, icone('doc')), el('strong', { text: nomSansExt(d.nom) }), el('span', { text: `PDF déjà rempli · ${d.pages} page${d.pages > 1 ? 's' : ''}` }),
+        el('div', { class: 'carte-modele-actions' },
+          bouton('Utiliser', { cls: 'btn principal', label: `Utiliser le modèle « ${nomSansExt(d.nom)} »`, onclick: () => ouvrirPuis(() => ouvrirSauvegarde(d, { modele: true })) }),
+          bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: `Supprimer le modèle « ${nomSansExt(d.nom)} »`, onclick: async () => {
+            if (!(await confirmer({ titre: `Supprimer le modèle « ${nomSansExt(d.nom)} » ?`, texte: 'Les documents déjà créés à partir de ce modèle ne changent pas.', action: 'Supprimer le modèle' }))) return;
+            await supprimerSauvegarde(d); toast('Modèle supprimé'); await fe.fermer(); ouvrirFormulaires();
+          } }))))),
       el('button', { type: 'button', class: 'carte-form nouveau', onclick: () => nouveauModele(ouvrirPuis) },
-        el('span', { class: 'carte-form-ico' }, icone('doc')), el('strong', { text: 'À partir d\'un PDF' }), el('span', { text: 'Un PDF déjà rempli, prêt à réutiliser' }))),
+        el('span', { class: 'carte-form-ico' }, icone('doc')), el('strong', { text: 'Modèle à partir d\'un PDF' }), el('span', { text: 'Un PDF déjà rempli, prêt à réutiliser' }))),
+    enCours,
     el('h3', { class: 'titre-section', text: 'Modèles prêts à l\'emploi' }),
     el('div', { class: 'grille-formulaires' }, MODELES_FORMULAIRES.map(m => carte(m, 'formulaire'))),
     el('h3', { class: 'titre-section', text: 'Documents officiels' }),
@@ -5545,6 +5583,7 @@ function enregistrerModeleDoc(m) {
   }
   const util = champsUtilises(propre);
   propre.questions = propre.questions.filter(q => util.includes(q.cle)); // les questions des blocs supprimés ne sont pas gardées
+  if (!propre.nom) propre.nom = (propre.blocs.find(b => b.type === 'titre')?.texte || '').trim().slice(0, 60) || 'Nouveau modèle';
   propre.maj = Date.now();
   const l = (prefs.modelesDoc || []).slice(), i = l.findIndex(x => x.id === m.id);
   if (i >= 0) l[i] = propre; else l.push(propre);
@@ -5631,8 +5670,8 @@ function creerBlocDoc(cle, m) {
   if (cle === 'titre') Object.assign(b, { texte: 'Titre', sous: null });
   if (cle === 'section') b.texte = 'Nouvelle section';
   if (cle === 'texte') b.html = '';
-  if (cle === 'client') Object.assign(b, { type: 'texte', html: `<p><b>Client :</b> ${tagDoc('c-nom')}<br>${tagDoc('c-adresse')}<br>Tél. ${tagDoc('c-tel')}</p>` });
-  if (cle === 'entreprise') Object.assign(b, { type: 'texte', html: `<p><b>${tagDoc('e-nom')}</b><br>${tagDoc('e-adresse')}<br>Tél. ${tagDoc('e-tel')} – SIRET ${tagDoc('e-siret')}</p>` });
+  if (cle === 'client') Object.assign(b, { type: 'texte', demi: true, html: `<p><b>Client :</b> ${tagDoc('c-nom')}<br>${tagDoc('c-adresse')}<br>Tél. ${tagDoc('c-tel')}</p>` });
+  if (cle === 'entreprise') Object.assign(b, { type: 'texte', demi: true, html: `<p><b>${tagDoc('e-nom')}</b><br>${tagDoc('e-adresse')}<br>Tél. ${tagDoc('e-tel')} – SIRET ${tagDoc('e-siret')}</p>` });
   if (cle === 'colonnes') Object.assign(b, { separees: true, cols: ['', ''] });
   if (cle === 'ligne') Object.assign(b, { ep: 1, coul: 'theme' });
   if (cle === 'encadre') Object.assign(b, { fond: 'pale', html: '' });
@@ -5683,16 +5722,20 @@ function editerDocument(source) {
   const nom = el('input', { class: 'champ cr-nom', id: 'cr-nom', placeholder: 'Nom du modèle (ex. : Prévisite combles)', maxlength: 60, autocomplete: 'off', 'aria-label': 'Nom du modèle' });
   nom.value = m.nom || '';
   nom.addEventListener('input', () => { m.nom = nom.value.trim(); fe.feuille.querySelector('.feuille-tete h2').textContent = m.nom || 'Nouveau modèle'; modifie(); });
-  const barre = el('div', { class: 'cr-barre' }, nom,
+  let mode = 'edition', jetonApercu = 0; const repTest = {};
+  const modes = segments('cr-mode', [['edition', 'Modifier'], ['test', 'Remplir'], ['apercu', 'Aperçu PDF']], mode, v => { mode = v; rendreTout(); });
+  modes.classList.add('cr-modes');
+  const barre = el('div', { class: 'cr-barre' }, nom, modes,
     el('div', { class: 'cr-actions' },
       bouton('Thème', { ico: 'palette', cls: 'btn cr-btn-theme', onclick: () => ouvrirOutil('theme') }),
-      bouton('Tester', { ico: 'oeil', cls: 'btn principal', label: 'Tester : remplir ce modèle et voir le PDF', onclick: essai }),
       bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: 'Supprimer ce modèle', onclick: supprimerModele })));
   const page = el('div', { class: 'cr-page' });
   const plan = el('div', { class: 'cr-plan' }, page);
   const palette = el('aside', { class: 'cr-palette', 'aria-label': 'Blocs à ajouter' });
   const cote = el('aside', { class: 'cr-cote', 'aria-label': 'Réglages' });
-  fe.corps.append(barre, el('div', { class: 'cr-zone' }, palette, plan, cote));
+  const zoneEdition = el('div', { class: 'cr-zone' }, palette, plan, cote);
+  const zoneTest = el('div', { class: 'cr-essai' }), zoneApercu = el('div', { class: 'cr-essai cr-apercu' });
+  fe.corps.append(barre, zoneEdition, zoneTest, zoneApercu);
   const outil = (texte, ico, quoi, cls = '') => { const b = bouton(texte, { ico, cls: 'btn cr-outil ' + cls, onclick: () => ouvrirOutil(quoi) }); b.addEventListener('pointerdown', e => e.preventDefault()); return b; };
   fe.pied.classList.add('cr-pied');
   fe.pied.append(outil('Ajouter', 'plus', 'ajouter', 'fort'), outil('Réglages', 'reglages', 'bloc'), outil('Thème', 'palette', 'theme'));
@@ -5707,7 +5750,7 @@ function editerDocument(source) {
     const th = themeDe(m), e = entreprise(), logo = lireTampons().find(t => t.id === e.logoId);
     page.className = `cr-page theme-${th.style} police-${th.police}`;
     page.style.setProperty('--doc-c1', th.c1);
-    const entete = m.entete === 'aucun' ? el('div', { class: 'cr-entete masque', text: 'Pas d\'en-tête' }) : el('div', { class: 'cr-entete' },
+    const entete = m.entete === 'aucun' ? el('div', { class: 'cr-entete masque', text: 'Pas d\'en-tête : toucher ici pour en mettre un' }) : el('div', { class: 'cr-entete' },
       el('div', { class: 'cr-entete-g' }, logo ? el('img', { src: logo.png, alt: 'Logo' }) : null,
         el('div', {}, el('strong', { text: e.nom || 'Votre entreprise' }),
           el('span', { text: [e.adresse, e.cpVille].filter(Boolean).join(', ') || 'Logo et adresse : Paramètres → Mon entreprise' }),
@@ -5716,7 +5759,20 @@ function editerDocument(source) {
     const pied = m.pied === 'aucun' ? el('div', { class: 'cr-pied-doc masque', text: 'Pas de pied de page' })
       : el('div', { class: 'cr-pied-doc' }, el('span', { text: [e.nom, e.siret ? 'SIRET ' + e.siret : '', e.mentions].filter(Boolean).join(' · ') || 'Mentions de l\'entreprise : Paramètres → Mon entreprise' }), el('span', { text: 'Page 1 / 1' }));
     const vide = m.blocs.length ? null : el('button', { type: 'button', class: 'cr-vide', onclick: () => ouvrirOutil('ajouter') }, icone('plus'), el('strong', { text: 'Ajoutez votre premier bloc' }), el('span', { text: mqPc.matches ? 'Cliquez un bloc à gauche, ou glissez-le ici.' : 'Touchez « Ajouter » en bas de l\'écran.' }));
-    page.replaceChildren(entete, ...m.blocs.map(blocEd), ...(vide ? [vide] : []), pied);
+    // L'en-tête et le pied de page se règlent (ou se retirent) en les touchant
+    for (const [n, quoi] of [[entete, 'En-tête'], [pied, 'Pied de page']]) {
+      n.classList.add('cliquable'); n.setAttribute('role', 'button'); n.tabIndex = 0; n.title = `${quoi} : toucher pour le régler ou le retirer`;
+      n.addEventListener('click', () => ouvrirOutil('theme'));
+      n.addEventListener('keydown', e => { if (e.key === 'Enter') ouvrirOutil('theme'); });
+    }
+    // Deux blocs « Moitié » qui se suivent sont posés côte à côte
+    const noeuds = [];
+    for (let i = 0; i < m.blocs.length; i++) {
+      const b = m.blocs[i], s = m.blocs[i + 1];
+      if (b.demi) { noeuds.push(el('div', { class: 'cr-rangee-blocs' }, blocEd(b), s?.demi ? blocEd(s) : null)); if (s?.demi) i++; }
+      else noeuds.push(blocEd(b));
+    }
+    page.replaceChildren(entete, ...noeuds, ...(vide ? [vide] : []), pied);
   }
   function zoneTexte(b, cle, html, vide = 'Écrivez ici…') {
     const z = el('div', { class: 'cr-zone-texte', contenteditable: 'true', 'data-cle': cle, 'data-vide': vide });
@@ -5776,7 +5832,7 @@ function editerDocument(source) {
       case 'section': corps = zonePlate(b, 'texte', 'cr-section', 'Nom de la section'); break;
       case 'texte': corps = zoneTexte(b, 'html', b.html, 'Écrivez votre texte…'); break;
       case 'colonnes': corps = el('div', { class: `cr-colonnes n${b.cols.length}${b.separees ? ' separees' : ''}` }, b.cols.map((c, i) => zoneTexte(b, 'col' + i, c, `Colonne ${i + 1}`))); break;
-      case 'ligne': corps = el('div', { class: 'cr-ligne', style: { borderTopWidth: (b.ep || 1) + 'px', borderTopColor: b.coul === 'gris' ? '#cfd5dc' : 'var(--doc-c1)' } }); break;
+      case 'ligne': corps = el('div', { class: 'cr-ligne', style: { borderTopWidth: (b.ep || 1) + 'px', borderTopColor: b.coul === 'gris' && !b.couleur ? '#cfd5dc' : 'var(--doc-c1)' } }); break;
       case 'encadre': corps = el('div', { class: 'cr-encadre ' + (b.fond === 'bord' ? 'bord' : 'pale') }, zoneTexte(b, 'html', b.html, 'Texte mis en valeur…')); break;
       case 'tableau': corps = el('table', { class: 'cr-tableau' },
         el('thead', {}, el('tr', {}, b.entetes.map((h, i) => el('th', {}, zoneTexte(b, 'th' + i, h, 'Titre'))))),
@@ -5806,6 +5862,7 @@ function editerDocument(source) {
       ob(icone('poubelle'), 'Supprimer le bloc', () => supprimer(b.id)));
     const cond = b.si?.q ? el('div', { class: 'cr-si' }, icone('info'), `Seulement si « ${questionDe(m, b.si.q)?.label || '?'} » = ${b.si.val}`) : null;
     const n = el('div', { class: `cr-bloc cr-b-${b.type}${choisi === b.id ? ' choisi' : ''}${cond ? ' conditionnel' : ''}`, dataset: { id: b.id } }, outils, cond, corps);
+    if (b.couleur) n.style.setProperty('--doc-c1', b.couleur);
     n.addEventListener('pointerdown', () => choisir(b.id));
     n.addEventListener('focusin', () => choisir(b.id));
     return n;
@@ -5991,7 +6048,44 @@ function editerDocument(source) {
     palette.replaceChildren(...(mqPc.matches ? [contenuPalette()] : []));
     cote.replaceChildren(...(mqLarge.matches ? [blocDe(choisi) ? reglagesBloc() : reglagesTheme()] : []));
   }
-  function rendreTout() { rendrePage(); rendreCote(); }
+  function rendreTout() {
+    fermerPop();
+    zoneEdition.hidden = mode !== 'edition'; zoneTest.hidden = mode !== 'test'; zoneApercu.hidden = mode !== 'apercu';
+    fe.feuille.classList.toggle('cr-hors-edition', mode !== 'edition');
+    if (mode === 'edition') { rendrePage(); rendreCote(); } else if (mode === 'test') rendreTest(); else rendreApercu();
+  }
+  /* Vue « Remplir » : on essaie le modèle sur place (rien n'est gardé). Les photos marchent ; la signature se fait au vrai remplissage. */
+  const actionsTest = new Proxy({}, { get: (_, cle) => ({
+    ajouter: async camera => {
+      const fs = await choisirFichiers({ accept: 'image/*', multiple: !camera, capture: camera ? 'environment' : undefined });
+      for (const f of fs) { try { const c = await chargerImage(f, 1400); (repTest[cle] ||= []).push({ url: c.toDataURL('image/jpeg', 0.8), legende: '' }); } catch { toast(`« ${f.name} » : format d'image non pris en charge.`); } }
+      rendreTest();
+    },
+    retirer: i => { repTest[cle]?.splice(i, 1); rendreTest(); },
+    signer: () => toast('La signature se fait quand vous remplissez le modèle pour de vrai (bouton « Remplir pour de vrai »).', 5000),
+    effacer: () => {} }) });
+  function rendreTest() {
+    const haut = zoneTest.scrollTop;
+    zoneTest.replaceChildren(
+      el('div', { class: 'cr-bandeau-essai' }, el('span', { text: 'Essai : touchez les champs surlignés. Rien n\'est enregistré.' }), bouton('Remplir pour de vrai', { ico: 'valider', onclick: essai })),
+      pageDocRemplie(m, repTest, { changer: rendreTest, actions: actionsTest }));
+    zoneTest.scrollTop = haut;
+  }
+  async function rendreApercu() {
+    const jeton = ++jetonApercu;
+    zoneApercu.replaceChildren(el('p', { class: 'note cr-attente', text: 'Préparation de l\'aperçu…' }));
+    try {
+      const octets = await genererPdfDocument(JSON.parse(JSON.stringify(m)), repTest);
+      const pdf = await pdfjsLib.getDocument({ data: octets }).promise, pages = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const p = await pdf.getPage(i), vp = p.getViewport({ scale: 1.6 });
+        const c = el('canvas', { class: 'cr-page-pdf', width: Math.round(vp.width), height: Math.round(vp.height), role: 'img', 'aria-label': `Page ${i} du PDF` });
+        await p.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise; pages.push(c);
+      }
+      if (jeton !== jetonApercu) return;
+      zoneApercu.replaceChildren(el('p', { class: 'note cr-attente', text: `Le PDF tel qu'il sortira (${pdf.numPages} page${pdf.numPages > 1 ? 's' : ''}), avec les réponses saisies dans « Remplir ».` }), ...pages);
+    } catch (err) { console.error(err); if (jeton === jetonApercu) zoneApercu.replaceChildren(el('p', { class: 'note cr-attente', text: 'L\'aperçu n\'a pas pu être préparé.' })); }
+  }
   mqPc.addEventListener('change', rendreTout); mqLarge.addEventListener('change', rendreTout);
   const ligneReglage = (titre, contenu) => el('div', { class: 'cr-reglage' }, el('div', { class: 'etiquette', text: titre }), contenu);
   const coche = (texte, obj, cle, detail) => { const id = 'cr-c-' + idUnique(); const c = el('input', { type: 'checkbox', id, checked: !!obj[cle] }); c.addEventListener('change', () => { obj[cle] = c.checked; apres(); }); return el('label', { class: 'case-option', for: id }, c, el('span', { class: 'texte' }, el('strong', { text: texte }), detail ? el('small', { text: detail }) : null)); };
@@ -6051,8 +6145,7 @@ function editerDocument(source) {
             bouton('Colonne', { ico: 'texte-moins', label: 'Retirer la dernière colonne', onclick: () => { if (b.entetes.length > 1) { b.entetes.pop(); b.lignes.forEach(l => l.pop()); apres(); } } })));
         break;
       case 'ligne': parts.push(
-        ligneReglage('Épaisseur', seg('ep', [['1', 'Fine'], ['2', 'Moyenne'], ['4', 'Épaisse']], String(b.ep || 1), v => { b.ep = +v; })),
-        ligneReglage('Couleur', seg('coul', [['theme', 'Couleur du thème'], ['gris', 'Gris']], b.coul === 'gris' ? 'gris' : 'theme', v => { b.coul = v; })));
+        ligneReglage('Épaisseur', seg('ep', [['1', 'Fine'], ['2', 'Moyenne'], ['4', 'Épaisse']], String(b.ep || 1), v => { b.ep = +v; })));
         break;
       case 'signatures':
         parts.push(ligneReglage('Nombre de signatures', seg('ns', [['1', '1'], ['2', '2']], String(b.cases.length), v => {
@@ -6069,6 +6162,15 @@ function editerDocument(source) {
         break;
       case 'saut': parts.push(el('p', { class: 'note', text: 'Ce qui suit ce bloc commence sur une nouvelle page du PDF.' })); break;
     }
+    if (['ligne', 'encadre', 'section', 'titre'].includes(b.type)) {
+      const actuelle = b.couleur || (b.coul === 'gris' ? '#8a92a0' : null);
+      parts.push(ligneReglage('Couleur', el('div', { class: 'cr-pastilles' },
+        el('button', { type: 'button', class: 'cr-pastille-theme', 'aria-pressed': String(!actuelle), onclick: () => { delete b.couleur; delete b.coul; apres(); } }, el('i', { style: { background: themeDe(m).c1 } }), 'Thème'),
+        [...COULEURS_DOC, '#8a92a0'].map(c => el('button', { type: 'button', class: 'cr-pastille', 'aria-label': 'Couleur ' + c, 'aria-pressed': String(c === actuelle), style: { background: c }, onclick: () => { b.couleur = c; delete b.coul; apres(); } })))));
+    }
+    if (['texte', 'encadre'].includes(b.type) || (b.type === 'question' && questionDe(m, b.q)?.type !== 'photos'))
+      parts.push(ligneReglage('Largeur', seg('larg', [['pleine', 'Toute la ligne'], ['demi', 'Moitié']], b.demi ? 'demi' : 'pleine', v => { b.demi = v === 'demi'; })),
+        el('p', { class: 'note', text: 'Deux blocs « Moitié » qui se suivent se placent côte à côte.' }));
     if (b.type !== 'saut') parts.push(reglageCondition(b));
     parts.push(el('div', { class: 'rangee-btn cr-rangee' }, bouton('Dupliquer', { ico: 'copier', onclick: () => dupliquer(b.id) }), bouton('Supprimer', { ico: 'poubelle', onclick: () => supprimer(b.id) })));
     return el('div', { class: 'cr-reglages' }, ...parts);
@@ -6167,7 +6269,13 @@ function pageDocRemplie(m, rep, { changer, actions }) {
     el('div', { class: 'cr-entete-g' }, logo ? el('img', { src: logo.png, alt: 'Logo' }) : null,
       el('div', {}, el('strong', { text: e.nom || '' }), el('span', { text: [e.adresse, e.cpVille].filter(Boolean).join(', ') }), el('span', { text: [e.tel, e.email].filter(Boolean).join(' · ') }))),
     el('div', { class: 'cr-entete-d', text: dateLongue() })));
-  for (const b of m.blocs) { if (!blocVisible(b, rep)) continue; const n = bloc(b); if (n) page.append(el('div', { class: 'cr-bloc-rempli' }, n)); }
+  const enrobe = (b, n) => { const d = el('div', { class: 'cr-bloc-rempli' }, n); if (b.couleur) d.style.setProperty('--doc-c1', b.couleur); return d; };
+  const vis = m.blocs.filter(b => blocVisible(b, rep));
+  for (let i = 0; i < vis.length; i++) {
+    const b = vis[i], s = vis[i + 1], n = bloc(b); if (!n) continue;
+    if (b.demi) { const n2 = s?.demi ? bloc(s) : null; page.append(el('div', { class: 'cr-rangee-blocs' }, enrobe(b, n), n2 ? enrobe(s, n2) : null)); if (s?.demi) i++; }
+    else page.append(enrobe(b, n));
+  }
   if (m.pied !== 'aucun') page.append(el('div', { class: 'cr-pied-doc' }, el('span', { text: [e.nom, e.siret ? 'SIRET ' + e.siret : '', e.mentions].filter(Boolean).join(' · ') }), el('span', {})));
   return page;
 }
@@ -6210,6 +6318,9 @@ async function genererPdfDocument(m, rep) {
   const teinte = k => rgb(...[16, 8, 0].map(s => ((n1 >> s) & 255) / 255 * (1 - k) + k));
   const c1 = teinte(0), pale = teinte(0.9);
   const T = 10.5, LH = 1.42;
+  let X = mg, L = largeur; // colonne en cours (blocs côte à côte)
+  const coulDe = b => b.couleur ? hexVersRgb(b.couleur) : b.coul === 'gris' ? trait : c1;
+  const paleDe = b => { if (!b.couleur) return pale; const n = parseInt(b.couleur.slice(1), 16) || 0; return rgb(...[16, 8, 0].map(s => ((n >> s) & 255) / 255 * 0.1 + 0.9)); };
   const cache = new Map();
   const image = async url => { if (!cache.has(url)) cache.set(url, url.startsWith('data:image/png') ? await doc.embedPng(dataUrlVersOctets(url)) : await doc.embedJpg(dataUrlVersOctets(url))); return cache.get(url); };
   const couperA = (t, f, taille, max) => { let s = versWinAnsi(t).replace(/\n/g, ' '); if (f.widthOfTextAtSize(s, taille) <= max) return s; while (s && f.widthOfTextAtSize(s + '…', taille) > max) s = s.slice(0, -1); return s + '…'; };
@@ -6331,13 +6442,14 @@ async function genererPdfDocument(m, rep) {
   async function dessinerBloc(b) {
     switch (b.type) {
       case 'titre': {
-        const centre = (b.align || 'centre') === 'centre', coul = th.style === 'sobre' ? encre : c1;
-        y -= 4;
-        await ecrireLignes(lignesDe([{ runs: [{ t: b.texte || '', b: true }] }], largeur, 17), mg, { couleur: coul, align: centre ? 'centre' : 'gauche', larg: largeur });
-        if (b.sous) await ecrireLignes(lignesDe([{ runs: [{ t: b.sous }] }], largeur, 9.5), mg, { couleur: doux, align: centre ? 'centre' : 'gauche', larg: largeur });
-        y -= 10; break;
+        const centre = (b.align || 'centre') === 'centre', coul = b.couleur ? coulDe(b) : th.style === 'sobre' ? encre : c1;
+        y -= 6;
+        await ecrireLignes(lignesDe([{ runs: [{ t: b.texte || '', b: true }] }], largeur, 19), mg, { couleur: coul, align: centre ? 'centre' : 'gauche', larg: largeur });
+        if (b.sous) await ecrireLignes(lignesDe([{ runs: [{ t: b.sous }] }], largeur, 10), mg, { couleur: doux, align: centre ? 'centre' : 'gauche', larg: largeur });
+        y -= 4; page.drawRectangle({ x: centre ? (W - 46) / 2 : mg, y: y - 2.6, width: 46, height: 2.6, color: coulDe(b) });
+        y -= 18; break;
       }
-      case 'texte': await ecrireLignes(lignesDe(paragraphes(b.html), largeur), mg); y -= 4; break;
+      case 'texte': await ecrireLignes(lignesDe(paragraphes(b.html), L), X); y -= 6; break;
       case 'colonnes': {
         const n = b.cols.length, gap = 22, cw = (largeur - gap * (n - 1)) / n;
         const cols = b.cols.map(h => lignesDe(paragraphes(h), cw));
@@ -6351,19 +6463,19 @@ async function genererPdfDocument(m, rep) {
         });
         y -= h + 6; break;
       }
-      case 'ligne': await place(16); y -= 6; page.drawLine({ start: { x: mg, y }, end: { x: W - mg, y }, thickness: b.ep || 1, color: b.coul === 'gris' ? trait : c1 }); y -= 10; break;
+      case 'ligne': await place(16); y -= 6; page.drawLine({ start: { x: mg, y }, end: { x: W - mg, y }, thickness: b.ep || 1, color: coulDe(b) }); y -= 10; break;
       case 'encadre': {
-        const pad = 10, lignes = lignesDe(paragraphes(b.html), largeur - 2 * pad);
+        const pad = 10, lignes = lignesDe(paragraphes(b.html), L - 2 * pad);
         y -= 2;
         for (let i = 0; i < lignes.length;) {
           await place(lignes[i].h + 2 * pad);
           let h = 2 * pad, j = i;
           while (j < lignes.length && y - (h + hauteur(lignes[j])) >= basContenu) { h += hauteur(lignes[j]); j++; }
           if (j === i) { h += hauteur(lignes[i]); j = i + 1; }
-          if (b.fond === 'bord') rectArrondi(page, mg, y, largeur, h, 6, { borderColor: c1, borderWidth: 1.2 });
-          else rectArrondi(page, mg, y, largeur, h, 6, { color: pale });
+          if (b.fond === 'bord') rectArrondi(page, X, y, L, h, 6, { borderColor: coulDe(b), borderWidth: 1.2 });
+          else rectArrondi(page, X, y, L, h, 6, { color: paleDe(b) });
           let yy = y - pad;
-          for (let k = i; k < j; k++) { dessinerLigne(lignes[k], mg + pad, yy); yy -= hauteur(lignes[k]); }
+          for (let k = i; k < j; k++) { dessinerLigne(lignes[k], X + pad, yy); yy -= hauteur(lignes[k]); }
           y -= h; i = j;
           if (i < lignes.length) await nouvellePage();
         }
@@ -6387,35 +6499,40 @@ async function genererPdfDocument(m, rep) {
         y -= 10; break;
       }
       case 'section': {
-        y -= 8; await place(48);
-        await ecrireLignes(lignesDe([{ runs: [{ t: b.texte || '', b: true }] }], largeur, 12), mg, { couleur: c1 });
-        page.drawLine({ start: { x: mg, y: y + 1 }, end: { x: W - mg, y: y + 1 }, thickness: 0.9, color: c1 });
-        y -= 8; break;
+        // Bandeau teinté avec une barre de couleur à gauche
+        const ls = lignesDe([{ runs: [{ t: b.texte || '', b: true }] }], largeur - 24, 11.5), hb = ls.reduce((s, l) => s + l.h, 0) + 9;
+        y -= 12; await place(hb + 40);
+        page.drawRectangle({ x: mg, y: y - hb, width: largeur, height: hb, color: paleDe(b) });
+        page.drawRectangle({ x: mg, y: y - hb, width: 3.5, height: hb, color: coulDe(b) });
+        let yy = y - 4.5; for (const l of ls) { dessinerLigne(l, mg + 12, yy, { couleur: coulDe(b) }); yy -= l.h; }
+        y -= hb + 6; break;
       }
       case 'question': {
         const q = questionDe(m, b.q); if (!q) break;
-        const v = valeurChampDoc(m, b.q, rep), titre = b.sansTitre ? '' : (q.label || '');
         if (q.type === 'photos') { await dessinerBloc({ ...b, type: 'photos' }); break; }
-        if (q.type === 'choix') {
-          if (titre) { await place(36); await ecrireLignes(lignesDe([{ runs: [{ t: titre, b: true }] }], largeur), mg); y += 1; }
-          await dessinerBloc({ ...b, type: 'choix' }); break;
-        }
-        if (q.type === 'ouinon') {
-          // La question à gauche, les deux cases à droite sur la même ligne
-          const ls = lignesDe([{ runs: [{ t: titre }] }], largeur - 116);
-          await place(ls.length * T * LH);
-          const yb = y - T * 1.12 - 0.5; let x = W - mg - 104;
-          for (const o of ['Oui', 'Non']) { caseCochee(x, yb, rep[b.q] === o); page.drawText(o, { x: x + 13, y: yb + 1, size: T, font: rep[b.q] === o ? F.b : F.n, color: encre }); x += 54; }
-          for (const l of ls) { dessinerLigne(l, mg, y); y -= l.h; }
-          y -= 5; break;
-        }
-        if (q.type === 'long') {
-          if (titre) { await place(36); await ecrireLignes(lignesDe([{ runs: [{ t: titre + ' :' }] }], largeur), mg); y += 2; }
-          await ecrireLignes(lignesDe(v ? v.split('\n').map(l => ({ runs: [{ t: l, b: true }] })) : [{ runs: [{ t: '………………………………………………', vide: true }] }], largeur - 10), mg + 10);
-          y -= 4; break;
-        }
-        await ecrireLignes(lignesDe([{ runs: [...(titre ? [{ t: titre + ' : ' }] : []), v ? { t: v, b: true } : { t: '……………', vide: true }] }], largeur), mg);
-        y -= 2; break;
+        // Fiche en deux colonnes : la question à gauche, la réponse à droite, un filet sous chaque ligne
+        const v = valeurChampDoc(m, b.q, rep), titre = b.sansTitre ? '' : (q.label || ''), padV = 5.5;
+        const colV = titre ? X + Math.min(L * 0.46, 250) : X + 4, lv = X + L - colV;
+        const gauche = titre ? lignesDe([{ runs: [{ t: titre }] }], colV - X - 14) : [];
+        const cases = q.type === 'ouinon' ? ['Oui', 'Non'] : q.type === 'choix' ? (q.options || []) : null, enLigne = q.type === 'ouinon';
+        const droite = cases ? [] : lignesDe(v ? v.split('\n').map(l => ({ runs: [{ t: l, b: true }] })) : [{ runs: [{ t: q.type === 'long' ? '………………………………' : '……………', vide: true }] }], lv);
+        const lignesCases = cases ? cases.map(o => lignesDe([{ runs: [{ t: o, b: rep[b.q] === o }] }], enLigne ? 44 : lv - 16)) : [];
+        const hCases = cases ? (enLigne ? T * LH : lignesCases.reduce((s, ls) => s + ls.reduce((a, l) => a + l.h, 0), 0)) : 0;
+        const h = Math.max(gauche.reduce((s, l) => s + l.h, 0), droite.reduce((s, l) => s + l.h, 0), hCases, T * LH) + 2 * padV;
+        await place(h);
+        let yy = y - padV; for (const l of gauche) { dessinerLigne(l, X + 2, yy, { couleur: doux }); yy -= l.h; }
+        yy = y - padV;
+        if (cases) {
+          let cx = colV;
+          cases.forEach((o, k) => {
+            caseCochee(cx, yy - T * 1.12 - 0.5, rep[b.q] === o);
+            if (enLigne) { dessinerLigne(lignesCases[k][0], cx + 14, yy); cx += 62; }
+            else for (const l of lignesCases[k]) { dessinerLigne(l, cx + 15, yy); yy -= l.h; }
+          });
+        } else for (const l of droite) { dessinerLigne(l, colV, yy); yy -= l.h; }
+        y -= h;
+        page.drawLine({ start: { x: X, y }, end: { x: X + L, y }, thickness: 0.5, color: trait });
+        break;
       }
       case 'choix': {
         const q = questionDe(m, b.q); if (!q) break;
@@ -6469,7 +6586,22 @@ async function genererPdfDocument(m, rep) {
   }
 
   await nouvellePage();
-  for (const b of m.blocs) if (blocVisible(b, rep)) await dessinerBloc(b);
+  const visibles = m.blocs.filter(b => blocVisible(b, rep));
+  const hEstimee = (b, l) => {
+    if (b.type === 'texte' || b.type === 'encadre') return lignesDe(paragraphes(b.html), l - (b.type === 'encadre' ? 20 : 0)).reduce((s, x) => s + hauteur(x), 0) + (b.type === 'encadre' ? 30 : 6);
+    const q = questionDe(m, b.q); return 26 + (q?.type === 'choix' ? (q.options || []).length * 15 : 0);
+  };
+  for (let i = 0; i < visibles.length; i++) {
+    const b = visibles[i], s = visibles[i + 1]?.demi ? visibles[i + 1] : null;
+    if (!b.demi) { await dessinerBloc(b); continue; }
+    // Deux blocs « Moitié » : le second se dessine à droite du premier, à la même hauteur
+    const gap = 24, l2 = (largeur - gap) / 2;
+    await place(Math.min(Math.max(hEstimee(b, l2), s ? hEstimee(s, l2) : 0), 420));
+    const y0 = y, p0 = page;
+    L = l2; X = mg; await dessinerBloc(b);
+    if (s) { const y1 = y, memePage = page === p0; if (memePage) y = y0; X = mg + l2 + gap; await dessinerBloc(s); if (memePage && page === p0) y = Math.min(y, y1); i++; }
+    X = mg; L = largeur;
+  }
   // Pied de page : mentions de l'entreprise et numéro, sur chaque page
   const pages = doc.getPages();
   pages.forEach((p, i) => {
