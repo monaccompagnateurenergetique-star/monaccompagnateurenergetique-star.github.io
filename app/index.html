@@ -1229,7 +1229,7 @@ body .feuille.apercu-biblio .feuille-corps{background:#e8ecea}
 .cr-perdu{color:#b42318;font-size:.9em}
 /* Remplir sur le document */
 .segments.onglets-capsule.choix-remplir{display:flex;width:fit-content;max-width:100%;margin:0 auto 10px}
-.segments.onglets-capsule.collant{position:sticky;top:-8px;z-index:3}
+.onglets-param .segments.onglets-capsule{margin:0}
 .aide-remplir{text-align:center;margin:0 0 10px}
 body .feuille.remplir-createur .feuille-corps{background:#e8ecea}
 .remplir-doc{padding:0 0 24px}
@@ -1495,7 +1495,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.43.1';
+const VERSION_APPLI = '1.43.2';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -7788,7 +7788,7 @@ function ouvrirParametres() {
   const voulu = ANCIENS[prefs.ongletParametres] || prefs.ongletParametres;
   let rubrique = rubriques.some(([id]) => id === voulu) ? voulu : 'p-entreprise';
   const sommaire = segments('param-onglet', rubriques, rubrique, v => { rubrique = v; prefs.ongletParametres = v; ecrirePrefs(prefs); montrerRubrique(); });
-  sommaire.classList.add('onglets-capsule', 'collant');
+  sommaire.classList.add('onglets-capsule');
   function montrerRubrique() {
     fe.corps.querySelectorAll('.carte-param').forEach((c, i) => { c.hidden = c.dataset.onglet !== rubrique; });
     fe.corps.scrollTop = 0;
@@ -7796,7 +7796,8 @@ function ouvrirParametres() {
   const carte = (onglet, ...enfants) => el('section', { class: 'carte-param', 'data-onglet': onglet }, ...enfants);
   fe.feuille?.classList.add('large', 'atelier', 'parametres');
   fe.corps.append(
-    sommaire,
+    // Bandeau collant et opaque : le contenu défile dessous sans passer derrière les onglets
+    el('div', { class: 'onglets-param' }, sommaire),
     el('div', { class: 'param-contenu' },
     ...(enEntreprise() ? [
       carte('p-entreprise', el('div', { id: 'p-infos' }, blocEntreprise())),
