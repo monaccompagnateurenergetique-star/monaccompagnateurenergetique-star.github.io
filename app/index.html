@@ -979,6 +979,34 @@ body.mode-entreprise .seul-particulier{display:none!important}
 .secours-selecteur .btn{background:#fff;white-space:nowrap;font-size:13px}
 @media (max-width:640px){.page-outils .grille-formulaires{grid-template-columns:1fr 1fr;gap:8px}.page-outils .carte-form{padding:12px 10px}}
 .btn-completer{width:100%;margin:0 0 10px;font-size:14px;background:var(--accent-pale);border-color:transparent;color:var(--accent-fort)}
+.btn-favori{font-size:21px;line-height:1;color:#a9b1bb}
+.btn-favori[aria-pressed="true"]{color:#e0a100}
+.carte-modele .btn-favori{position:absolute;top:4px;right:4px;width:40px;height:40px}
+.btn-filtre-fav{white-space:nowrap;flex:none}
+.btn-filtre-fav[aria-pressed="true"]{background:#fff3c9;border-color:#e0a100;color:#7a5200}
+/* Page Modèles : cartes rectangulaires et liste (même contenu, disposé en ligne) */
+.page-modeles .vue-m-rect .grille-formulaires{grid-template-columns:repeat(auto-fill,minmax(380px,1fr))}
+:is(.vue-m-rect,.vue-m-liste) .carte-modele .carte-form{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;grid-template-areas:"ico nom actions fav" "ico detail actions fav";align-items:center;column-gap:12px;row-gap:0;min-height:0;padding:10px 12px}
+:is(.vue-m-rect,.vue-m-liste) .carte-modele .carte-form-ico{grid-area:ico;margin:0}
+:is(.vue-m-rect,.vue-m-liste) .carte-modele strong{grid-area:nom;align-self:end}
+:is(.vue-m-rect,.vue-m-liste) .carte-modele .carte-form>span:not(.carte-form-ico){grid-area:detail;align-self:start;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+:is(.vue-m-rect,.vue-m-liste) .carte-modele-actions{grid-area:actions;width:auto;margin:0;padding:0}
+:is(.vue-m-rect,.vue-m-liste) .carte-modele-actions .btn{flex:0 0 auto;padding:0 14px}
+:is(.vue-m-rect,.vue-m-liste) .carte-modele .btn-favori,:is(.vue-m-rect,.vue-m-liste) .badge-ajoute{grid-area:fav;position:static}
+:is(.vue-m-rect,.vue-m-liste) .grille-formulaires>.carte-form.nouveau{flex-direction:row;align-items:center;gap:12px;min-height:0;padding:10px 12px}
+:is(.vue-m-rect,.vue-m-liste) .grille-formulaires>.carte-form.nouveau .carte-form-ico{margin:0}
+:is(.vue-m-rect,.vue-m-liste) .grille-formulaires>.carte-form.nouveau span:last-child{margin-left:auto;text-align:right}
+.vue-m-liste .grille-formulaires{display:block;background:#fff;border-radius:14px;box-shadow:var(--ombre);overflow:hidden}
+.vue-m-liste .carte-modele .carte-form,.vue-m-liste .grille-formulaires>.carte-form.nouveau{border:0;border-radius:0;border-bottom:1px solid var(--ligne);background:#fff}
+.vue-m-liste .grille-formulaires>:last-child .carte-form,.vue-m-liste .grille-formulaires>.carte-form.nouveau:last-child{border-bottom:0}
+@media (max-width:640px){
+  .page-modeles .vue-m-rect .grille-formulaires{grid-template-columns:1fr}
+  :is(.vue-m-rect,.vue-m-liste) .carte-modele .carte-form{grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"ico nom fav" "ico detail fav" "actions actions actions";row-gap:2px}
+  :is(.vue-m-rect,.vue-m-liste) .carte-modele-actions{padding-top:8px}
+  :is(.vue-m-rect,.vue-m-liste) .carte-modele-actions .btn{flex:1}
+  .outils-modeles .choix-vue{margin-left:auto}
+  .outils-modeles input[type=search]{flex:1 1 70%}
+}
 /* ---------- Créateur de documents ---------- */
 body .feuille.createur .feuille-corps{padding:0;overflow:hidden;display:flex;flex-direction:column;background:#e8ecea}
 .cr-barre{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:8px 12px;background:var(--carte);border-bottom:1px solid var(--ligne)}
@@ -1050,7 +1078,7 @@ body .feuille.createur.cr-hors-edition .cr-pied,.cr-hors-edition .cr-btn-theme{d
 @media (prefers-reduced-motion:reduce){.segments.onglets-capsule span{transition:none}}
 .outils-modeles{margin-bottom:6px}
 .outils-modeles .tri-modeles{flex:0 0 auto;width:auto;min-width:170px}
-@media (max-width:640px){.outils-modeles{flex-wrap:wrap}.outils-modeles .tri-modeles{flex:1 1 100%}}
+@media (max-width:640px){.outils-modeles{flex-wrap:wrap}.outils-modeles .tri-modeles{flex:1 1 40%;min-width:0}}
 .page-modeles .grille-formulaires{margin-bottom:8px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
 .carte-modele-actions .btn{min-width:0;gap:5px}
 .carte-modele-actions .btn .ico{width:18px;height:18px}
@@ -1463,7 +1491,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.40.2';
+const VERSION_APPLI = '1.43.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4472,6 +4500,14 @@ const dateFr = iso => iso ? new Date(iso + 'T12:00:00').toLocaleDateString('fr-F
 const aujourdhuiIso = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 
 /* ---------- Liste des formulaires et des brouillons ---------- */
+/* Favoris : une étoile sur un modèle ou un document ; ils passent en tête et peuvent être affichés seuls. */
+const estFavori = cle => (prefs.favoris || []).includes(cle);
+function boutonFavori(cle, nom, apres) {
+  const b = el('button', { type: 'button', class: 'btn-icone btn-favori' });
+  const maj = () => { const oui = estFavori(cle); b.textContent = oui ? '★' : '☆'; b.setAttribute('aria-pressed', String(oui)); b.title = oui ? 'Retirer des favoris' : 'Mettre en favori'; b.setAttribute('aria-label', `${oui ? 'Retirer' : 'Mettre'} « ${nom} » ${oui ? 'des favoris' : 'en favori'}`); };
+  b.addEventListener('click', e => { e.stopPropagation(); const l = prefs.favoris || []; prefs.favoris = l.includes(cle) ? l.filter(x => x !== cle) : [...l, cle]; ecrirePrefs(prefs); maj(); apres?.(); });
+  maj(); return b;
+}
 /* Bibliothèque : les modèles proposés par l'appli. On n'ajoute à « Mes modèles » que ceux qu'on veut. */
 function bibliotheque() {
   const doc = (id, categorie, creer) => { const m = creer(); return { id, type: 'doc', categorie, nom: m.nom, resume: m.resume, creer }; };
@@ -4482,8 +4518,8 @@ function bibliotheque() {
     base('aft', 'Chantier'), base('visite', 'Chantier'), base('edl', 'Logement'),
     ...MODELES_PDF.map(m => ({ id: m.id, type: 'officiel', categorie: 'Documents officiels', nom: m.nom, resume: m.resume, m })),
     // Formulaires officiels à champs : on prépare son propre modèle (sa partie remplie, ses cases, son tampon)
-    { id: 'vierge-mandat-mpr', type: 'vierge', categorie: 'Documents officiels', nom: 'Mandat MaPrimeRénov\' – administratif et financier',
-      resume: 'Cerfa de l\'Anah. Remplissez votre partie, cochez, posez votre tampon, puis gardez-le comme modèle.', fichier: 'modeles/cerfa_mandat_general_mpr.pdf',
+    { id: 'vierge-mandat-mpr', type: 'vierge', categorie: 'Documents officiels', nom: 'Mandat MaPrimeRénov\' – à remplir sur le PDF',
+      resume: 'Le Cerfa de l\'Anah tel quel. Remplissez votre partie, cochez, posez votre tampon, puis gardez-le comme modèle.', fichier: 'modeles/cerfa_mandat_general_mpr.pdf',
       entreprise: { 'Raison sociale si personne morale': 'nom', 'Adresse postale mandataire': 'adresse', 'Code postal mandataire': 'cp', 'Commune mandataire': 'ville',
         'Adresse mail mandataire': 'email', 'Téléphone mobile ou fixe mandataire': 'tel', 'Nom et Prénom du mandataire ou Raison sociale du mandataire': 'nom' } }];
 }
@@ -4566,26 +4602,47 @@ async function ouvrirFormulaires(onglet = 'miens') {
   const tri = el('select', { class: 'champ tri-modeles', 'aria-label': 'Trier mes modèles' }, [['recents', 'Les plus récents'], ['az', 'Nom : A → Z'], ['za', 'Nom : Z → A']].map(([v, t]) => el('option', { value: v, text: t, selected: prefs.triModeles === v })));
   const infoR = el('p', { class: 'info-recherche', 'aria-live': 'polite' });
   let majDe = new Map();
+  const filtre = el('select', { class: 'champ tri-modeles', 'aria-label': 'Afficher seulement un type de modèle' });
+  function majFiltre() {
+    if (filtre.dataset.onglet === onglet) return;
+    filtre.dataset.onglet = onglet;
+    const opts = onglet === 'biblio' ? [['', 'Toutes les catégories'], ...[...new Set(bibliotheque().map(x => x.categorie))].map(c => [c, c])]
+      : [['', 'Tous mes modèles'], ['favoris', '★ Favoris'], ['creation', 'Mes créations'], ['pret', 'Modèles prêts'], ['officiel', 'Documents officiels et PDF']];
+    filtre.replaceChildren(...opts.map(([v, t]) => el('option', { value: v, text: t })));
+  }
+  filtre.addEventListener('change', () => appliquerTri());
+  const choixVueM = el('div', { class: 'choix-vue', role: 'group', 'aria-label': 'Affichage des modèles' });
+  function appliquerVueM(v) {
+    prefs.vueModeles = v; ecrirePrefs(prefs);
+    zone.classList.toggle('vue-m-liste', v === 'liste'); zone.classList.toggle('vue-m-rect', v === 'rect');
+    choixVueM.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vue === v)));
+  }
+  [['cartes', 'vue-cartes', 'Afficher en cartes'], ['rect', 'vue-liste', 'Afficher en cartes rectangulaires'], ['liste', 'vue-lignes', 'Afficher en liste']].forEach(([v, ico, label]) => {
+    const b = bouton('', { ico, cls: 'btn-icone', label, onclick: () => appliquerVueM(v) });
+    b.dataset.vue = v; choixVueM.append(b);
+  });
   /** Recherche (dans l'onglet affiché) et tri de « Mes modèles ». */
   function appliquerTri() {
-    const q = sansAccentM(champR.value.trim()); let vus = 0;
+    const q = sansAccentM(champR.value.trim()), cat = filtre.value; let vus = 0;
     tri.hidden = onglet === 'biblio';
     for (const grille of zone.querySelectorAll('.grille-formulaires')) {
       const cartes = [...grille.querySelectorAll(':scope > .carte-modele')];
       if (onglet === 'miens') {
         const t = tri.value;
-        cartes.sort((a, b) => t === 'az' ? a.dataset.nom.localeCompare(b.dataset.nom, 'fr') : t === 'za' ? b.dataset.nom.localeCompare(a.dataset.nom, 'fr') : (majDe.get(b.dataset.nom) || 0) - (majDe.get(a.dataset.nom) || 0));
+        cartes.sort((a, b) => (b.dataset.fav === '1') - (a.dataset.fav === '1') || (t === 'az' ? a.dataset.nom.localeCompare(b.dataset.nom, 'fr') : t === 'za' ? b.dataset.nom.localeCompare(a.dataset.nom, 'fr') : (majDe.get(b.dataset.nom) || 0) - (majDe.get(a.dataset.nom) || 0)));
         cartes.forEach(c => grille.append(c));
       }
-      let n = 0; cartes.forEach(c => { const ok = !q || sansAccentM(c.textContent).includes(q); c.hidden = !ok; if (ok) n++; });
+      const catGrille = onglet === 'biblio' ? grille.previousElementSibling?.textContent : null;
+      let n = 0; cartes.forEach(c => { const ok = (!q || sansAccentM(c.textContent).includes(q)) && (!cat || (cat === 'favoris' ? c.dataset.fav === '1' : (catGrille ?? c.dataset.cat) === cat)); c.hidden = !ok; if (ok) n++; });
       vus += n;
       const titre = grille.previousElementSibling; if (titre?.classList.contains('titre-section')) titre.hidden = !n;
     }
-    infoR.textContent = q ? (vus ? `${vus} modèle${vus > 1 ? 's' : ''} trouvé${vus > 1 ? 's' : ''}` : `Aucun modèle pour « ${champR.value.trim()} ».`) : '';
+    infoR.textContent = q || cat ? (vus ? `${vus} modèle${vus > 1 ? 's' : ''} trouvé${vus > 1 ? 's' : ''}` : (q ? `Aucun modèle pour « ${champR.value.trim()} ».` : 'Aucun modèle de ce type pour l\'instant.')) : '';
   }
   champR.addEventListener('input', appliquerTri);
   tri.addEventListener('change', () => { prefs.triModeles = tri.value; ecrirePrefs(prefs); appliquerTri(); });
-  fe.corps.append(barreOnglets, el('div', { class: 'barre-recherche-docs outils-modeles' }, el('label', { for: 'recherche-modeles', class: 'lib-recherche' }, icone('zoom'), 'Rechercher'), champR, tri), infoR, zone);
+  fe.corps.append(barreOnglets, el('div', { class: 'barre-recherche-docs outils-modeles' }, el('label', { for: 'recherche-modeles', class: 'lib-recherche' }, icone('zoom'), 'Rechercher'), champR, filtre, tri, choixVueM), infoR, zone);
+  appliquerVueM(['liste', 'rect'].includes(prefs.vueModeles) ? prefs.vueModeles : 'cartes');
   const carteModele = (ico, cls, nom, detail, actions, badge) => el('div', { class: 'case-form carte-modele', dataset: { nom } }, el('div', { class: 'carte-form' },
     el('span', { class: 'carte-form-ico ' + cls }, icone(ico)), badge ? el('small', { class: 'badge-ajoute', text: badge }) : null,
     el('strong', { text: nom }), el('span', { text: detail }), el('div', { class: 'carte-modele-actions' }, actions)));
@@ -4593,7 +4650,7 @@ async function ouvrirFormulaires(onglet = 'miens') {
   try { pdfs = (await bdAll('documents')).filter(d => d.modele).sort((a, b) => b.maj - a.maj); } catch (err) { console.error(err); }
   if (fe.ferme()) return;
   function afficher() {
-    zone.replaceChildren();
+    zone.replaceChildren(); majFiltre();
     if (onglet === 'biblio') { afficherBibliotheque(); return appliquerTri(); }
     const e = entreprise();
     const supprimerMien = async m => {
@@ -4631,6 +4688,14 @@ async function ouvrirFormulaires(onglet = 'miens') {
       el('div', { class: 'pied-modeles' },
         bouton('Modèle à partir d\'un PDF déjà rempli', { ico: 'doc', onclick: () => nouveauModele(ouvrirPuis) }),
         !e.nom ? bouton('Renseigner mon entreprise (logo, adresse)', { ico: 'reglages', onclick: async () => { prefs.ongletParametres = 'p-entreprise'; ecrirePrefs(prefs); await fe.fermer(); ouvrirParametres(); } }) : null)].filter(Boolean));
+    // Type de chaque carte, dans l'ordre où elles ont été posées (pour le filtre)
+    const posees = zone.querySelectorAll('.grille-formulaires > .carte-modele');
+    [...miens.map(() => 'creation'), ...ajoutes.map(x => x.officiel ? 'officiel' : 'pret'), ...pdfs.map(() => 'officiel')].forEach((c, i) => { if (posees[i]) posees[i].dataset.cat = c; });
+    [...miens.map(x => ['modele:' + x.id, x.nom]), ...ajoutes.map(x => ['modele:' + x.id, x.nom]), ...pdfs.map(d => ['doc:' + d.id, nomSansExt(d.nom)])].forEach(([cle, nomC], i) => {
+      const carte = posees[i]; if (!carte) return;
+      carte.dataset.fav = estFavori(cle) ? '1' : '';
+      carte.querySelector('.carte-form').append(boutonFavori(cle, nomC, () => { carte.dataset.fav = estFavori(cle) ? '1' : ''; appliquerTri(); }));
+    });
     appliquerTri();
   }
   function afficherBibliotheque() {
@@ -5081,6 +5146,70 @@ const MODELES_PDF = [
       texte(p2, e.nom, 336, 715, 9, gras, 220);
       if (se?.tampon) await poser(p2, se.tampon, 400, 716, 150, 46);
       if (se?.png) await poser(p2, se.png, 345, 718, 140, 42);
+    } },
+  /* Mandat MaPrimeRénov' (Cerfa 16089) : le PDF officiel a des champs nommés ; chaque réponse est écrite dans son champ,
+     les signatures sont posées dans les deux zones prévues. */
+  { id: 'mandat-mpr-formulaire', officiel: true, nom: 'Mandat MaPrimeRénov\' – par formulaire', resume: 'Cerfa de l\'Anah rempli par questions : client, cases, date, signatures',
+    fichier: 'modeles/cerfa_mandat_general_mpr.pdf',
+    blocs: [
+      { t: 'titre', texte: 'Mandat MaPrimeRénov\' (administratif et / ou financier)' },
+      { t: 'section', texte: 'Le mandant (votre client)' },
+      { t: 'choix', id: 'civ', label: 'Civilité', options: ['M.', 'Mme'], defaut: 'M.' },
+      { t: 'champ', id: 'nom', label: 'Nom', requis: true, client: 'nom' },
+      { t: 'champ', id: 'prenom', label: 'Prénom', client: 'prenom' },
+      { t: 'champ', id: 'dossier', label: 'N° de dossier MPR (si vous l\'avez)' },
+      { t: 'case', id: 'proprio', label: 'Propriétaire ou titulaire d\'un droit réel sur le logement', defaut: true },
+      { t: 'champ', id: 'adresse', label: 'Adresse du logement à rénover', client: 'adresse' },
+      { t: 'champ', id: 'cp', label: 'Code postal', clavier: 'numeric', client: 'cp' },
+      { t: 'champ', id: 'ville', label: 'Commune', client: 'ville' },
+      { t: 'champ', id: 'email', label: 'E-mail', clavier: 'email', client: 'email' },
+      { t: 'champ', id: 'tel', label: 'Téléphone', clavier: 'tel', client: 'tel' },
+      { t: 'section', texte: 'Le mandataire (votre entreprise)' },
+      { t: 'choix', id: 'mCiv', label: 'Civilité du représentant', options: ['M.', 'Mme'], defaut: 'M.', memo: true },
+      { t: 'champ', id: 'mNom', label: 'Nom du représentant', memo: true },
+      { t: 'champ', id: 'mPrenom', label: 'Prénom du représentant', memo: true },
+      { t: 'para', texte: 'Raison sociale, adresse, e-mail et téléphone : repris de Paramètres → Mon entreprise ({E.nom}).' },
+      { t: 'section', texte: 'Objet du mandat' },
+      { t: 'case', id: 'administratif', label: 'Mandat administratif : constituer le dossier à la place du client', defaut: true, memo: true },
+      { t: 'case', id: 'financier', label: 'Mandat financier : percevoir la prime à la place du client', memo: true },
+      { t: 'faitA', id: 'fait' },
+      { t: 'signature', id: 'sig-client', label: 'Signature du mandant (client)', qui: 'client' },
+      { t: 'signature', id: 'sig-ent', label: 'Signature du mandataire (entreprise)', qui: 'entreprise' }
+    ],
+    async remplir(doc, rep, e) {
+      const form = doc.getForm();
+      const ecrire = (nom, v) => { try { if (!v) return; const f = form.getTextField(nom), max = f.getMaxLength(), t = versWinAnsi(String(v)).replace(/\n/g, ' '); f.setText(max ? t.slice(0, max) : t); } catch (err) { console.warn('Champ non rempli :', nom, err); } };
+      const cocher = (debut, oui) => { try { const f = form.getFields().find(x => x.getName().startsWith(debut)); if (!f) return; oui ? f.check() : f.uncheck(); } catch (err) { console.warn('Case non cochée :', debut, err); } };
+      // Le mandant
+      cocher(rep.civ === 'Mme' ? 'ou Madame' : 'Monsieur', true);
+      ecrire('Nom', (rep.nom || '').toUpperCase()); ecrire('Prénom', rep.prenom);
+      const numero = String(rep.dossier || '').replace(/^mpr/i, '').replace(/[^0-9a-z]/gi, '');
+      if (numero) { let l1 = 4; try { l1 = form.getTextField('N du dossier MPR (partie 1)').getMaxLength() || 4; } catch {} ecrire('N du dossier MPR (partie 1)', numero.slice(0, l1)); ecrire('N du dossier MPR (partie 2)', numero.slice(l1)); }
+      cocher('Propriétaire ou titulaire', rep.proprio !== false);
+      ecrire('Adresse postale du logement à rénover', rep.adresse); ecrire('Code postal du logement à rénover', rep.cp); ecrire('Commune du logement à rénover', rep.ville);
+      ecrire('Adresse mail', rep.email); ecrire('Téléphone mobile ou fixe', String(rep.tel || '').replace(/\s/g, ''));
+      // Le mandataire
+      cocher(rep.mCiv === 'Mme' ? 'Madame (mandataire)' : 'Monsieur (mandataire)', true);
+      ecrire('Nom mandataire', (rep.mNom || '').toUpperCase()); ecrire('Prénom mandataire', rep.mPrenom);
+      const [, cpE = '', villeE = ''] = String(e.cpVille || '').match(/^\s*(\d{4,5})?\s*(.*)$/) || [];
+      ecrire('Raison sociale si personne morale', e.nom); ecrire('Adresse postale mandataire', e.adresse); ecrire('Code postal mandataire', cpE); ecrire('Commune mandataire', villeE);
+      ecrire('Adresse mail mandataire', e.email); ecrire('Téléphone mobile ou fixe mandataire', String(e.tel || '').replace(/\s/g, ''));
+      // L'objet du mandat
+      cocher('Mandat ADMINISTRATIF', rep.administratif !== false); cocher('Mandat FINANCIER', !!rep.financier);
+      // Fait à … le … et les noms sous les signatures
+      const f = rep.fait || {};
+      ecrire('Fait à', f.lieu);
+      if (f.date) { const [a, mo, j] = f.date.split('-'); ecrire('le, jour', j); ecrire('mois', mo); ecrire('année', a); }
+      ecrire('Nom et Prénom du demandeur', [(rep.nom || '').toUpperCase(), rep.prenom].filter(Boolean).join(' '));
+      ecrire('Nom et Prénom du mandataire ou Raison sociale du mandataire', e.nom || [rep.mNom, rep.mPrenom].filter(Boolean).join(' '));
+      // Signatures : posées dans les deux zones prévues (le champ de la zone reste vide et verrouillé)
+      const img = async url => url.startsWith('data:image/png') ? doc.embedPng(dataUrlVersOctets(url)) : doc.embedJpg(dataUrlVersOctets(url));
+      const zone = nom => { try { const ch = form.getTextField(nom), w = ch.acroField.getWidgets()[0], rc = w.getRectangle(), page = doc.getPages().find(p => p.ref === w.P()) || doc.getPages()[1]; ch.enableReadOnly(); return { page, ...rc }; } catch (err) { console.warn('Zone de signature introuvable :', nom, err); return null; } };
+      const poser = async (z, url, de = 0, a = 1) => { if (!z || !url) return; const im = await img(url), k = Math.min((z.width * (a - de) - 6) / im.width, (z.height - 4) / im.height); z.page.drawImage(im, { x: z.x + z.width * de + 3, y: z.y + 2, width: im.width * k, height: im.height * k }); };
+      const zc = zone('Espace signature demandeur'), zm = zone('Espace signature mandataire'), se = rep['sig-ent'];
+      await poser(zc, rep['sig-client']?.png);
+      await poser(zm, se?.png, 0, se?.tampon ? 0.5 : 1);
+      await poser(zm, se?.tampon, 0.5, 1);
     } }
 ];
 
@@ -8485,7 +8614,9 @@ async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
   if (onglet === 'modeles' && enEntreprise()) return ouvrirFormulaires();
   const fe = feuille({ titre: 'Fichiers', plein: true, pied: false, page: 'documents', rouvrir: () => ouvrirMesDocuments(courant, filtreDoc) });
   const zone = el('div', { class: 'liste-docs' });
-  let courant = onglet;
+  let courant = onglet, seulFavoris = false;
+  const btnFavoris = el('button', { type: 'button', class: 'btn puce btn-filtre-fav', 'aria-pressed': 'false', title: 'Afficher seulement mes favoris',
+    onclick: () => { seulFavoris = !seulFavoris; btnFavoris.setAttribute('aria-pressed', String(seulFavoris)); afficher(); } }, '★ Favoris');
   const onglets = [['documents', 'Documents'], ['historique', 'Historique'], ...(enEntreprise() ? [] : [['modeles', 'Modèles']])];
   if (driveConfigure()) onglets.push(['drive', 'Drive']);
   const barreOnglets = segments('mesdocs', onglets, courant, v => { courant = v; filtreDoc = null; afficher(); });
@@ -8517,7 +8648,7 @@ async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
   });
   appliquerVue(['cartes', 'lignes'].includes(prefs.vueDocs) ? prefs.vueDocs : 'liste');
   fe.corps.append(el('div', { class: 'barre-recherche-docs' },
-    el('label', { for: 'recherche-docs', class: 'lib-recherche' }, icone('zoom'), 'Rechercher'), champRecherche, choixVue), barreOnglets, infoRecherche, zone);
+    el('label', { for: 'recherche-docs', class: 'lib-recherche' }, icone('zoom'), 'Rechercher'), champRecherche, btnFavoris, choixVue), barreOnglets, infoRecherche, zone);
   const ouvrirPuis = async fn => { await fe.fermer(); fn(); };
   const surDrive = () => { if (!zone.isConnected) document.removeEventListener('drive-etat', surDrive); else if (courant === 'drive' || courant === 'documents') afficher(); };
   document.addEventListener('drive-etat', surDrive);
@@ -8529,12 +8660,13 @@ async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
     zone.replaceChildren();
     if (!prefs.garderDocuments && courant !== 'modeles') zone.append(el('p', { class: 'note', text: 'La sauvegarde des documents est désactivée dans les Paramètres.' }));
     if (courant === 'documents') {
-      const liste = docs.filter(d => !d.modele).sort((a, b) => b.maj - a.maj);
-      if (!liste.length) { zone.append(el('p', { class: 'vide', text: 'Les documents que vous modifiez apparaîtront ici automatiquement, pour reprendre plus tard.' })); return; }
+      const liste = docs.filter(d => !d.modele && (!seulFavoris || estFavori('doc:' + d.id))).sort((a, b) => estFavori('doc:' + b.id) - estFavori('doc:' + a.id) || b.maj - a.maj);
+      if (!liste.length) { zone.append(el('p', { class: 'vide', text: seulFavoris ? 'Aucun favori pour l\'instant. Touchez l\'étoile d\'un document pour le retrouver ici.' : 'Les documents que vous modifiez apparaîtront ici automatiquement, pour reprendre plus tard.' })); return; }
       const nbVersions = id => hist.filter(h => h.docId === id).length;
       liste.forEach(d => zone.append(ligneDoc({ apercu: d.apercu, titre: d.nom, detail: `Modifié ${quand(d.maj)} · ${d.pages} page${d.pages > 1 ? 's' : ''}`, badges: badgesDoc(d, hist),
         onclick: () => ouvrirPuis(() => ouvrirSauvegarde(d)),
         actions: [
+          boutonFavori('doc:' + d.id, d.nom, afficher),
           bouton('', { ico: 'info', cls: 'btn-icone', label: `Historique des actions de ${d.nom}`, onclick: () => ouvrirJournal(d) }),
           nbVersions(d.id) ? bouton(String(nbVersions(d.id)), { ico: 'horloge', cls: 'btn-icone avec-nombre', label: `Versions envoyées de ${d.nom}`, onclick: () => { courant = 'historique'; filtreDoc = d.id; fe.corps.querySelector('input[name="mesdocs"][value="historique"]').checked = true; afficher(); } }) : '',
           bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: `Supprimer ${d.nom}`, onclick: async () => {
