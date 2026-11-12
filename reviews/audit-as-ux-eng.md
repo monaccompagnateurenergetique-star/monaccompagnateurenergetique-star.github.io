@@ -34,8 +34,8 @@ L'utilisateur (artisan, débutant en informatique) compose un document en posant
 | # | Sujet | Effet | Piste |
 |---|---|---|---|
 | 1 | Téléphone : pas de dépôt sur le côté depuis la palette | Les colonnes se font par la place libre ou le réglage Largeur | Acceptable ; à revoir si besoin |
-| 2 | Annuler (Ctrl+Z) limité à la suppression d'un bloc | Une erreur de déplacement se rattrape à la main | Historique d'annulation du modèle |
-| 3 | Question à plusieurs réponses | Manque pour certaines fiches de visite | Nouveau type « Cases multiples » |
+| 2 | Annuler limité à la suppression d'un bloc | FAIT (v79) : flèches annuler / rétablir, Ctrl+Z / Ctrl+Y | — |
+| 3 | Question à plusieurs réponses | FAIT (v79) : bloc « Choix multiple » | — |
 | 4 | Formulaire du vrai remplissage | Habillage moins soigné que l'essai du créateur | Reprendre les cartes par section |
 
 ## Cohérence
@@ -48,6 +48,6 @@ L'utilisateur (artisan, débutant en informatique) compose un document en posant
 
 - Découvrabilité : RÉUSSI (place libre visible, astuce sous la palette)
 - Parcours complet : RÉUSSI
-- Rattrapage d'erreur : RÉSERVES (annulation limitée)
+- Rattrapage d'erreur : RÉUSSI (historique annuler / rétablir depuis la v79)
 - Retours du système : RÉUSSI
 - Cohérence : RÉUSSI
