@@ -516,9 +516,11 @@ a{color:var(--accent)}
 .annotationLayer .textWidgetAnnotation textarea{resize:none}
 .annotationLayer :is(.textWidgetAnnotation :is(input,textarea),.choiceWidgetAnnotation select):focus{background:rgba(0,84,255,.04);border-color:var(--edition);outline:none}
 .annotationLayer .textWidgetAnnotation input.comb{font-family:monospace;padding-left:2px;padding-right:0}
-.annotationLayer .buttonWidgetAnnotation:is(.checkBox,.radioButton) input{appearance:none;-webkit-appearance:none;width:100%;height:100%;margin:0;background:rgba(0,84,255,.10);border:1px solid rgba(0,84,255,.35);display:block}
+.annotationLayer .buttonWidgetAnnotation:is(.checkBox,.radioButton) input{appearance:none;-webkit-appearance:none;width:100%;height:100%;margin:0;background:rgba(0,84,255,.10)!important;border:1px solid rgba(0,84,255,.35)!important;display:block;cursor:pointer}
 .annotationLayer .buttonWidgetAnnotation.radioButton input{border-radius:50%}
-.annotationLayer .buttonWidgetAnnotation:is(.checkBox,.radioButton) input:checked{background:#1b2130 content-box;padding:18%;border-color:#1b2130}
+/* Certains formulaires imposent un fond blanc à leurs cases : la coche est forcée pour rester visible */
+.annotationLayer .buttonWidgetAnnotation.checkBox input:checked{background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231b2130' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12.5l5.5 5.5L20 6.5'/%3E%3C/svg%3E") center/84% no-repeat!important;border-color:#1b2130!important}
+.annotationLayer .buttonWidgetAnnotation.radioButton input:checked{background:#1b2130 content-box!important;padding:18%;border-color:#1b2130!important}
 .annotationLayer .buttonWidgetAnnotation:not(.checkBox):not(.radioButton) input{display:none}
 .annotationLayer .popupAnnotation,.annotationLayer .popupTriggerArea{display:none}
 
@@ -1461,7 +1463,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.40.1';
+const VERSION_APPLI = '1.40.2';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
