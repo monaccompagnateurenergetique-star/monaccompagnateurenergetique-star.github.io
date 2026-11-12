@@ -1035,7 +1035,10 @@ body .feuille.createur.cr-hors-edition .cr-pied,.cr-hors-edition .cr-btn-theme{d
 .cr-pastille-theme{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px 0 6px;border:1px solid var(--ligne);border-radius:99px;background:#fff;font:600 13px/1 system-ui,sans-serif;color:var(--encre)}
 .cr-pastille-theme i{width:22px;height:22px;border-radius:50%}
 .cr-pastille-theme[aria-pressed="true"]{border-color:var(--encre);box-shadow:0 0 0 1px var(--encre)}
-.onglets-modeles{margin:0 0 16px}
+.onglets-modeles{margin:0 0 12px}
+.outils-modeles{margin-bottom:6px}
+.outils-modeles .tri-modeles{flex:0 0 auto;width:auto;min-width:170px}
+@media (max-width:640px){.outils-modeles{flex-wrap:wrap}.outils-modeles .tri-modeles{flex:1 1 100%}}
 .page-modeles .grille-formulaires{margin-bottom:8px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
 .carte-modele-actions .btn{min-width:0;gap:5px}
 .carte-modele-actions .btn .ico{width:18px;height:18px}
@@ -1080,14 +1083,25 @@ body .feuille.apercu-biblio .feuille-corps{background:#e8ecea}
 .cr-bloc{position:relative;border-radius:8px;outline:1px dashed #d0d7dd;outline-offset:3px;padding:1px 2px;transition:outline-color .12s}
 @media (hover:hover){.cr-bloc:hover{outline-color:#8fa69a}}
 .cr-bloc.cadre-bord,.cr-bloc-rempli.cadre-bord{border:1.5px solid var(--doc-c1);border-radius:8px;padding:8px 10px}
-.cr-bloc.cadre-fond,.cr-bloc-rempli.cadre-fond{background:color-mix(in srgb,var(--doc-c1) 10%,#fff);border-radius:8px;padding:8px 10px}
+.cr-glissiere{width:100%;accent-color:var(--accent);min-height:32px}
+.cr-bloc.cadre-fond,.cr-bloc-rempli.cadre-fond{background:color-mix(in srgb,var(--doc-c1) var(--fond-pct,10%),#fff);border-radius:8px;padding:8px 10px}
 .cr-redim{display:none;position:absolute;top:50%;right:-11px;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:#fff;border:2px solid #1fae76;box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:ew-resize;touch-action:none;z-index:4}
 .cr-redim::before{content:"";position:absolute;inset:-10px}
 .cr-bloc.choisi>.cr-redim{display:block}
 .cr-hist{width:40px;height:40px}
 .cr-hist.refaire .ico{transform:scaleX(-1)}
 .cr-hist:disabled{opacity:.3;cursor:default}
-.cr-fe-titre{padding:14px 16px;border-radius:14px;background:var(--accent);color:#fff;font-weight:700;font-size:17px}
+.cr-fe-titre{display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:14px;background:var(--accent);color:#fff;font-weight:700;font-size:17px}
+.jauge-form{display:flex;align-items:center;gap:10px}
+.jauge-form-barre{flex:1;height:8px;border-radius:99px;background:rgba(27,33,48,.12);overflow:hidden}
+.jauge-form-barre span{display:block;height:100%;width:0;border-radius:99px;background:var(--accent);transition:width .2s}
+.jauge-form small{font-size:12.5px;font-weight:600;white-space:nowrap;color:var(--doux)}
+.jauge-form.complet small{color:var(--accent-fort)}
+.cr-fe-titre .jauge-form-barre{background:rgba(255,255,255,.3)}
+.cr-fe-titre .jauge-form-barre span{background:#fff}
+.cr-fe-titre .jauge-form small{color:#fff}
+.saisie-form>.feuille-corps>.jauge-form{position:sticky;top:-16px;z-index:3;margin-bottom:12px;padding:10px 14px;border-radius:12px;background:var(--carte);box-shadow:var(--ombre)}
+@media (prefers-reduced-motion:reduce){.jauge-form-barre span{transition:none}}
 .cr-bloc.choisi{outline:2px solid #1fae76}
 .cr-outils-bloc{position:absolute;bottom:calc(100% + 9px);right:-6px;display:none;gap:1px;background:#1b2130;border-radius:10px;padding:3px;z-index:3;box-shadow:0 6px 16px rgba(0,0,0,.22)}
 .cr-bloc.choisi .cr-outils-bloc{display:flex}
@@ -1127,7 +1141,7 @@ body .feuille.apercu-biblio .feuille-corps{background:#e8ecea}
 @media (max-width:640px){.cr-colonnes.n2,.cr-colonnes.n3{grid-template-columns:1fr;gap:10px}.cr-colonnes.separees>div+div{border-left:0;padding-left:0;border-top:1px solid #cfd5dc;padding-top:8px}}
 .cr-ligne{border-top:1px solid;margin:4px 0}
 .cr-encadre{border-radius:8px;padding:10px 12px}
-.cr-encadre.pale{background:color-mix(in srgb,var(--doc-c1) 10%,#fff)}
+.cr-encadre.pale{background:color-mix(in srgb,var(--doc-c1) var(--fond-pct,10%),#fff)}
 .cr-encadre.bord{border:1.5px solid var(--doc-c1)}
 .cr-tableau{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.92em}
 .cr-tableau th,.cr-tableau td{border:1px solid #cfd5dc;padding:5px 7px;text-align:left;vertical-align:top}
@@ -1435,7 +1449,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.38.0';
+const VERSION_APPLI = '1.39.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -4506,8 +4520,32 @@ async function ouvrirFormulaires(onglet = 'miens') {
   const barreOnglets = segments('onglet-modeles', [['miens', 'Mes modèles'], ['biblio', 'Bibliothèque']], onglet, v => { onglet = v; afficher(); });
   barreOnglets.classList.add('onglets', 'onglets-modeles');
   const zone = el('div', {});
-  fe.corps.append(barreOnglets, zone);
-  const carteModele = (ico, cls, nom, detail, actions, badge) => el('div', { class: 'case-form carte-modele' }, el('div', { class: 'carte-form' },
+  const sansAccentM = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const champR = el('input', { type: 'search', class: 'champ', id: 'recherche-modeles', placeholder: 'Nom du modèle…', autocomplete: 'off', enterkeyhint: 'search' });
+  const tri = el('select', { class: 'champ tri-modeles', 'aria-label': 'Trier mes modèles' }, [['recents', 'Les plus récents'], ['az', 'Nom : A → Z'], ['za', 'Nom : Z → A']].map(([v, t]) => el('option', { value: v, text: t, selected: prefs.triModeles === v })));
+  const infoR = el('p', { class: 'info-recherche', 'aria-live': 'polite' });
+  let majDe = new Map();
+  /** Recherche (dans l'onglet affiché) et tri de « Mes modèles ». */
+  function appliquerTri() {
+    const q = sansAccentM(champR.value.trim()); let vus = 0;
+    tri.hidden = onglet === 'biblio';
+    for (const grille of zone.querySelectorAll('.grille-formulaires')) {
+      const cartes = [...grille.querySelectorAll(':scope > .carte-modele')];
+      if (onglet === 'miens') {
+        const t = tri.value;
+        cartes.sort((a, b) => t === 'az' ? a.dataset.nom.localeCompare(b.dataset.nom, 'fr') : t === 'za' ? b.dataset.nom.localeCompare(a.dataset.nom, 'fr') : (majDe.get(b.dataset.nom) || 0) - (majDe.get(a.dataset.nom) || 0));
+        cartes.forEach(c => grille.append(c));
+      }
+      let n = 0; cartes.forEach(c => { const ok = !q || sansAccentM(c.textContent).includes(q); c.hidden = !ok; if (ok) n++; });
+      vus += n;
+      const titre = grille.previousElementSibling; if (titre?.classList.contains('titre-section')) titre.hidden = !n;
+    }
+    infoR.textContent = q ? (vus ? `${vus} modèle${vus > 1 ? 's' : ''} trouvé${vus > 1 ? 's' : ''}` : `Aucun modèle pour « ${champR.value.trim()} ».`) : '';
+  }
+  champR.addEventListener('input', appliquerTri);
+  tri.addEventListener('change', () => { prefs.triModeles = tri.value; ecrirePrefs(prefs); appliquerTri(); });
+  fe.corps.append(barreOnglets, el('div', { class: 'barre-recherche-docs outils-modeles' }, el('label', { for: 'recherche-modeles', class: 'lib-recherche' }, icone('zoom'), 'Rechercher'), champR, tri), infoR, zone);
+  const carteModele = (ico, cls, nom, detail, actions, badge) => el('div', { class: 'case-form carte-modele', dataset: { nom } }, el('div', { class: 'carte-form' },
     el('span', { class: 'carte-form-ico ' + cls }, icone(ico)), badge ? el('small', { class: 'badge-ajoute', text: badge }) : null,
     el('strong', { text: nom }), el('span', { text: detail }), el('div', { class: 'carte-modele-actions' }, actions)));
   let pdfs = [];
@@ -4515,7 +4553,7 @@ async function ouvrirFormulaires(onglet = 'miens') {
   if (fe.ferme()) return;
   function afficher() {
     zone.replaceChildren();
-    if (onglet === 'biblio') return afficherBibliotheque();
+    if (onglet === 'biblio') { afficherBibliotheque(); return appliquerTri(); }
     const e = entreprise();
     const supprimerMien = async m => {
       if (!(await confirmer({ titre: `Supprimer le modèle « ${m.nom} » ?`, texte: 'Le modèle disparaît de votre liste. Les PDF déjà créés ne changent pas.', action: 'Supprimer le modèle' }))) return;
@@ -4525,6 +4563,7 @@ async function ouvrirFormulaires(onglet = 'miens') {
     const miens = tousLesModeles().filter(m => m.perso);
     const ajoutes = [...MODELES_FORMULAIRES, ...MODELES_PDF].filter(m => modelesAjoutes().includes(m.id));
     const vide = !miens.length && !ajoutes.length && !pdfs.length;
+    majDe = new Map([...miens.map(x => [x.nom, x.doc?.maj || 0]), ...pdfs.map(d => [nomSansExt(d.nom), d.maj || 0])]);
     zone.append(...[
       el('div', { class: 'grille-formulaires' },
         el('button', { type: 'button', class: 'carte-form nouveau', onclick: async () => { const d = await choisirDepartDocument(); if (!d) return; await fe.fermer(); editerDocument(d); } },
@@ -4551,6 +4590,7 @@ async function ouvrirFormulaires(onglet = 'miens') {
       el('div', { class: 'pied-modeles' },
         bouton('Modèle à partir d\'un PDF déjà rempli', { ico: 'doc', onclick: () => nouveauModele(ouvrirPuis) }),
         !e.nom ? bouton('Renseigner mon entreprise (logo, adresse)', { ico: 'reglages', onclick: async () => { prefs.ongletParametres = 'p-entreprise'; ecrirePrefs(prefs); await fe.fermer(); ouvrirParametres(); } }) : null)].filter(Boolean));
+    appliquerTri();
   }
   function afficherBibliotheque() {
     const tous = bibliotheque();
@@ -4605,8 +4645,8 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null, e
       prefs.brouillonsForm = l; ecrirePrefs(prefs); majMenu();
     } catch (e) { console.warn('Brouillon non gardé', e); }
   }
-  let surChangement = null; const actionsBloc = {};
-  const changer = () => { touche = true; clearTimeout(minuteur); minuteur = setTimeout(sauverBrouillon, 800); majVisibles(); surChangement?.(); };
+  let surChangement = null, majAvancement = () => {}; const actionsBloc = {};
+  const changer = () => { touche = true; clearTimeout(minuteur); minuteur = setTimeout(sauverBrouillon, 800); majVisibles(); surChangement?.(); majAvancement(); };
   const zone = el('div', { class: 'form-blocs' });
   const blocsEls = [];
   function rendreBlocs(blocs, r, parent, prefixe = '') {
@@ -4738,6 +4778,7 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null, e
   }
   rendreBlocs(modele.blocs, rep, zone);
   majVisibles();
+  const jauge = jaugeFormulaire(); majAvancement = () => jauge.maj(modele.blocs, rep); majAvancement(); fe.corps.append(jauge.boite);
   if (modele.doc) {
     // Modèle du créateur : on remplit en touchant les champs du document (par défaut), ou par le formulaire
     let vue = prefs.vueRemplir === 'doc' ? 'doc' : 'form';
@@ -4754,7 +4795,7 @@ function saisirFormulaire(modele, { id = idUnique(), rep = {}, dossier = null, e
     fe.corps.append(choixVue, el('p', { class: 'note aide-remplir', text: 'Touchez un champ surligné pour le remplir.' }), planDoc, zone);
     fe.feuille.classList.add('remplir-createur');
     // Le formulaire prend la couleur du thème du document
-    { const c1 = themeDe(modele.doc).c1; for (const [k, v] of [['--accent', c1], ['--accent-fort', c1], ['--accent-pale', `color-mix(in srgb, ${c1} 13%, #fff)`]]) fe.feuille.style.setProperty(k, v); }
+    habillerFormulaire(fe.feuille, fe.corps, modele.doc);
     afficherVue();
   } else fe.corps.append(zone);
   fe.pied.append(
@@ -5103,12 +5144,19 @@ function mesurerBarreBas() {
   if (h) document.documentElement.style.setProperty('--h-menu-bas', h + 'px');
 }
 addEventListener('resize', () => requestAnimationFrame(mesurerBarreBas));
+/** « Lire un PDF » : on choisit un fichier, il s'ouvre en simple lecture ; le bouton « Modifier » fait passer à l'éditeur. */
+async function lireUnPdf() {
+  const [f] = await choisirFichiers(); if (!f) return;
+  if (!estPdf(f)) { toast('Ce fichier n\'est pas un PDF.'); return; }
+  ouvrirFichier(f, { lecture: true });
+}
 /** Page « Outils PDF » : tous les outils au même endroit, rangés par usage. */
 function ouvrirOutils() {
   const fe = feuille({ titre: 'Outils PDF', plein: true, pied: false, page: 'outils', rouvrir: () => ouvrirOutils() });
   fe.feuille.classList.add('large', 'page-outils');
   const groupes = [
-    ['Modifier un PDF', [
+    ['Lire et modifier un PDF', [
+      [lireUnPdf, 'livre', 'Lire un PDF', 'Ouvrir pour consulter ; « Modifier » ouvre l\'éditeur'],
       ['#btn-ouvrir', 'crayon', 'Modifier', 'Ajouter du texte, des photos, corriger, masquer'],
       ['#btn-signer', 'signature', 'Signer', 'Signature et tampon'],
       ['#btn-remplir', 'texte', 'Remplir un formulaire', 'Cerfa, mandat, contrat…'],
@@ -5126,7 +5174,7 @@ function ouvrirOutils() {
       ...(enEntreprise() ? [['#btn-creer-tampon', 'tampon', 'Créer un tampon', 'Votre société, signé dessus']] : [])]]];
   for (const [titre, outils] of groupes) fe.corps.append(el('h3', { class: 'titre-section', text: titre }),
     el('div', { class: 'grille-formulaires' }, outils.map(([sel, ico, nom, detail]) => el('div', { class: 'case-form' },
-      el('button', { type: 'button', class: 'carte-form', onclick: () => naviguer(() => $('#ecran-accueil ' + sel)?.click()) },
+      el('button', { type: 'button', class: 'carte-form', onclick: () => naviguer(typeof sel === 'function' ? sel : () => $('#ecran-accueil ' + sel)?.click()) },
         el('span', { class: 'carte-form-ico' }, icone(ico)), el('strong', { text: nom }), el('span', { text: detail }))))));
 }
 /** Bouton « Créer » (téléphone) : les façons de commencer un document. */
@@ -5614,6 +5662,30 @@ function normaliserModeleDoc(m) {
   return m;
 }
 const modelesDoc = () => (prefs.modelesDoc || []).map(normaliserModeleDoc);
+/** Le formulaire à remplir prend la couleur choisie pour lui, sinon celle du document ; son fond peut être teinté. */
+function habillerFormulaire(cible, fond, m) {
+  const c = m.form?.couleur || themeDe(m).c1;
+  for (const [k, v] of [['--accent', c], ['--accent-fort', c], ['--accent-pale', `color-mix(in srgb, ${c} 13%, #fff)`]]) cible.style.setProperty(k, v);
+  fond.style.background = m.form?.fond === 'teinte' ? `color-mix(in srgb, ${c} 10%, #fff)` : '';
+}
+/** Jauge d'avancement : nombre de réponses données sur le nombre de questions affichées. */
+function jaugeFormulaire() {
+  const trait = el('span'), texte = el('small');
+  const barre = el('div', { class: 'jauge-form-barre', role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-label': 'Avancement du formulaire' }, trait);
+  const boite = el('div', { class: 'jauge-form' }, barre, texte);
+  return { boite, maj(blocs, rep) {
+    let n = 0, ok = 0;
+    for (const b of blocs) {
+      if (!b.id || b.t === 'section' || !visible(b, rep)) continue;
+      n++; const v = rep[b.id];
+      if (Array.isArray(v) ? v.length : typeof v === 'string' ? v.trim() : v && typeof v === 'object' ? (b.t === 'faitA' ? v.lieu : true) : v) ok++;
+    }
+    const pct = n ? Math.round(ok / n * 100) : 0;
+    trait.style.width = pct + '%'; barre.setAttribute('aria-valuenow', String(pct));
+    texte.textContent = !n ? '' : pct === 100 ? 'Complet · 100 %' : `${ok} / ${n} réponses · ${pct} %`;
+    boite.classList.toggle('complet', n > 0 && pct === 100);
+  } };
+}
 const questionDe = (m, cle) => (m.questions || []).find(q => q.cle === cle);
 const dateLongue = () => new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 /** Un bloc soumis à une condition n'apparaît que si la réponse attendue a été donnée. */
@@ -5886,7 +5958,7 @@ function editerDocument(source) {
   fe.feuille.classList.add('large', 'createur');
   const modifie = () => { sauve = false; clearTimeout(minuteur); minuteur = setTimeout(() => { if (supprime) return; enregistrerModeleDoc(m); sauve = true; }, 700); clearTimeout(minuteurHist); minuteurHist = setTimeout(noterHist, 500); };
   /* Historique : chaque changement est noté (la frappe est regroupée) ; les flèches reviennent en arrière ou en avant */
-  const etatHist = () => JSON.stringify({ nom: m.nom, theme: m.theme, entete: m.entete, pied: m.pied, questions: m.questions, blocs: m.blocs });
+  const etatHist = () => JSON.stringify({ nom: m.nom, theme: m.theme, entete: m.entete, pied: m.pied, form: m.form || null, questions: m.questions, blocs: m.blocs });
   let hist = [etatHist()], posHist = 0, minuteurHist;
   function noterHist() {
     clearTimeout(minuteurHist);
@@ -6068,6 +6140,7 @@ function editerDocument(source) {
     const n = el('div', { class: `cr-bloc cr-b-${b.type}${choisi === b.id ? ' choisi' : ''}${cond ? ' conditionnel' : ''}`, dataset: { id: b.id } }, outils, cond, corps);
     if (b.couleur) n.style.setProperty('--doc-c1', b.couleur);
     if (b.cadre) n.classList.add('cadre-' + b.cadre);
+    if (b.fondPct) n.style.setProperty('--fond-pct', b.fondPct + '%');
     // Poignée de largeur : on tire le bord droit du bloc (tiers, moitié, deux tiers, toute la ligne)
     if (peutPartager(m, b)) {
       const redim = el('span', { class: 'cr-redim', title: 'Tirer pour changer la largeur', 'aria-hidden': 'true' });
@@ -6271,7 +6344,8 @@ function editerDocument(source) {
     };
     pop = el('div', { class: 'cr-pop cr-pop-couleur', role: 'dialog', 'aria-label': 'Couleur du texte' },
       el('div', { class: 'cr-pastilles' }, ['#1d222c', themeDe(m).c1, ...COULEURS_DOC.filter(c => c !== themeDe(m).c1), '#b42318', '#8a92a0'].map(c =>
-        el('button', { type: 'button', class: 'cr-pastille', 'aria-label': 'Couleur ' + c, style: { background: c }, onpointerdown: e => e.preventDefault(), onclick: () => appliquer(c) }))));
+        el('button', { type: 'button', class: 'cr-pastille', 'aria-label': 'Couleur ' + c, style: { background: c }, onpointerdown: e => e.preventDefault(), onclick: () => appliquer(c) })),
+        (() => { const p = el('input', { type: 'color', class: 'cr-couleur', 'aria-label': 'Autre couleur (pipette)', title: 'Autre couleur, avec pipette' }); p.value = '#1d222c'; p.addEventListener('change', () => appliquer(p.value)); return p; })()));
     pop.style.zIndex = zFeuille + 5; document.body.append(pop);
     pop.style.left = clamp(x - 120, 8, innerWidth - 308) + 'px'; pop.style.top = clamp(y, 8, Math.max(8, innerHeight - 120)) + 'px';
   }
@@ -6361,7 +6435,9 @@ function editerDocument(source) {
   let vueTest = 'form';
   /** Le formulaire tel qu'il se remplit sur téléphone : une carte par section, les questions dans l'ordre de la page. */
   function formulaireEssai() {
-    const racine = el('div', { class: 'cr-form-essai' }, el('div', { class: 'cr-fe-titre', text: m.nom || m.blocs.find(b => b.type === 'titre')?.texte || 'Formulaire' }));
+    const blocsForm = formulaireDuDocument(m), jauge = jaugeFormulaire(), majAv = () => jauge.maj(blocsForm, repTest);
+    majAv();
+    const racine = el('div', { class: 'cr-form-essai' }, el('div', { class: 'cr-fe-titre' }, el('span', { text: m.nom || m.blocs.find(b => b.type === 'titre')?.texte || 'Formulaire' }), jauge.boite));
     let carte = el('div', { class: 'cr-fe-carte' }); racine.append(carte);
     for (const b of formulaireDuDocument(m)) {
       if (!visible(b, repTest)) continue;
@@ -6370,7 +6446,7 @@ function editerDocument(source) {
       if (['champ', 'zone', 'date'].includes(b.t)) {
         const c = b.t === 'zone' ? el('textarea', { class: 'champ', id, rows: 3 }) : el('input', { class: 'champ', id, type: b.t === 'date' ? 'date' : 'text', inputmode: b.clavier || null, autocomplete: 'off' });
         c.value = typeof repTest[b.id] === 'string' ? repTest[b.id] : '';
-        c.addEventListener('input', () => { repTest[b.id] = c.value; });
+        c.addEventListener('input', () => { repTest[b.id] = c.value; majAv(); });
         carte.append(el('div', { class: 'form-bloc' }, el('label', { class: 'etiquette', for: id }, b.label, etoile), c));
       } else if (b.t === 'multi') { const liste = Array.isArray(repTest[b.id]) ? repTest[b.id] : []; carte.append(el('div', { class: 'form-bloc' }, el('div', { class: 'etiquette' }, b.label, etoile),
         el('div', { class: 'cr-choix', role: 'group', 'aria-label': b.label }, b.options.map(o =>
@@ -6391,7 +6467,7 @@ function editerDocument(source) {
   }
   function rendreTest() {
     const haut = zoneTest.scrollTop;
-    { const c1 = themeDe(m).c1; for (const [k, v] of [['--accent', c1], ['--accent-fort', c1], ['--accent-pale', `color-mix(in srgb, ${c1} 13%, #fff)`]]) zoneTest.style.setProperty(k, v); }
+    habillerFormulaire(zoneTest, zoneTest, m);
     const choix = segments('cr-vue-test', [['form', 'Formulaire'], ['doc', 'Sur le document']], vueTest, v => { vueTest = v; rendreTest(); });
     choix.classList.add('choix-remplir');
     zoneTest.replaceChildren(
@@ -6493,7 +6569,15 @@ function editerDocument(source) {
       const actuelle = b.couleur || (b.coul === 'gris' ? '#8a92a0' : null);
       parts.push(ligneReglage('Couleur', el('div', { class: 'cr-pastilles' },
         el('button', { type: 'button', class: 'cr-pastille-theme', 'aria-pressed': String(!actuelle), onclick: () => { delete b.couleur; delete b.coul; apres(); } }, el('i', { style: { background: themeDe(m).c1 } }), 'Thème'),
-        [...COULEURS_DOC, '#8a92a0'].map(c => el('button', { type: 'button', class: 'cr-pastille', 'aria-label': 'Couleur ' + c, 'aria-pressed': String(c === actuelle), style: { background: c }, onclick: () => { b.couleur = c; delete b.coul; apres(); } })))));
+        [...COULEURS_DOC, '#8a92a0'].map(c => el('button', { type: 'button', class: 'cr-pastille', 'aria-label': 'Couleur ' + c, 'aria-pressed': String(c === actuelle), style: { background: c }, onclick: () => { b.couleur = c; delete b.coul; apres(); } })),
+        (() => { const p = el('input', { type: 'color', class: 'cr-couleur', 'aria-label': 'Choisir une autre couleur (pipette)', title: 'Autre couleur, avec pipette' }); p.value = actuelle || themeDe(m).c1; p.addEventListener('change', () => { b.couleur = p.value; delete b.coul; apres(); }); return p; })())));
+    }
+    if (b.cadre === 'fond' || (b.type === 'encadre' && b.fond !== 'bord')) {
+      const idF = 'cr-fond-' + b.id, g = el('input', { type: 'range', class: 'cr-glissiere', id: idF, min: '5', max: '60', step: '5' });
+      g.value = String(b.fondPct ?? 10);
+      const lib = el('span', { text: g.value + ' %' });
+      g.addEventListener('input', () => { b.fondPct = +g.value; lib.textContent = g.value + ' %'; modifie(); rendrePage(); });
+      parts.push(el('div', { class: 'cr-reglage' }, el('label', { class: 'etiquette', for: idF }, 'Intensité du fond : ', lib), g));
     }
     if (peutPartager(m, b)) parts.push(ligneReglage('Largeur sur la ligne', seg('larg', [['', 'Toute'], ['d', '2/3'], ['m', '1/2'], ['t', '1/3']], b.l || '', v => { if (v) b.l = v; else delete b.l; })),
       el('p', { class: 'note', text: 'Les blocs étroits qui se suivent se placent côte à côte.' }));
@@ -6507,6 +6591,8 @@ function editerDocument(source) {
     const seg = (cle, opts, val, f) => segments('cr-th-' + cle, opts, val, f);
     const libre = el('input', { type: 'color', class: 'cr-couleur', 'aria-label': 'Autre couleur', title: 'Autre couleur' }); libre.value = th.c1;
     libre.addEventListener('change', () => changer('c1', libre.value));
+    const libreForm = el('input', { type: 'color', class: 'cr-couleur', 'aria-label': 'Autre couleur du formulaire (pipette)', title: 'Autre couleur, avec pipette' }); libreForm.value = m.form?.couleur || th.c1;
+    libreForm.addEventListener('change', () => { m.form = { ...(m.form || {}), couleur: libreForm.value }; apres(); });
     return el('div', { class: 'cr-reglages' },
       el('h3', { class: 'cr-h3', text: 'Thème du document' }),
       ligneReglage('Style de l\'en-tête', seg('style', [['sobre', 'Sobre'], ['bandeau', 'Bandeau'], ['encadre', 'Encadré']], th.style, v => changer('style', v))),
@@ -6517,7 +6603,13 @@ function editerDocument(source) {
       el('h3', { class: 'cr-h3', text: 'En-tête et pied de page' }),
       ligneReglage('En-tête (logo, coordonnées)', seg('entete', [['toutes', 'Toutes les pages'], ['premiere', '1re page'], ['aucun', 'Aucun']], m.entete || 'toutes', v => { m.entete = v; apres(); })),
       ligneReglage('Pied de page (mentions, numéro)', seg('pied', [['toutes', 'Toutes les pages'], ['aucun', 'Aucun']], m.pied || 'toutes', v => { m.pied = v; apres(); })),
-      el('p', { class: 'note', text: 'Logo, adresse et mentions viennent de Paramètres → Mon entreprise.' }));
+      el('p', { class: 'note', text: 'Logo, adresse et mentions viennent de Paramètres → Mon entreprise.' }),
+      el('h3', { class: 'cr-h3', text: 'Formulaire à remplir' }),
+      ligneReglage('Couleur du formulaire', el('div', { class: 'cr-pastilles' },
+        el('button', { type: 'button', class: 'cr-pastille-theme', 'aria-pressed': String(!m.form?.couleur), onclick: () => { m.form = { ...(m.form || {}), couleur: null }; apres(); } }, el('i', { style: { background: th.c1 } }), 'Comme le document'),
+        COULEURS_DOC.map(c => el('button', { type: 'button', class: 'cr-pastille', 'aria-label': 'Couleur ' + c, 'aria-pressed': String(m.form?.couleur === c), style: { background: c }, onclick: () => { m.form = { ...(m.form || {}), couleur: c }; apres(); } })), libreForm)),
+      ligneReglage('Fond du formulaire', seg('ffond', [['clair', 'Clair'], ['teinte', 'Teinté']], m.form?.fond === 'teinte' ? 'teinte' : 'clair', v => { m.form = { ...(m.form || {}), fond: v }; apres(); })),
+      el('p', { class: 'note', text: 'Le résultat se voit dans la vue « Remplir ».' }));
   }
 
   async function essai() {
@@ -6606,7 +6698,7 @@ function pageDocRemplie(m, rep, { changer, actions }) {
     el('div', { class: 'cr-entete-g' }, logo ? el('img', { src: logo.png, alt: 'Logo' }) : null,
       el('div', {}, el('strong', { text: e.nom || '' }), el('span', { text: [e.adresse, e.cpVille].filter(Boolean).join(', ') }), el('span', { text: [e.tel, e.email].filter(Boolean).join(' · ') }))),
     el('div', { class: 'cr-entete-d', text: dateLongue() })));
-  const enrobe = (b, n) => { const d = el('div', { class: 'cr-bloc-rempli' + (b.cadre ? ' cadre-' + b.cadre : '') }, n); if (b.couleur) d.style.setProperty('--doc-c1', b.couleur); return d; };
+  const enrobe = (b, n) => { const d = el('div', { class: 'cr-bloc-rempli' + (b.cadre ? ' cadre-' + b.cadre : '') }, n); if (b.couleur) d.style.setProperty('--doc-c1', b.couleur); if (b.fondPct) d.style.setProperty('--fond-pct', b.fondPct + '%'); return d; };
   const vis = m.blocs.filter(b => blocVisible(b, rep));
   for (const rg of rangeesDoc(m, vis)) {
     if (rg.length === 1 && fractionBloc(m, rg[0]) === 6) { const n = bloc(rg[0]); if (n) page.append(enrobe(rg[0], n)); continue; }
@@ -6657,7 +6749,7 @@ async function genererPdfDocument(m, rep) {
   let X = mg, L = largeur; // colonne en cours (blocs côte à côte)
   const filet = rgb(0.62, 0.66, 0.71); // ligne à remplir à la main
   const coulDe = b => b.couleur ? hexVersRgb(b.couleur) : b.coul === 'gris' ? trait : c1;
-  const paleDe = b => { if (!b.couleur) return pale; const n = parseInt(b.couleur.slice(1), 16) || 0; return rgb(...[16, 8, 0].map(s => ((n >> s) & 255) / 255 * 0.1 + 0.9)); };
+  const paleDe = b => { if (!b.couleur && !b.fondPct) return pale; const n = parseInt(String(b.couleur || th.c1).slice(1), 16) || 0, p = (b.fondPct ?? 10) / 100; return rgb(...[16, 8, 0].map(s => ((n >> s) & 255) / 255 * p + (1 - p))); };
   const cache = new Map();
   const image = async url => { if (!cache.has(url)) cache.set(url, url.startsWith('data:image/png') ? await doc.embedPng(dataUrlVersOctets(url)) : await doc.embedJpg(dataUrlVersOctets(url))); return cache.get(url); };
   const couperA = (t, f, taille, max) => { let s = versWinAnsi(t).replace(/\n/g, ' '); if (f.widthOfTextAtSize(s, taille) <= max) return s; while (s && f.widthOfTextAtSize(s + '…', taille) > max) s = s.slice(0, -1); return s + '…'; };
