@@ -1098,6 +1098,9 @@ body .feuille.apercu-biblio .feuille-corps{background:#e8ecea}
 .cr-tableau{width:100%;border-collapse:collapse;table-layout:fixed;font-size:.92em}
 .cr-tableau th,.cr-tableau td{border:1px solid #cfd5dc;padding:5px 7px;text-align:left;vertical-align:top}
 .cr-tableau th{background:color-mix(in srgb,var(--doc-c1) 10%,#fff);font-weight:700}
+.theme-bandeau .cr-section{background:var(--doc-c1);color:#fff}
+.theme-encadre .cr-section{border:1.5px solid var(--doc-c1)}
+.theme-sobre .cr-section{background:none;border-radius:0;padding:7px 0 4px;border-bottom:2px solid var(--doc-c1)}
 /* Questions */
 .cr-question{display:flex;flex-direction:column;gap:6px}
 .cr-q-tete{display:flex;align-items:baseline;gap:6px}
@@ -1391,7 +1394,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.34.0';
+const VERSION_APPLI = '1.35.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -6425,6 +6428,7 @@ async function genererPdfDocument(m, rep) {
   const c1 = teinte(0), pale = teinte(0.9);
   const T = 10.5, LH = 1.42;
   let X = mg, L = largeur; // colonne en cours (blocs côte à côte)
+  const filet = rgb(0.62, 0.66, 0.71); // ligne à remplir à la main
   const coulDe = b => b.couleur ? hexVersRgb(b.couleur) : b.coul === 'gris' ? trait : c1;
   const paleDe = b => { if (!b.couleur) return pale; const n = parseInt(b.couleur.slice(1), 16) || 0; return rgb(...[16, 8, 0].map(s => ((n >> s) & 255) / 255 * 0.1 + 0.9)); };
   const cache = new Map();
@@ -6446,7 +6450,7 @@ async function genererPdfDocument(m, rep) {
           if (!cur) nouveau(puce);
           const v = valeurChampDoc(m, n.dataset.champ, rep);
           if (v) v.split('\n').forEach((l, k) => { if (k) cur.runs.push({ br: true }); cur.runs.push({ t: l, ...st }); });
-          else cur.runs.push({ t: '……………', ...st, vide: true });
+          else cur.runs.push({ blanc: true });
           continue;
         }
         if (tag === 'BR') { if (!cur) nouveau(puce); cur.runs.push({ br: true }); continue; }
@@ -6467,6 +6471,7 @@ async function genererPdfDocument(m, rep) {
       const pousser = fin => { while (ligne.length && ligne[ligne.length - 1].espace) lw -= ligne.pop().w; res.push({ morceaux: ligne, puce: premiere ? p.puce : null, retrait, h: taille * LH, fin, taille }); ligne = []; lw = 0; premiere = false; };
       for (const r of p.runs) {
         if (r.br) { pousser(false); continue; }
+        if (r.blanc) { const w = Math.min(92, lmax); if (lw + w > lmax && ligne.length) pousser(false); ligne.push({ t: '', f: F.n, w, blanc: true }); lw += w; continue; }
         const f = police(r.b, r.i);
         for (let mot of versWinAnsi(r.t).split(/(\s+)/)) {
           if (!mot) continue;
@@ -6493,7 +6498,8 @@ async function genererPdfDocument(m, rep) {
     let cx = align === 'centre' ? x + (larg - total) / 2 : x + l.retrait;
     if (l.puce) page.drawText(l.puce, { x: x + 2, y: base, size: l.taille, font: F.n, color: couleur });
     for (const mo of l.morceaux) {
-      if (!mo.espace) page.drawText(mo.t, { x: cx, y: base, size: l.taille, font: mo.f, color: mo.gris ? doux : mo.c ? hexVersRgb(mo.c) : couleur });
+      if (mo.blanc) page.drawLine({ start: { x: cx + 2, y: base - 1.5 }, end: { x: cx + mo.w - 2, y: base - 1.5 }, thickness: 0.6, color: filet });
+      else if (!mo.espace) page.drawText(mo.t, { x: cx, y: base, size: l.taille, font: mo.f, color: mo.gris ? doux : mo.c ? hexVersRgb(mo.c) : couleur });
       if (mo.u) page.drawLine({ start: { x: cx, y: base - 1.6 }, end: { x: cx + mo.w, y: base - 1.6 }, thickness: 0.6, color: couleur });
       cx += mo.w;
     }
@@ -6505,7 +6511,7 @@ async function genererPdfDocument(m, rep) {
   // En-tête, pied de page, pages
   const logo = lireTampons().find(t => t.id === e.logoId);
   const lignesEnt = [e.nom ? { t: e.nom, b: true } : null, ...[[e.adresse, e.cpVille].filter(Boolean).join(', '), [e.tel, e.email].filter(Boolean).join(' - '), e.site].filter(Boolean).map(t => ({ t }))].filter(Boolean);
-  const aEntete = m.entete !== 'aucun' && (logo || lignesEnt.length);
+  const aEntete = m.entete !== 'aucun' && (logo || lignesEnt.length || th.style === 'bandeau');
   const couperSimple = (texte, f, taille, larg) => {
     const res = [];
     for (const para of versWinAnsi(texte).split('\n')) { let l = ''; for (const mot of para.split(' ')) { const s = l ? l + ' ' + mot : mot; if (f.widthOfTextAtSize(s, taille) > larg && l) { res.push(l); l = mot; } else l = s; } if (l) res.push(l); }
@@ -6555,7 +6561,7 @@ async function genererPdfDocument(m, rep) {
         y -= 4; page.drawRectangle({ x: centre ? (W - 46) / 2 : mg, y: y - 2.6, width: 46, height: 2.6, color: coulDe(b) });
         y -= 18; break;
       }
-      case 'texte': await ecrireLignes(lignesDe(paragraphes(b.html), L), X); y -= 6; break;
+      case 'texte': y -= 2; await ecrireLignes(lignesDe(paragraphes(b.html), L), X); y -= 8; break;
       case 'colonnes': {
         const n = b.cols.length, gap = 22, cw = (largeur - gap * (n - 1)) / n;
         const cols = b.cols.map(h => lignesDe(paragraphes(h), cw));
@@ -6608,8 +6614,10 @@ async function genererPdfDocument(m, rep) {
         // Bandeau teinté (pas de barre verticale)
         const ls = lignesDe([{ runs: [{ t: b.texte || '', b: true }] }], largeur - 24, 11.5), hb = ls.reduce((s, l) => s + l.h, 0) + 9;
         y -= 12; await place(hb + 40);
-        page.drawRectangle({ x: mg, y: y - hb, width: largeur, height: hb, color: paleDe(b) });
-        let yy = y - 4.5; for (const l of ls) { dessinerLigne(l, mg + 12, yy, { couleur: coulDe(b) }); yy -= l.h; }
+        if (th.style === 'bandeau') rectArrondi(page, mg, y, largeur, hb, 4, { color: coulDe(b) });
+        else if (th.style === 'encadre') rectArrondi(page, mg, y, largeur, hb, 4, { color: paleDe(b), borderColor: coulDe(b), borderWidth: 1 });
+        else page.drawLine({ start: { x: mg, y: y - hb }, end: { x: W - mg, y: y - hb }, thickness: 1.2, color: coulDe(b) });
+        let yy = y - 4.5; for (const l of ls) { dessinerLigne(l, th.style === 'sobre' ? mg : mg + 10, yy, { couleur: th.style === 'bandeau' ? blanc : coulDe(b) }); yy -= l.h; }
         y -= hb + 6; break;
       }
       case 'question': {
@@ -6620,10 +6628,11 @@ async function genererPdfDocument(m, rep) {
         const colV = titre ? X + Math.min(L * 0.46, 250) : X + 4, lv = X + L - colV;
         const gauche = titre ? lignesDe([{ runs: [{ t: titre }] }], colV - X - 14) : [];
         const cases = q.type === 'ouinon' ? ['Oui', 'Non'] : q.type === 'choix' ? (q.options || []) : null, enLigne = q.type === 'ouinon';
-        const droite = cases ? [] : lignesDe(v ? v.split('\n').map(l => ({ runs: [{ t: l, b: true }] })) : [{ runs: [{ t: q.type === 'long' ? '………………………………' : '……………', vide: true }] }], lv);
+        const droite = cases || !v ? [] : lignesDe(v.split('\n').map(l => ({ runs: [{ t: l, b: true }] })), lv);
+        const nbBlancs = cases || v ? 0 : q.type === 'long' ? 3 : 1;
         const lignesCases = cases ? cases.map(o => lignesDe([{ runs: [{ t: o, b: rep[b.q] === o }] }], enLigne ? 44 : lv - 16)) : [];
         const hCases = cases ? (enLigne ? T * LH : lignesCases.reduce((s, ls) => s + ls.reduce((a, l) => a + l.h, 0), 0)) : 0;
-        const h = Math.max(gauche.reduce((s, l) => s + l.h, 0), droite.reduce((s, l) => s + l.h, 0), hCases, T * LH) + 2 * padV;
+        const h = Math.max(gauche.reduce((s, l) => s + l.h, 0), droite.reduce((s, l) => s + l.h, 0), hCases, nbBlancs * T * LH * 1.15, T * LH) + 2 * padV;
         await place(h);
         let yy = y - padV; for (const l of gauche) { dessinerLigne(l, X + 2, yy, { couleur: doux }); yy -= l.h; }
         yy = y - padV;
@@ -6634,9 +6643,12 @@ async function genererPdfDocument(m, rep) {
             if (enLigne) { dessinerLigne(lignesCases[k][0], cx + 14, yy); cx += 62; }
             else for (const l of lignesCases[k]) { dessinerLigne(l, cx + 15, yy); yy -= l.h; }
           });
-        } else for (const l of droite) { dessinerLigne(l, colV, yy); yy -= l.h; }
+        } else if (nbBlancs) for (let k = 0; k < nbBlancs; k++) { const yl = yy - T * 1.25 - k * T * LH * 1.15; page.drawLine({ start: { x: colV, y: yl }, end: { x: X + L - 2, y: yl }, thickness: 0.6, color: filet }); }
+        else for (const l of droite) { dessinerLigne(l, colV, yy); yy -= l.h; }
         y -= h;
-        page.drawLine({ start: { x: X, y }, end: { x: X + L, y }, thickness: 0.5, color: trait });
+        // Un filet sépare les lignes de la fiche ; pas sous une ligne à remplir, ni sous une question sans titre
+        if (titre && !nbBlancs) page.drawLine({ start: { x: X, y }, end: { x: X + L, y }, thickness: 0.5, color: trait });
+        if (!titre) y -= 6;
         break;
       }
       case 'choix': {
@@ -6671,13 +6683,13 @@ async function genererPdfDocument(m, rep) {
       }
       case 'signatures': {
         const gap = 20, cw = (largeur - gap) / 2, hb = 70;
-        await place(hb + 40);
+        y -= 8; await place(hb + 40);
         for (const [k, c] of b.cases.entries()) {
           const x = mg + k * (cw + gap), s = rep[c.q], q = questionDe(m, c.q);
           page.drawText(couperA(c.titre || '', F.b, 10, cw), { x, y: y - 10, size: 10, font: F.b, color: encre });
           if (c.mention) page.drawText(s ? 'Lu et approuvé' : versWinAnsi('Précédée de la mention « Lu et approuvé »'), { x, y: y - 23, size: 8, font: F.i, color: doux });
           const haut = y - 30;
-          page.drawRectangle({ x, y: haut - hb, width: cw, height: hb, borderColor: trait, borderWidth: 0.7 });
+          rectArrondi(page, x, haut, cw, hb, 5, { borderColor: filet, borderWidth: 0.8 });
           if (s?.tampon) { const t = await image(s.tampon), kk = Math.min((cw - 10) / t.width, (hb - 10) / t.height) * 0.9; page.drawImage(t, { x: x + cw - t.width * kk - 6, y: haut - hb + 5, width: t.width * kk, height: t.height * kk }); }
           if (s?.png) { const im = await image(s.png), kk = Math.min((cw - 20) / im.width, (hb - 22) / im.height, 1); page.drawImage(im, { x: x + 10, y: haut - hb + 16, width: im.width * kk, height: im.height * kk }); }
           if (s?.nom) page.drawText(couperA(`${s.nom}${s.client ? ' - ' + new Date(s.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : ''}`, F.n, 7.5, cw - 12), { x: x + 6, y: haut - hb + 5, size: 7.5, font: F.n, color: doux });
