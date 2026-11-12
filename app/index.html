@@ -837,6 +837,16 @@ body.mode-entreprise .seul-particulier{display:none!important}
 .tb-actions .btn{flex:1 1 140px;background:rgba(255,255,255,.1);color:#fff;border-color:transparent}
 .tb-actions .btn.principal{background:#0d6b4f}
 .tb-vide{margin:0;color:#b9c0cf;font-size:14px}
+.tb-raccourcis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tb-raccourci{display:flex;align-items:center;gap:12px;min-height:72px;padding:12px 14px;border:0;border-radius:14px;background:rgba(255,255,255,.08);color:#fff;text-align:left}
+.tb-raccourci:hover{background:rgba(255,255,255,.14)}
+.tb-raccourci:focus-visible{outline:2px solid #1fae76;outline-offset:2px}
+.tb-raccourci-ico{flex:none;width:44px;height:44px;border-radius:12px;background:rgba(31,174,118,.22);display:grid;place-items:center}
+.tb-raccourci-ico .ico{width:24px;height:24px;color:#3fd39a}
+.tb-raccourci .texte{display:flex;flex-direction:column;gap:2px;min-width:0}
+.tb-raccourci strong{font-size:15.5px}
+.tb-raccourci small{color:#b9c0cf;font-size:12.5px;line-height:1.35}
+@media (max-width:640px){.tb-raccourcis{grid-template-columns:1fr}}
 @media (max-width:520px){.tb-stats{grid-template-columns:repeat(2,1fr)}}
 .suivi-client{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .suivi-client>div{display:flex;flex-direction:column;gap:4px}
@@ -1420,6 +1430,8 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
     </div>
     <h2 class="titre-section">Tous les outils</h2>
     <div class="grille-outils outils-base">
+      <button class="tuile seul-particulier" id="btn-lire"><svg class="ico"><use href="#i-livre"/></svg><strong>Lire un PDF</strong><span>Consulter, puis « Modifier » si besoin</span></button>
+      <button class="tuile seul-particulier" id="btn-inspecter"><svg class="ico"><use href="#i-detective"/></svg><strong>Inspecter un fichier</strong><span>Auteur, dates, appareil, lieu</span></button>
       <button class="tuile" id="btn-excel"><svg class="ico"><use href="#i-pages"/></svg><strong>Excel → PDF</strong><span>Tableurs xlsx, ods, csv</span></button>
       <button class="tuile" data-outil="images"><svg class="ico"><use href="#i-images"/></svg><strong>PDF → JPG</strong><span>Chaque page en image</span></button>
       <button class="tuile" data-outil="organiser"><svg class="ico"><use href="#i-pages"/></svg><strong>Organiser</strong><span>Trier, pivoter, supprimer des pages</span></button>
@@ -1516,7 +1528,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.44.0';
+const VERSION_APPLI = '1.45.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -5527,26 +5539,15 @@ function majTableauBord() {
   majMenu();
   const zone = $('#tableau-bord'); if (!zone) return;
   if (!enEntreprise()) { zone.replaceChildren(); return; }
-  const tous = dossiers(), actifs = tous.filter(dossierActif), relances = aRelancer();
-  const complets = tous.length - actifs.length;
-  const manquantes = actifs.reduce((s, d) => s + d.pieces.filter(p => p.etat !== 'recu').length, 0);
-  const stat = (n, texte, cls, filtre) => el('button', { type: 'button', class: 'tb-stat' + (cls ? ' ' + cls : ''), onclick: () => ouvrirDossiers(filtre) }, el('strong', { text: String(n) }), el('span', { text: texte }));
+  const raccourci = (ico, titre, detail, action) => el('button', { type: 'button', class: 'tb-raccourci', onclick: action },
+    el('span', { class: 'tb-raccourci-ico' }, icone(ico)), el('span', { class: 'texte' }, el('strong', { text: titre }), el('small', { text: detail })));
   zone.replaceChildren(
     el('div', { class: 'tb-tete' },
       el('h2', {}, 'Tableau de bord', el('small', { text: entreprise().nom || 'Mode Entreprise' })),
       bouton('', { ico: 'reglages', cls: 'btn-icone', label: 'Coordonnées de l\'entreprise', onclick: () => { prefs.ongletParametres = 'p-entreprise'; ecrirePrefs(prefs); ouvrirParametres(); } })),
-    el('div', { class: 'tb-stats' },
-      stat(actifs.length, 'dossier' + (actifs.length > 1 ? 's' : '') + ' en cours', '', 'actifs'),
-      stat(complets, 'complet' + (complets > 1 ? 's' : ''), 'ok', 'complets'),
-      stat(manquantes, 'pièce' + (manquantes > 1 ? 's' : '') + ' manquante' + (manquantes > 1 ? 's' : ''), '', 'actifs'),
-      stat(relances.length, 'à relancer', relances.length ? 'alerte' : '', 'relancer')),
-    el('div', { class: 'tb-relances' },
-      el('h3', { text: relances.length ? 'À relancer' : 'Relances' }),
-      ...(relances.length ? relances.slice(0, 4).map(({ d, pourquoi }) => el('button', { type: 'button', class: 'tb-relance', onclick: () => ouvrirDossier(d.id) },
-        el('span', {}, el('strong', { text: nomClient(d.client) }), el('small', { text: pourquoi })), icone('droite')))
-        : [el('p', { class: 'tb-vide', text: tous.length ? 'Aucune relance aujourd\'hui.' : 'Créez votre premier dossier client pour suivre vos chantiers ici.' })])),
-    el('div', { class: 'tb-actions' },
-      bouton('Nouveau client', { ico: 'plus', cls: 'btn principal', onclick: () => nouveauDossier() })));
+    el('div', { class: 'tb-raccourcis' },
+      raccourci('livre', 'Lire un PDF', 'Il s\'ouvre en lecture ; « Modifier » ouvre l\'éditeur', lireUnPdf),
+      raccourci('detective', 'Inspecter un fichier', 'Auteur, dates, appareil, lieu : ce qu\'il révèle', inspecterFichier)));
 }
 
 /* ---------- Tableau de bord ---------- */
@@ -9440,6 +9441,8 @@ $('#btn-formulaires').addEventListener('click', ouvrirFormulaires);
 $('#btn-dossiers').addEventListener('click', () => ouvrirDossiers());
 $('#btn-excel').addEventListener('click', async () => { const [f] = await choisirFichiers({ accept: ACCEPT_TABLEUR }); if (f) convertirTableur(f); });
 $('#btn-modeles').addEventListener('click', () => ouvrirMesDocuments('modeles'));
+$('#btn-lire').addEventListener('click', () => lireUnPdf());
+$('#btn-inspecter').addEventListener('click', () => inspecterFichier());
 appliquerMode();
 $('#btn-creer-tampon').addEventListener('click', async () => { const t = await tamponTexte(); if (t) toast('Votre tampon est prêt : touchez « Tampon » dans un document pour le poser'); });
 $('#btn-ouvrir-drive').addEventListener('click', () => choisirDansDrive('ouvrir'));
