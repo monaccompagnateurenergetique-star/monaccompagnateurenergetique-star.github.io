@@ -1542,7 +1542,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.47.1';
+const VERSION_APPLI = '1.48.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -3026,6 +3026,25 @@ function paragrapheAutour(pg, tc, t0, r0) {
     const l = lignes.find(l => Math.abs(l.base - m.r.base) < m.r.taille * 0.35);
     if (l) l.m.push(m); else lignes.push({ base: m.r.base, m: [m] });
   }
+  // Colonnes : sur une même ligne de base, un vide sépare deux cellules. C'est une colonne si le vide est grand,
+  // ou si un morceau commence au même endroit, après un vide, sur au moins trois lignes (alignement d'un tableau).
+  const apresVide = [];
+  for (const l of lignes) {
+    l.m.sort((a, b) => a.r.x - b.r.x);
+    l.m.forEach((m, k) => { if (k && m.r.x - (l.m[k - 1].r.x + l.m[k - 1].r.w) > m.r.taille * 0.45) apresVide.push(m.r.x); });
+  }
+  const aligne = x => apresVide.filter(v => Math.abs(v - x) < 3).length >= 3;
+  const cellules = [];
+  for (const l of lignes) {
+    const debutDe = cellules.length; let cour = null;
+    for (const m of l.m) {
+      const prec = cour && cour.m[cour.m.length - 1], vide = prec ? m.r.x - (prec.r.x + prec.r.w) : 0, t = Math.max(m.r.taille, prec ? prec.r.taille : 0);
+      if (prec && !(vide > t * 2 || (vide > t * 0.45 && aligne(m.r.x)))) cour.m.push(m);
+      else { cour = { base: l.base, m: [m] }; cellules.push(cour); }
+    }
+    for (let k = debutDe; k < cellules.length; k++) cellules[k].nbCol = cellules.length - debutDe;
+  }
+  lignes.splice(0, lignes.length, ...cellules);
   for (const l of lignes) {
     l.m.sort((a, b) => a.r.x - b.r.x);
     l.x = Math.min(...l.m.map(m => m.r.x)); l.y = Math.min(...l.m.map(m => m.r.y));
@@ -3047,19 +3066,26 @@ function paragrapheAutour(pg, tc, t0, r0) {
   lignes.sort((a, b) => a.base - b.base);
   let i = lignes.findIndex(l => l.m.some(m => m.t === t0));
   if (i < 0) return { ...r0, texte: t0.str, nbLignes: 1, interligne: 1.15 };
+  // On ne garde que les lignes de la même colonne que le texte touché
+  const l0 = lignes[i];
+  lignes.splice(0, lignes.length, ...lignes.filter(l => l === l0 || (l.x < l0.droite && l.droite > l0.x)));
+  i = lignes.indexOf(l0);
+  // Dans un tableau, deux lignes ne forment un paragraphe que si celle du dessus remplit la cellule (texte qui revient à la ligne)
+  const tabulaire = l0.nbCol > 1, largeurMax = Math.max(...lignes.slice(Math.max(0, i - 6), i + 7).map(l => l.droite - l.x));
+  const pleine = l => !tabulaire || l.droite - l.x >= largeurMax * 0.75;
   const puce = s => /^[–—•▪●○■\-*]\s|^\d+[.)]\s|^[a-z][.)]\s/i.test(s);
   const meme = (a, b) => Math.abs(a.taille - b.taille) < b.taille * 0.2 && a.x < b.droite && a.droite > b.x;
   let debut = i, fin = i;
   // vers le haut : tant que la ligne courante n'est pas un début de puce, et que l'écart reste celui d'un paragraphe
   while (debut > 0 && !puce(lignes[debut].texte)) {
     const p = lignes[debut - 1], c = lignes[debut], ecart = c.base - p.base;
-    if (!meme(p, c) || ecart > c.taille * 1.7 || ecart < c.taille * 0.8) break;
+    if (!meme(p, c) || !pleine(p) || ecart > c.taille * 1.7 || ecart < c.taille * 0.8) break;
     debut--;
   }
   // vers le bas : on s'arrête à la ligne suivante qui commence une nouvelle puce
   while (fin < lignes.length - 1) {
     const c = lignes[fin], n = lignes[fin + 1], ecart = n.base - c.base;
-    if (puce(n.texte) || !meme(n, c) || ecart > c.taille * 1.7 || ecart < c.taille * 0.8) break;
+    if (puce(n.texte) || !meme(n, c) || !pleine(c) || ecart > c.taille * 1.7 || ecart < c.taille * 0.8) break;
     fin++;
   }
   const sel = lignes.slice(debut, fin + 1);
