@@ -837,7 +837,10 @@ body.mode-entreprise .seul-particulier{display:none!important}
 .tb-actions .btn{flex:1 1 140px;background:rgba(255,255,255,.1);color:#fff;border-color:transparent}
 .tb-actions .btn.principal{background:#0d6b4f}
 .tb-vide{margin:0;color:#b9c0cf;font-size:14px}
-.tb-raccourcis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tb-raccourcis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.tb-lien{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 10px;margin:-4px 0 -6px -10px;border:0;border-radius:10px;background:none;color:#b9c0cf;font-size:13.5px;text-align:left}
+.tb-lien:hover{background:rgba(255,255,255,.08);color:#fff}
+.tb-lien .ico{width:18px;height:18px}
 .tb-raccourci{display:flex;align-items:center;gap:12px;min-height:72px;padding:12px 14px;border:0;border-radius:14px;background:rgba(255,255,255,.08);color:#fff;text-align:left}
 .tb-raccourci:hover{background:rgba(255,255,255,.14)}
 .tb-raccourci:focus-visible{outline:2px solid #1fae76;outline-offset:2px}
@@ -1034,6 +1037,10 @@ body .feuille.inspecteur .feuille-corps{background:#edf3ef}
 .insp-carte{background:var(--carte);border-radius:14px;box-shadow:var(--ombre);padding:6px 16px 10px}
 .insp-carte h3{margin:10px 0 4px;font-size:15px;color:var(--accent-fort)}
 .insp-carte dl{margin:0}
+.insp-retenir{background:#fffaf0}
+.insp-retenir ul{margin:4px 0 6px;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.insp-retenir li{font-weight:600;line-height:1.4}
+.insp-retenir .note{margin:6px 0 4px}
 .insp-ligne{display:grid;grid-template-columns:minmax(120px,34%) minmax(0,1fr);gap:4px 14px;padding:9px 0;border-top:1px solid var(--ligne)}
 .insp-ligne:first-child{border-top:0}
 .insp-ligne dt{color:var(--doux);font-size:14px}
@@ -1528,7 +1535,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.45.0';
+const VERSION_APPLI = '1.46.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -5410,7 +5417,9 @@ async function inspecterFichier() {
   const [f] = await choisirFichiers({ accept: 'application/pdf,.pdf,image/*' }); if (!f) return;
   if (!estPdf(f) && !estImage(f)) { toast('Choisissez un PDF ou une image.'); return; }
   occupe('Lecture du fichier…');
-  const sections = []; let octets, sensible = false, pdfOuvert = null;
+  const sections = [], retenir = []; let octets, sensible = false, pdfOuvert = null;
+  const duree = ms => { const min = ms / 60000, h = min / 60, j = h / 24; return min < 60 ? `${Math.max(1, Math.round(min))} min` : h < 48 ? `${Math.round(h)} h` : j < 60 ? `${Math.round(j)} jours` : j < 730 ? `${Math.round(j / 30)} mois` : `${Math.round(j / 365)} ans`; };
+  const dPdf = t => { const m = /D:(\d{4})(\d{2})?(\d{2})?(\d{2})?(\d{2})?/.exec(String(t || '')); return m ? new Date(+m[1], (+m[2] || 1) - 1, +m[3] || 1, +m[4] || 0, +m[5] || 0) : null; };
   const dateLisible = d => d && !isNaN(d) ? d.toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'short' }) : '';
   const datePdf = t => { const m = /D:(\d{4})(\d{2})?(\d{2})?(\d{2})?(\d{2})?/.exec(String(t || '')); return m ? dateLisible(new Date(+m[1], (+m[2] || 1) - 1, +m[3] || 1, +m[4] || 0, +m[5] || 0)) : ''; };
   const dateExif = t => { const m = /^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2})/.exec(String(t || '')); return m ? dateLisible(new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5])) : ''; };
@@ -5418,21 +5427,43 @@ async function inspecterFichier() {
   const section = (titre, lignes, vide) => sections.push({ titre, lignes: lignes.filter(l => l[1] !== '' && l[1] != null), vide });
   try {
     octets = new Uint8Array(await f.arrayBuffer());
-    section('Le fichier', [['Nom', f.name], ['Type', estPdf(f) ? 'Document PDF' : (f.type || 'Image').replace('image/', 'Image ').toUpperCase().replace('IMAGE', 'Image')], ['Poids', tailleLisible(f.size)], ['Dernière modification', dateLisible(new Date(f.lastModified))]]);
+    const empreinte = [...new Uint8Array(await crypto.subtle.digest('SHA-256', octets))].map(o => o.toString(16).padStart(2, '0')).join('');
+    section('Le fichier', [['Nom', f.name], ['Type', estPdf(f) ? 'Document PDF' : (f.type || 'Image').replace('image/', 'Image ').toUpperCase().replace('IMAGE', 'Image')], ['Poids', tailleLisible(f.size)], ['Dernière modification', dateLisible(new Date(f.lastModified))], ['Empreinte (SHA-256)', empreinte]]);
     if (estPdf(f)) {
       const pdf = pdfOuvert = await pdfjsLib.getDocument({ data: octets.slice() }).promise;
       const info = (await pdf.getMetadata().catch(() => ({}))).info || {};
       const [x0, y0, x1, y1] = (await pdf.getPage(1)).view, l = Math.round((x1 - x0) / 72 * 25.4), h = Math.round((y1 - y0) / 72 * 25.4);
       const a4 = Math.abs(Math.min(l, h) - 210) <= 2 && Math.abs(Math.max(l, h) - 297) <= 2;
       const champs = await pdf.getFieldObjects().catch(() => null), nbChamps = champs ? Object.keys(champs).length : 0;
+      // Texte sélectionnable ou scan ? (on regarde les 5 premières pages)
+      const aTester = Math.min(pdf.numPages, 5); let avecTexte = 0;
+      for (let i = 1; i <= aTester; i++) { const t = await (await pdf.getPage(i)).getTextContent().catch(() => ({ items: [] })); if (t.items.some(it => (it.str || '').trim().length > 1)) avecTexte++; }
+      const nature = avecTexte === aTester ? 'Texte sélectionnable' : avecTexte === 0 ? 'Pages scannées (images)' : 'Mixte : texte et pages scannées';
+      const pj = await pdf.getAttachments().catch(() => null), nbPj = pj ? Object.keys(pj).length : 0;
+      const scripts = pdf.getJSActions ? await pdf.getJSActions().catch(() => null) : null, aScripts = !!scripts && Object.keys(scripts).length > 0;
+      const cree = dPdf(info.CreationDate), modif = dPdf(info.ModDate), ecart = cree && modif ? modif - cree : 0;
+      const apres = ecart > 120000 ? `Oui, ${duree(ecart)} après` : cree && modif ? 'Non' : '';
+      if (avecTexte === 0) retenir.push('Ce PDF est un scan : son texte ne peut pas être sélectionné ni recherché.');
+      if (ecart > 120000) retenir.push(`Il a été modifié ${duree(ecart)} après sa création${info.Producer ? `, en dernier avec « ${info.Producer} »` : ''}.`);
+      if (info.Author) retenir.push(`Son auteur déclaré est « ${info.Author} ».`);
+      if (nbChamps) retenir.push(`C'est un formulaire à remplir (${nbChamps} champ${nbChamps > 1 ? 's' : ''}).`);
+      if (info.IsSignaturesPresent) retenir.push('Il porte une signature numérique.');
+      if (aScripts) retenir.push('Il contient des scripts : prudence avant de l\'ouvrir dans un autre logiciel.');
+      if (nbPj) retenir.push(`Il embarque ${nbPj} pièce${nbPj > 1 ? 's' : ''} jointe${nbPj > 1 ? 's' : ''}.`);
       section('Le document', [['Pages', String(pdf.numPages)], ['Format de la première page', `${l} × ${h} mm${a4 ? ' (A4)' : ''}`], ['Version du format PDF', info.PDFFormatVersion || ''],
-        ['Formulaire à remplir', nbChamps ? `Oui, ${nbChamps} champ${nbChamps > 1 ? 's' : ''}` : 'Non'], ['Signature numérique', info.IsSignaturesPresent ? 'Oui' : 'Non'], ['Protégé par mot de passe', info.EncryptFilterName ? 'Oui' : 'Non']]);
-      section('Son origine', [['Titre', info.Title], ['Auteur', info.Author, true], ['Sujet', info.Subject], ['Mots-clés', info.Keywords], ['Créé avec', info.Creator], ['Fabriqué par', info.Producer], ['Créé le', datePdf(info.CreationDate)], ['Modifié le', datePdf(info.ModDate)]],
+        ['Formulaire à remplir', nbChamps ? `Oui, ${nbChamps} champ${nbChamps > 1 ? 's' : ''}` : 'Non'], ['Signature numérique', info.IsSignaturesPresent ? 'Oui' : 'Non'], ['Protégé par mot de passe', info.EncryptFilterName ? 'Oui' : 'Non'],
+        ['Contenu des pages', nature], ['Pièces jointes', nbPj ? String(nbPj) : ''], ['Scripts intégrés', aScripts ? 'Oui' : '']]);
+      section('Son origine', [['Titre', info.Title], ['Auteur', info.Author, true], ['Sujet', info.Subject], ['Mots-clés', info.Keywords], ['Créé avec', info.Creator], ['Fabriqué par', info.Producer], ['Créé le', datePdf(info.CreationDate)], ['Modifié le', datePdf(info.ModDate)], ['Modifié après sa création', apres]],
         'Ce PDF ne contient aucune information sur son origine.');
     } else {
       let dim = null;
       try { const b = await createImageBitmap(f); dim = [b.width, b.height]; b.close?.(); } catch {}
       const x = lireExif(octets);
+      const retouche = /photoshop|lightroom|gimp|snapseed|canva|paint|pixelmator|affinity|picsart/i.exec(x.logiciel || '');
+      if (x.gps) retenir.push('Cette photo contient le lieu exact où elle a été prise.');
+      if (x.prise || x.date) retenir.push(`Elle a été prise le ${dateExif(x.prise || x.date)}${x.marque || x.modele ? `, avec un ${[x.marque, x.modele].filter(Boolean).join(' ')}` : ''}.`);
+      if (retouche) retenir.push(`Elle est passée par un logiciel de retouche (${x.logiciel}).`);
+      if (!Object.keys(x).length) retenir.push('Aucune information de prise de vue : la photo a sans doute été envoyée par une messagerie, ou déjà nettoyée.');
       section('L\'image', [['Dimensions', dim ? `${dim[0]} × ${dim[1]} pixels` : ''], ['Définition', dim ? `${(dim[0] * dim[1] / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 1 })} mégapixels` : '']]);
       section('La prise de vue', [['Prise le', dateExif(x.prise || x.date)], ['Appareil', [x.marque, x.modele].filter(Boolean).join(' '), true], ['Objectif', x.objectif],
         ['Réglages', [x.pose ? (x.pose < 1 ? `1/${Math.round(1 / x.pose)} s` : `${x.pose} s`) : '', x.ouverture ? `f/${x.ouverture}` : '', x.iso ? `ISO ${x.iso}` : '', x.focale ? `${Math.round(x.focale)} mm` : ''].filter(Boolean).join(' · ')],
@@ -5448,6 +5479,8 @@ async function inspecterFichier() {
   fe.corps.append(el('div', { class: 'insp-cadre' },
     el('div', { class: 'insp-tete' }, el('span', { class: 'insp-ico' }, icone('detective')), el('div', {}, el('strong', { text: f.name }),
       el('span', { text: sensible ? 'Ce fichier contient des informations personnelles (surlignées). Elles partent avec lui quand vous le partagez.' : 'Voici ce que ce fichier dit de lui. Rien n\'est envoyé : tout est lu sur votre appareil.' }))),
+    retenir.length ? el('section', { class: 'insp-carte insp-retenir' }, el('h3', { text: 'À retenir' }), el('ul', {}, retenir.map(t => el('li', { text: t }))),
+      el('p', { class: 'note', text: 'Ce sont les informations que le fichier déclare lui-même : elles peuvent avoir été modifiées.' })) : null,
     sections.map(sec => el('section', { class: 'insp-carte' }, el('h3', { text: sec.titre }),
       sec.lignes.length ? el('dl', {}, sec.lignes.map(([lib, val, perso]) => el('div', { class: 'insp-ligne' + (perso ? ' perso' : '') }, el('dt', { text: lib }),
         el('dd', {}, val?.lien ? el('a', { href: val.lien, target: '_blank', rel: 'noopener noreferrer', text: val.texte }) : String(val)))))
@@ -5547,7 +5580,9 @@ function majTableauBord() {
       bouton('', { ico: 'reglages', cls: 'btn-icone', label: 'Coordonnées de l\'entreprise', onclick: () => { prefs.ongletParametres = 'p-entreprise'; ecrirePrefs(prefs); ouvrirParametres(); } })),
     el('div', { class: 'tb-raccourcis' },
       raccourci('livre', 'Lire un PDF', 'Il s\'ouvre en lecture ; « Modifier » ouvre l\'éditeur', lireUnPdf),
-      raccourci('detective', 'Inspecter un fichier', 'Auteur, dates, appareil, lieu : ce qu\'il révèle', inspecterFichier)));
+      raccourci('scanner', 'Scanner', 'Une feuille papier ou une pièce d\'identité en PDF', () => $('#btn-scanner').click()),
+      raccourci('formulaire', 'Remplir un modèle', 'Prévisite, PV de réception, mandat…', () => ouvrirFormulaires())),
+    el('button', { type: 'button', class: 'tb-lien', onclick: inspecterFichier }, icone('detective'), 'Inspecter un fichier : ce qu\'un PDF ou une photo révèle'));
 }
 
 /* ---------- Tableau de bord ---------- */
