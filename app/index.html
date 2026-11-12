@@ -712,7 +712,7 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
 .menu-bas .badge{position:absolute;top:3px;left:calc(50% + 4px)}
 .menu-bas .badge.alerte,.menu-lateral .badge.alerte{background:#f4b740;color:#1b2130}
 @media (min-width:1000px){
-  #ecran-accueil.actif{display:grid;grid-template-columns:244px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
+  #ecran-accueil.actif{display:grid;grid-template-columns:var(--l-menu,244px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}
   #ecran-accueil #menu-app{display:flex;grid-column:1;grid-row:1/3;min-height:0}
   #ecran-accueil>.barre-accueil,#ecran-accueil>.accueil{grid-column:2;min-height:0}
   /* La zone qui défile prend toute la largeur (barre de défilement au bord droit) ; le contenu reste centré */
@@ -721,6 +721,16 @@ input[type=range]{width:100%;height:44px;accent-color:var(--accent)}
   .menu-lateral{display:flex;flex-direction:column;gap:2px;width:100%;background:#1b2130;color:#fff;padding:16px 12px calc(14px + var(--bas-sur));overflow-y:auto}
   .menu-marque{display:flex;align-items:center;gap:10px;font-weight:800;font-size:17px;padding:2px 10px 14px}
   .menu-marque svg{width:30px;height:30px}
+  body.menu-reduit{--l-menu:68px}
+  .menu-reduire{margin-left:auto;width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:8px;background:rgba(255,255,255,.08);color:#b9c0cf}
+  .menu-reduire .ico{width:18px;height:18px}
+  .menu-reduire:hover{background:rgba(255,255,255,.16);color:#fff}
+  body.menu-reduit .menu-lateral{padding-left:8px;padding-right:8px;align-items:center}
+  body.menu-reduit .menu-marque{flex-direction:column;padding:2px 0 10px}
+  body.menu-reduit .menu-marque>span,body.menu-reduit .menu-item>span,body.menu-reduit .menu-groupe,body.menu-reduit .menu-offre{display:none}
+  body.menu-reduit .menu-reduire{margin:0}
+  body.menu-reduit .menu-item{width:44px;min-height:44px;padding:0;justify-content:center;position:relative}
+  body.menu-reduit .menu-item .badge{position:absolute;top:2px;right:2px}
   .menu-groupe{font-size:11.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#9aa3b5;padding:14px 10px 4px}
   .menu-item{display:flex;align-items:center;gap:12px;min-height:40px;padding:0 10px;border:0;border-radius:10px;background:none;color:#e8ebf1;font-size:14.5px;font-weight:500;text-align:left}
   .menu-item span{flex:1}
@@ -741,7 +751,7 @@ body .feuille.pleine.page-app.ouverte{opacity:1}
 .feuille.page-app .feuille-tete{background:var(--carte);padding-left:6px}
 .feuille.page-app .feuille-tete h2{font-size:19px}
 @media (min-width:1000px){
-  body .feuille.pleine.page-app{left:244px;bottom:0}
+  body .feuille.pleine.page-app{left:var(--l-menu,244px);bottom:0}
   .feuille.page-app .feuille-tete{padding:14px 24px 12px 14px}
   .feuille.page-app .feuille-tete h2{font-size:22px}
   .feuille.page-app .feuille-corps{padding-left:28px;padding-right:28px}
@@ -1003,7 +1013,21 @@ body .feuille.createur.cr-hors-edition .cr-pied,.cr-hors-edition .cr-btn-theme{d
 .cr-bandeau-essai .btn{min-height:40px;padding:0 12px}
 .cr-attente{max-width:794px;margin:0 auto 12px;text-align:center}
 .cr-page-pdf{display:block;width:100%;max-width:794px;height:auto;margin:0 auto 16px;background:#fff;box-shadow:0 1px 2px rgba(27,33,48,.08),0 12px 32px rgba(27,33,48,.10)}
-.cr-rangee-blocs{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+.cr-rangee-blocs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:20px;align-items:start}
+.cr-rangee-blocs>*{min-width:0}
+.cr-place-libre{display:flex;align-items:center;justify-content:center;gap:6px;align-self:stretch;min-height:56px;padding:6px 8px;border:1.5px dashed #c3cbd3;border-radius:10px;background:none;color:#8a92a0;font:500 12.5px/1.3 system-ui,sans-serif;text-align:center;cursor:pointer}
+.cr-place-libre .ico{width:16px;height:16px;flex:none}
+.cr-place-libre:hover,.cr-place-libre.active,.cr-place-libre.cible-place{border-color:#1fae76;background:#e6f4ec;color:#0a5540}
+.cr-place-libre.active{border-style:solid}
+.cr-bloc.cible-gauche::before,.cr-bloc.cible-droite::before{content:"";position:absolute;top:-5px;bottom:-5px;width:50%;border-radius:8px;background:rgba(31,174,118,.22);z-index:2;pointer-events:none}
+.cr-bloc.cible-gauche::before{left:-5px}
+.cr-bloc.cible-droite::before{right:-5px}
+.cr-astuce{margin:16px 2px 0;font-size:12.5px}
+@media (min-width:1064px){
+  body.menu-reduit .cr-zone{grid-template-columns:212px minmax(0,1fr) 300px}
+  body.menu-reduit .cr-cote{display:block;overflow:auto;background:var(--carte);border-left:1px solid var(--ligne);padding:12px 16px 40px;overscroll-behavior:contain}
+  body.menu-reduit .cr-btn-theme,body.menu-reduit .cr-ob.pas-large{display:none}
+}
 @media (max-width:520px){.cr-rangee-blocs{gap:12px}}
 .cr-entete.cliquable,.cr-pied-doc.cliquable{cursor:pointer;border-radius:6px;outline:1.5px dashed transparent;outline-offset:4px}
 .cr-entete.cliquable:hover,.cr-pied-doc.cliquable:hover,.cr-entete.cliquable:focus-visible,.cr-pied-doc.cliquable:focus-visible{outline-color:#1fae76}
@@ -1067,9 +1091,10 @@ body .feuille.apercu-biblio .feuille-corps{background:#e8ecea}
 @media (pointer:coarse){.cr-ob{min-width:38px;height:40px}.cr-ob.pc{display:none}}
 .cr-page.en-glisse{user-select:none}
 .cr-bloc.glisse{opacity:.35}
-.cr-bloc.cible-avant::before,.cr-bloc.cible-apres::after{content:"";position:absolute;left:-6px;right:-6px;height:4px;border-radius:2px;background:#1fae76;z-index:2}
-.cr-bloc.cible-avant::before{top:-8px}
-.cr-bloc.cible-apres::after{bottom:-8px}
+.cr-rangee-blocs{position:relative}
+.cr-bloc.cible-avant::before,.cr-bloc.cible-apres::after,.cr-rangee-blocs.cible-avant::before,.cr-rangee-blocs.cible-apres::after{content:"";position:absolute;left:-6px;right:-6px;height:4px;border-radius:2px;background:#1fae76;z-index:2}
+.cr-bloc.cible-avant::before,.cr-rangee-blocs.cible-avant::before{top:-8px}
+.cr-bloc.cible-apres::after,.cr-rangee-blocs.cible-apres::after{bottom:-8px}
 .cr-fantome{position:fixed;left:0;top:0;pointer-events:none;background:#1b2130;color:#fff;font:600 13px/1 system-ui,sans-serif;padding:9px 12px;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,.25)}
 .cr-si{display:inline-flex;align-items:center;gap:5px;margin:0 0 4px;padding:2px 9px 2px 6px;border-radius:99px;background:#fff3c9;color:#7a5200;font:600 12px/1.5 system-ui,sans-serif}
 .cr-si .ico{width:14px;height:14px}
@@ -1401,7 +1426,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.36.0';
+const VERSION_APPLI = '1.37.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -5029,13 +5054,16 @@ function groupesMenu() {
 }
 function majMenu() {
   const nav = $('#menu-app'); if (!nav) return;
+  document.body.classList.toggle('menu-reduit', !!prefs.menuReduit);
   const groupes = groupesMenu(), ent = enEntreprise();
-  const entree = (i, cls) => el('button', { type: 'button', class: cls, onclick: () => naviguer(i.action), 'aria-current': i.page && i.page === rubriqueCourante ? 'page' : null, title: i.badge ? `${i.texte} : ${i.badge}` : null },
+  const entree = (i, cls) => el('button', { type: 'button', class: cls, onclick: () => naviguer(i.action), 'aria-current': i.page && i.page === rubriqueCourante ? 'page' : null, title: i.badge ? `${i.texte} : ${i.badge}` : i.texte },
     icone(i.ico), el('span', { text: i.texte }), i.badge ? el('small', { class: 'badge' + (i.alerte ? ' alerte' : ''), text: String(i.badge) }) : null);
   const n = Math.min(docsComptes().length, QUOTA.gratuit);
   const logo = $('.barre-accueil .marque svg')?.cloneNode(true);
   const lateral = el('div', { class: 'menu-lateral' },
-    el('div', { class: 'menu-marque' }, logo, el('span', { text: 'Atelier PDF' })),
+    el('div', { class: 'menu-marque' }, logo, el('span', { text: 'Atelier PDF' }),
+      el('button', { type: 'button', class: 'menu-reduire', 'aria-label': prefs.menuReduit ? 'Agrandir le menu' : 'Réduire le menu', title: prefs.menuReduit ? 'Agrandir le menu' : 'Réduire le menu',
+        onclick: () => { prefs.menuReduit = !prefs.menuReduit; ecrirePrefs(prefs); majMenu(); dispatchEvent(new Event('resize')); } }, icone(prefs.menuReduit ? 'droite' : 'gauche'))),
     groupes.flatMap(g => [g.groupe ? el('div', { class: 'menu-groupe', text: g.groupe }) : null, ...g.items.map(i => entree(i, 'menu-item'))]),
     el('button', { type: 'button', class: 'menu-offre', onclick: () => naviguer(() => ouvrirParam('p-reglages')) }, `${n} / ${QUOTA.gratuit} documents gratuits`,
       el('div', { class: 'jauge' + (n >= QUOTA.gratuit ? ' pleine' : '') }, el('span', { style: { width: n / QUOTA.gratuit * 100 + '%' } }))));
@@ -5544,9 +5572,9 @@ const CHAMPS_DOC = {
 const TYPES_Q = { texte: 'Réponse courte', long: 'Réponse longue', ouinon: 'Oui / Non', choix: 'Choix dans une liste', date: 'Date', nombre: 'Nombre', photos: 'Photos', signature: 'Signature' };
 const TYPES_Q_TEXTE = ['texte', 'long', 'date', 'nombre', 'ouinon'];
 const TYPES_Q_BLOC = ['texte', 'long', 'ouinon', 'choix', 'date', 'nombre', 'photos'];
-const NOMS_BLOCS = { titre: 'Titre', section: 'Section', texte: 'Texte libre', colonnes: 'Colonnes', ligne: 'Trait', encadre: 'Encadré', tableau: 'Tableau', question: 'Question', signatures: 'Signatures', saut: 'Saut de page' };
+const NOMS_BLOCS = { titre: 'Titre', section: 'Section', texte: 'Texte libre', colonnes: 'Colonnes', ligne: 'Trait', encadre: 'Encadré', tableau: 'Tableau', question: 'Question', signatures: 'Signatures', signature: 'Signature', saut: 'Saut de page' };
 const PALETTE_DOC = [
-  ['Questions', [['q:texte', 'Réponse courte', 'texte'], ['q:long', 'Réponse longue', 'note'], ['q:ouinon', 'Oui / Non', 'valider'], ['q:choix', 'Choix', 'vue-liste'], ['q:date', 'Date', 'horloge'], ['q:nombre', 'Nombre', 'numero'], ['q:photos', 'Photos', 'camera'], ['signatures', 'Signatures', 'signature']]],
+  ['Questions', [['q:texte', 'Réponse courte', 'texte'], ['q:long', 'Réponse longue', 'note'], ['q:ouinon', 'Oui / Non', 'valider'], ['q:choix', 'Choix', 'vue-liste'], ['q:date', 'Date', 'horloge'], ['q:nombre', 'Nombre', 'numero'], ['q:photos', 'Photos', 'camera'], ['sig:client', 'Signature client', 'signature'], ['sig:entreprise', 'Signature entreprise', 'tampon']]],
   ['Mise en page', [['titre', 'Titre', 'texte-plus'], ['section', 'Section', 'lignes'], ['texte', 'Texte libre', 'stylo'], ['colonnes', 'Colonnes', 'pages'], ['encadre', 'Encadré', 'note'], ['tableau', 'Tableau', 'vue-lignes'], ['ligne', 'Trait', 'texte-moins'], ['saut', 'Saut de page', 'bas']]],
   ['Déjà rempli', [['client', 'Le client', 'clients'], ['entreprise', 'Mon entreprise', 'maison']]]];
 const COULEURS_DOC = ['#0d6b4f', '#1d4fb3', '#9a3412', '#6b2fb3', '#1b2130', '#b7791f'];
@@ -5558,7 +5586,10 @@ function normaliserModeleDoc(m) {
   for (const b of m.blocs) {
     if (b.type === 'choix') { b.type = 'question'; b.sansTitre = true; }
     if (b.type === 'photos') b.type = 'question';
+    if (b.demi) { b.l = 'm'; delete b.demi; }
   }
+  // Ancien bloc à deux signatures : désormais une signature par bloc, côte à côte
+  m.blocs = m.blocs.flatMap(b => b.type !== 'signatures' ? [b] : (b.cases || []).map((c, i) => ({ id: b.id + '-' + i, type: 'signature', q: c.q, titre: c.titre, mention: !!c.mention, l: 'm', ...(b.si ? { si: b.si } : {}) })));
   return m;
 }
 const modelesDoc = () => (prefs.modelesDoc || []).map(normaliserModeleDoc);
@@ -5566,6 +5597,18 @@ const questionDe = (m, cle) => (m.questions || []).find(q => q.cle === cle);
 const dateLongue = () => new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 /** Un bloc soumis à une condition n'apparaît que si la réponse attendue a été donnée. */
 const blocVisible = (b, rep) => !b.si?.q || (rep[b.si.q] ?? '') === b.si.val;
+/* Largeur d'un bloc sur la ligne : toute (rien), 2/3 (« d »), 1/2 (« m »), 1/3 (« t »). Les blocs étroits qui se suivent partagent une ligne. */
+const peutPartager = (m, b) => !!b && (['texte', 'encadre', 'signature'].includes(b.type) || (b.type === 'question' && questionDe(m, b.q)?.type !== 'photos'));
+const fractionBloc = (m, b) => peutPartager(m, b) ? ({ m: 3, t: 2, d: 4 }[b.l] || 6) : 6;
+function rangeesDoc(m, blocs) {
+  const rangees = []; let cour = null, somme = 0;
+  for (const b of blocs) {
+    const f = fractionBloc(m, b);
+    if (f === 6) { rangees.push([b]); cour = null; continue; }
+    if (!cour || somme + f > 6) { cour = [b]; rangees.push(cour); somme = f; } else { cour.push(b); somme += f; }
+  }
+  return rangees;
+}
 function infoChamp(m, cle) {
   if (CHAMPS_DOC[cle]) return CHAMPS_DOC[cle];
   const q = questionDe(m, cle);
@@ -5622,6 +5665,7 @@ function champsUtilises(m) {
 }
 /** Le formulaire fabriqué à partir de la page : le client d'abord, puis les questions dans l'ordre (les sections font les étapes). */
 function formulaireDuDocument(m) {
+  normaliserModeleDoc(m);
   const blocs = [], vus = new Set(), util = champsUtilises(m);
   const clients = Object.keys(CHAMPS_DOC).filter(c => CHAMPS_DOC[c].source === 'client' && util.includes(c));
   if (clients.length) {
@@ -5646,7 +5690,7 @@ function formulaireDuDocument(m) {
   for (const b of m.blocs) {
     const si = b.si?.q ? [b.si.q, b.si.val] : null;
     if (b.type === 'section') { blocs.push({ t: 'section', texte: b.texte || 'Section', ...(si ? { si } : {}) }); sectionVoulue = false; continue; }
-    const cles = b.type === 'question' ? [b.q] : b.type === 'signatures' ? b.cases.map(c => c.q) : etiquettesDuBloc(b);
+    const cles = b.type === 'question' || b.type === 'signature' ? [b.q] : etiquettesDuBloc(b);
     for (const cle of cles) {
       const q = questionDe(m, cle);
       if (!q || vus.has(cle)) continue;
@@ -5762,19 +5806,22 @@ function creerBlocDoc(cle, m) {
     const noms = { texte: 'Votre question', long: 'Votre question', ouinon: 'Votre question ?', choix: 'Votre question', date: 'Date', nombre: 'Nombre', photos: 'Photos de…' };
     Object.assign(b, { type: 'question', q: nouvelleQ({ label: noms[type], type, ...(type === 'choix' ? { options: ['Réponse 1', 'Réponse 2'] } : {}), ...(type === 'date' ? { auto: false } : {}) }) });
     if (type === 'photos') b.parLigne = 3;
+    if (type === 'date' || type === 'nombre') b.l = 'm'; // une réponse courte n'a pas besoin de toute la ligne
   }
   if (cle === 'titre') Object.assign(b, { texte: 'Titre', sous: null });
   if (cle === 'section') b.texte = 'Nouvelle section';
   if (cle === 'texte') b.html = '';
-  if (cle === 'client') Object.assign(b, { type: 'texte', demi: true, html: `<p><b>Client :</b> ${tagDoc('c-nom')}<br>${tagDoc('c-adresse')}<br>Tél. ${tagDoc('c-tel')}</p>` });
-  if (cle === 'entreprise') Object.assign(b, { type: 'texte', demi: true, html: `<p><b>${tagDoc('e-nom')}</b><br>${tagDoc('e-adresse')}<br>Tél. ${tagDoc('e-tel')} – SIRET ${tagDoc('e-siret')}</p>` });
+  if (cle === 'client') Object.assign(b, { type: 'texte', l: 'm', html: `<p><b>Client :</b> ${tagDoc('c-nom')}<br>${tagDoc('c-adresse')}<br>Tél. ${tagDoc('c-tel')}</p>` });
+  if (cle === 'entreprise') Object.assign(b, { type: 'texte', l: 'm', html: `<p><b>${tagDoc('e-nom')}</b><br>${tagDoc('e-adresse')}<br>Tél. ${tagDoc('e-tel')} – SIRET ${tagDoc('e-siret')}</p>` });
   if (cle === 'colonnes') Object.assign(b, { separees: true, cols: ['', ''] });
   if (cle === 'ligne') Object.assign(b, { ep: 1, coul: 'theme' });
   if (cle === 'encadre') Object.assign(b, { fond: 'pale', html: '' });
   if (cle === 'tableau') Object.assign(b, { entetes: ['Désignation', 'Quantité', 'Observation'], lignes: [['', '', ''], ['', '', '']] });
-  if (cle === 'signatures') b.cases = [
-    { titre: 'Le client', q: nouvelleQ({ label: 'Signature du client', type: 'signature', qui: 'client' }), mention: false },
-    { titre: 'L\'entreprise', q: nouvelleQ({ label: 'Signature de l\'entreprise', type: 'signature', qui: 'entreprise' }), mention: false }];
+  if (cle.startsWith('sig:')) {
+    const qui = cle.slice(4);
+    Object.assign(b, { type: 'signature', titre: qui === 'client' ? 'Le client' : 'L\'entreprise', mention: false, l: 'm',
+      q: nouvelleQ({ label: qui === 'client' ? 'Signature du client' : 'Signature de l\'entreprise', type: 'signature', qui }) });
+  }
   return b;
 }
 /** « Créer mon modèle » : page blanche, exemples, ou copie d'un modèle. Renvoie le modèle choisi, ou null. */
@@ -5801,7 +5848,8 @@ function editerDocument(source) {
   const m = normaliserModeleDoc(JSON.parse(JSON.stringify(source)));
   let choisi = null, sauve = true, supprime = false, minuteur;
   let range = null, zoneActive = null, pop = null, feuilleOutil = null;
-  const mqPc = matchMedia('(min-width:1000px)'), mqLarge = matchMedia('(min-width:1240px)');
+  const mqPc = matchMedia('(min-width:1000px)'), mqLarge = matchMedia(prefs.menuReduit ? '(min-width:1064px)' : '(min-width:1240px)');
+  let placeChoisie = null; // place libre choisie à côté d'un bloc : le prochain bloc ajouté s'y pose
   const fe = feuille({ titre: m.nom || 'Nouveau modèle', plein: true, page: 'rediger',
     rouvrir: () => editerDocument(modelesDoc().find(x => x.id === m.id) || m),
     retour: { label: 'Revenir aux modèles', action: async () => { await fe.fermer(); ouvrirFormulaires(); } },
@@ -5827,6 +5875,8 @@ function editerDocument(source) {
       bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: 'Supprimer ce modèle', onclick: supprimerModele })));
   const page = el('div', { class: 'cr-page' });
   const plan = el('div', { class: 'cr-plan' }, page);
+  // Toucher le fond de la page (hors d'un bloc) désélectionne
+  plan.addEventListener('pointerdown', e => { if (!e.target.closest('.cr-bloc, .cr-entete, .cr-pied-doc, .cr-place-libre, .cr-vide')) choisir(null); });
   const palette = el('aside', { class: 'cr-palette', 'aria-label': 'Blocs à ajouter' });
   const cote = el('aside', { class: 'cr-cote', 'aria-label': 'Réglages' });
   const zoneEdition = el('div', { class: 'cr-zone' }, palette, plan, cote);
@@ -5861,13 +5911,16 @@ function editerDocument(source) {
       n.addEventListener('click', () => ouvrirOutil('theme'));
       n.addEventListener('keydown', e => { if (e.key === 'Enter') ouvrirOutil('theme'); });
     }
-    // Deux blocs « Moitié » qui se suivent sont posés côte à côte
-    const noeuds = [];
-    for (let i = 0; i < m.blocs.length; i++) {
-      const b = m.blocs[i], s = m.blocs[i + 1];
-      if (b.demi) { noeuds.push(el('div', { class: 'cr-rangee-blocs' }, blocEd(b), s?.demi ? blocEd(s) : null)); if (s?.demi) i++; }
-      else noeuds.push(blocEd(b));
-    }
+    // Les blocs étroits qui se suivent partagent une ligne ; la place qui reste accueille un autre bloc
+    const noeuds = rangeesDoc(m, m.blocs).map(rg => {
+      const total = rg.reduce((t, b) => t + fractionBloc(m, b), 0);
+      if (total === 6 && rg.length === 1) return blocEd(rg[0]);
+      const dernier = rg[rg.length - 1], reste = 6 - total;
+      return el('div', { class: 'cr-rangee-blocs' }, rg.map(b => { const n = blocEd(b); n.style.gridColumn = 'span ' + fractionBloc(m, b); return n; }),
+        reste >= 2 ? el('button', { type: 'button', class: 'cr-place-libre' + (placeChoisie === dernier.id ? ' active' : ''), style: { gridColumn: 'span ' + reste }, dataset: { apres: dernier.id, f: String(reste) },
+          onclick: () => { choisir(dernier.id); placeChoisie = dernier.id; rendrePage(); if (!mqPc.matches) ouvrirOutil('ajouter'); } },
+          icone('plus'), el('span', { text: placeChoisie === dernier.id ? 'Choisissez le bloc à mettre ici' : 'Place libre : ajoutez un bloc ici' })) : null);
+    });
     page.replaceChildren(entete, ...noeuds, ...(vide ? [vide] : []), pied);
   }
   function zoneTexte(b, cle, html, vide = 'Écrivez ici…') {
@@ -5935,11 +5988,13 @@ function editerDocument(source) {
         el('tbody', {}, b.lignes.map((l, r) => el('tr', {}, l.map((c, i) => el('td', {}, zoneTexte(b, `td${r}-${i}`, c, ' ')))))));
         break;
       case 'question': corps = questionEd(b); break;
-      case 'signatures': corps = el('div', { class: 'cr-signatures' + (b.cases.length === 1 ? ' une' : '') }, b.cases.map(c => {
-        const q = questionDe(m, c.q);
-        return el('div', { class: 'cr-sig' }, zonePlate(c, 'titre', 'cr-sig-titre', 'Qui signe ?', () => { if (q) q.label = 'Signature : ' + (c.titre || ''); }), c.mention ? el('small', { text: 'Mention « Lu et approuvé »' }) : null,
-          el('div', { class: 'cr-sig-zone', text: q?.qui === 'entreprise' ? 'Signature et tampon de l\'entreprise' : 'Signature du client (date, heure et lieu enregistrés)' }));
-      })); break;
+      case 'signature': {
+        const q = questionDe(m, b.q);
+        corps = el('div', { class: 'cr-sig' }, zonePlate(b, 'titre', 'cr-sig-titre', 'Qui signe ?', () => { if (q) q.label = 'Signature : ' + (b.titre || ''); }),
+          b.mention && q?.qui !== 'entreprise' ? el('small', { text: 'Mention « Lu et approuvé »' }) : null,
+          el('div', { class: 'cr-sig-zone', text: q?.qui === 'entreprise' ? 'Signature et tampon de l\'entreprise' : 'Le client signe ici, au doigt' }));
+        break;
+      }
       case 'saut': corps = el('div', { class: 'cr-saut', text: 'Saut de page' }); break;
     }
     const aTexte = ['texte', 'colonnes', 'encadre', 'tableau'].includes(b.type);
@@ -5968,6 +6023,7 @@ function editerDocument(source) {
   function choisir(id) {
     if (choisi === id) return;
     choisi = id;
+    if (placeChoisie) { placeChoisie = null; page.querySelectorAll('.cr-place-libre.active').forEach(x => { x.classList.remove('active'); x.lastChild.textContent = 'Place libre : ajoutez un bloc ici'; }); }
     page.querySelectorAll('.cr-bloc').forEach(x => x.classList.toggle('choisi', x.dataset.id === id));
     if (mqLarge.matches) rendreCote();
   }
@@ -5980,7 +6036,12 @@ function editerDocument(source) {
     });
   }
   function ajouterBloc(cle, position = null) {
-    const b = creerBlocDoc(cle, m), i = position ?? (idx(choisi) >= 0 ? idx(choisi) + 1 : m.blocs.length);
+    const b = creerBlocDoc(cle, m); let i = position ?? (idx(choisi) >= 0 ? idx(choisi) + 1 : m.blocs.length);
+    if (position == null && placeChoisie && idx(placeChoisie) >= 0) { // dans la place libre, à la largeur qui reste
+      const rg = rangeesDoc(m, m.blocs).find(x => x.some(y => y.id === placeChoisie)), reste = 6 - rg.reduce((t, y) => t + fractionBloc(m, y), 0);
+      i = idx(placeChoisie) + 1; b.l = { 3: 'm', 2: 't', 4: 'd' }[reste] || 'm';
+    }
+    placeChoisie = null;
     m.blocs.splice(i, 0, b); choisi = b.id;
     modifie(); rendrePage(); rendreCote(); viserBloc(b.id);
   }
@@ -5993,7 +6054,7 @@ function editerDocument(source) {
     const i = idx(id); if (i < 0) return;
     const c = JSON.parse(JSON.stringify(m.blocs[i])); c.id = idUnique();
     const copieQ = cle => { const q = questionDe(m, cle); if (!q) return cle; const nq = { ...JSON.parse(JSON.stringify(q)), cle: 'q-' + idUnique() + Math.random().toString(36).slice(2, 5) }; m.questions.push(nq); return nq.cle; };
-    if (c.type === 'question') c.q = copieQ(c.q);
+    if (c.type === 'question' || c.type === 'signature') c.q = copieQ(c.q);
     if (c.cases) c.cases.forEach(x => { x.q = copieQ(x.q); });
     m.blocs.splice(i + 1, 0, c); choisi = c.id; modifie(); rendrePage(); rafraichirPanneaux(); viserBloc(c.id, false);
   }
@@ -6013,29 +6074,60 @@ function editerDocument(source) {
     const src = id ? page.querySelector(`.cr-bloc[data-id="${id}"]`) : null;
     src?.classList.add('glisse'); page.classList.add('en-glisse');
     const fantome = el('div', { class: 'cr-fantome', text: libelle }); fantome.style.zIndex = zFeuille + 6; document.body.append(fantome);
+    // Ce bloc peut-il partager une ligne avec un autre ?
+    const partageable = id ? peutPartager(m, blocDe(id)) : /^(q:(?!photos)|sig:|texte$|encadre$|client$|entreprise$)/.test(nouveau);
+    const MARQUES = ['cible-avant', 'cible-apres', 'cible-gauche', 'cible-droite', 'cible-place'];
+    const nettoyer = () => { page.querySelectorAll(MARQUES.map(c => '.' + c).join(',')).forEach(n => n.classList.remove(...MARQUES)); page.classList.remove('cible-fin'); };
     let cible = null, x = e.clientX, y = e.clientY, vDefile = 0;
     const viser = () => {
       fantome.style.transform = `translate(${x + 14}px, ${y + 10}px)`;
-      const blocs = [...page.querySelectorAll('.cr-bloc')];
-      blocs.forEach(n => n.classList.remove('cible-avant', 'cible-apres')); page.classList.remove('cible-fin'); cible = null;
+      nettoyer(); cible = null;
       const pr = plan.getBoundingClientRect();
       if (x < pr.left || x > pr.right || y < pr.top || y > pr.bottom) return;
+      const blocs = [...page.querySelectorAll('.cr-bloc')];
       if (!blocs.length) { cible = { fin: true }; page.classList.add('cible-fin'); return; }
+      // 1. Une place libre à côté d'un bloc
+      if (partageable) for (const p of page.querySelectorAll('.cr-place-libre')) {
+        const rc = p.getBoundingClientRect();
+        if (x >= rc.left && x <= rc.right && y >= rc.top && y <= rc.bottom && p.dataset.apres !== id) { cible = { place: p.dataset.apres, f: +p.dataset.f }; p.classList.add('cible-place'); return; }
+      }
       let mieux = null, dist = Infinity;
-      for (const n of blocs) { const rc = n.getBoundingClientRect(), d = y < rc.top ? rc.top - y : y > rc.bottom ? y - rc.bottom : 0; if (d < dist) { dist = d; mieux = { n, apres: y > rc.top + rc.height / 2 }; } }
+      for (const n of blocs) {
+        const rc = n.getBoundingClientRect(), dy = y < rc.top ? rc.top - y : y > rc.bottom ? y - rc.bottom : 0, dx = x < rc.left ? rc.left - x : x > rc.right ? x - rc.right : 0;
+        if (dy * 4 + dx < dist) { dist = dy * 4 + dx; mieux = { n, rc }; }
+      }
       if (mieux.n.dataset.id === id) return;
-      cible = { id: mieux.n.dataset.id, apres: mieux.apres };
-      mieux.n.classList.add(cible.apres ? 'cible-apres' : 'cible-avant');
+      const t = blocDe(mieux.n.dataset.id), rx = (x - mieux.rc.left) / mieux.rc.width, dedans = y >= mieux.rc.top && y <= mieux.rc.bottom;
+      // 2. Le bord gauche ou droit d'un bloc : côte à côte
+      if (partageable && dedans && peutPartager(m, t) && (rx < 0.25 || rx > 0.75)) { cible = { id: t.id, cote: rx < 0.25 ? 'gauche' : 'droite' }; mieux.n.classList.add('cible-' + cible.cote); return; }
+      // 3. Au-dessus ou en dessous
+      // 3. Au-dessus ou en dessous (de toute la ligne, si le bloc en partage une)
+      const hote = mieux.n.closest('.cr-rangee-blocs') || mieux.n, rh = hote.getBoundingClientRect();
+      cible = { id: t.id, apres: y > rh.top + rh.height / 2 };
+      hote.classList.add(cible.apres ? 'cible-apres' : 'cible-avant');
     };
     const bouger = ev => { x = ev.clientX; y = ev.clientY; viser(); const pr = plan.getBoundingClientRect(); vDefile = x > pr.left && x < pr.right ? (y < pr.top + 60 ? -12 : y > pr.bottom - 60 ? 12 : 0) : 0; };
     const defile = setInterval(() => { if (vDefile) { plan.scrollBy(0, vDefile); viser(); } }, 16);
     const fin = () => {
       clearInterval(defile); fantome.remove();
       prise.removeEventListener('pointermove', bouger); prise.removeEventListener('pointerup', fin); prise.removeEventListener('pointercancel', fin);
-      page.classList.remove('en-glisse', 'cible-fin');
-      if (cible && nouveau) return ajouterBloc(nouveau, cible.fin ? m.blocs.length : idx(cible.id) + (cible.apres ? 1 : 0));
-      if (cible && id) { const [bl] = m.blocs.splice(idx(id), 1); m.blocs.splice(idx(cible.id) + (cible.apres ? 1 : 0), 0, bl); modifie(); }
-      rendrePage();
+      nettoyer(); page.classList.remove('en-glisse');
+      if (!cible) return rendrePage();
+      const b = id ? blocDe(id) : creerBlocDoc(nouveau, m);
+      if (id) m.blocs.splice(idx(id), 1);
+      if (cible.fin) m.blocs.push(b);
+      else if (cible.place) { b.l = { 3: 'm', 2: 't', 4: 'd' }[cible.f] || 'm'; m.blocs.splice(idx(cible.place) + 1, 0, b); }
+      else if (cible.cote) {
+        // Côte à côte : la ligne se partage en deux moitiés, ou en trois tiers
+        const t = blocDe(cible.id), voisins = rangeesDoc(m, m.blocs).find(rg => rg.includes(t)).filter(v => v === t || fractionBloc(m, v) < 6);
+        m.blocs.splice(idx(t.id) + (cible.cote === 'droite' ? 1 : 0), 0, b);
+        if (voisins.length + 1 <= 3) [...voisins, b].forEach(v => { v.l = voisins.length + 1 === 2 ? 'm' : 't'; }); else b.l = 'm';
+      } else {
+        const rg = rangeesDoc(m, m.blocs).find(x => x.some(v => v.id === cible.id)) || [blocDe(cible.id)];
+        m.blocs.splice(cible.apres ? idx(rg[rg.length - 1].id) + 1 : idx(rg[0].id), 0, b);
+      }
+      choisi = b.id; placeChoisie = null; modifie(); rendrePage(); rendreCote();
+      if (nouveau) viserBloc(b.id);
     };
     prise.addEventListener('pointermove', bouger); prise.addEventListener('pointerup', fin); prise.addEventListener('pointercancel', fin);
     viser();
@@ -6140,7 +6232,8 @@ function editerDocument(source) {
           t.addEventListener('pointerup', () => t.removeEventListener('pointermove', mv), { once: true });
         });
         return t;
-      }))]));
+      }))]),
+      mqPc.matches ? el('p', { class: 'note cr-astuce', text: 'Cliquez un bloc pour l\'ajouter, ou glissez-le sur la page. Sur le bord gauche ou droit d\'un autre bloc, ils se mettent côte à côte.' }) : null);
   }
   async function ouvrirOutil(quoi) {
     if (quoi === 'ajouter' && mqPc.matches) return;
@@ -6294,19 +6387,15 @@ function editerDocument(source) {
       case 'ligne': parts.push(
         ligneReglage('Épaisseur', seg('ep', [['1', 'Fine'], ['2', 'Moyenne'], ['4', 'Épaisse']], String(b.ep || 1), v => { b.ep = +v; })));
         break;
-      case 'signatures':
-        parts.push(ligneReglage('Nombre de signatures', seg('ns', [['1', '1'], ['2', '2']], String(b.cases.length), v => {
-          if (v === '1') b.cases = b.cases.slice(0, 1);
-          else if (b.cases.length === 1) { const q = { cle: 'q-' + idUnique(), label: 'Signature de l\'entreprise', type: 'signature', qui: 'entreprise' }; m.questions.push(q); b.cases.push({ titre: 'L\'entreprise', q: q.cle, mention: false }); }
-        })));
-        b.cases.forEach((c, i) => {
-          const q = questionDe(m, c.q);
-          parts.push(el('div', { class: 'cr-sous-reglage' }, el('strong', { text: c.titre || `Signature ${i + 1}` }),
-            ligneReglage('Qui signe ?', seg('qui' + i, [['client', 'Le client'], ['entreprise', 'L\'entreprise']], q?.qui || 'client', v => { if (q) q.qui = v; })),
-            q ? coche('Signature obligatoire', q, 'requis') : null,
-            coche('Mention « Lu et approuvé »', c, 'mention')));
-        });
+      case 'signature': {
+        const q = questionDe(m, b.q); if (!q) break;
+        parts.push(ligneReglage('Qui signe ?', seg('qui', [['client', 'Le client'], ['entreprise', 'Mon entreprise']], q.qui || 'client', v => {
+            q.qui = v; if (!b.titre || ['Le client', 'L\'entreprise'].includes(b.titre)) b.titre = v === 'client' ? 'Le client' : 'L\'entreprise'; })),
+          el('p', { class: 'note', text: q.qui === 'entreprise' ? 'Votre signature et votre tampon enregistrés (Paramètres → Mon entreprise) sont posés d\'un toucher.' : 'Le client signe au doigt sur l\'écran. La date, l\'heure et le lieu sont enregistrés, avec un certificat à la fin du PDF.' }),
+          coche('Signature obligatoire', q, 'requis'));
+        if (q.qui !== 'entreprise') parts.push(coche('Mention « Lu et approuvé »', b, 'mention'));
         break;
+      }
       case 'saut': parts.push(el('p', { class: 'note', text: 'Ce qui suit ce bloc commence sur une nouvelle page du PDF.' })); break;
     }
     if (['ligne', 'encadre', 'section', 'titre'].includes(b.type)) {
@@ -6315,9 +6404,8 @@ function editerDocument(source) {
         el('button', { type: 'button', class: 'cr-pastille-theme', 'aria-pressed': String(!actuelle), onclick: () => { delete b.couleur; delete b.coul; apres(); } }, el('i', { style: { background: themeDe(m).c1 } }), 'Thème'),
         [...COULEURS_DOC, '#8a92a0'].map(c => el('button', { type: 'button', class: 'cr-pastille', 'aria-label': 'Couleur ' + c, 'aria-pressed': String(c === actuelle), style: { background: c }, onclick: () => { b.couleur = c; delete b.coul; apres(); } })))));
     }
-    if (['texte', 'encadre'].includes(b.type) || (b.type === 'question' && questionDe(m, b.q)?.type !== 'photos'))
-      parts.push(ligneReglage('Largeur', seg('larg', [['pleine', 'Toute la ligne'], ['demi', 'Moitié']], b.demi ? 'demi' : 'pleine', v => { b.demi = v === 'demi'; })),
-        el('p', { class: 'note', text: 'Deux blocs « Moitié » qui se suivent se placent côte à côte.' }));
+    if (peutPartager(m, b)) parts.push(ligneReglage('Largeur sur la ligne', seg('larg', [['', 'Toute'], ['d', '2/3'], ['m', '1/2'], ['t', '1/3']], b.l || '', v => { if (v) b.l = v; else delete b.l; })),
+      el('p', { class: 'note', text: 'Les blocs étroits qui se suivent se placent côte à côte.' }));
     if (b.type !== 'saut') parts.push(reglageCondition(b));
     parts.push(el('div', { class: 'rangee-btn cr-rangee' }, bouton('Dupliquer', { ico: 'copier', onclick: () => dupliquer(b.id) }), bouton('Supprimer', { ico: 'poubelle', onclick: () => supprimer(b.id) })));
     return el('div', { class: 'cr-reglages' }, ...parts);
@@ -6400,6 +6488,13 @@ function pageDocRemplie(m, rep, { changer, actions }) {
       case 'encadre': return el('div', { class: 'cr-encadre ' + (b.fond === 'bord' ? 'bord' : 'pale') }, riche(b.html));
       case 'tableau': return el('table', { class: 'cr-tableau' }, el('thead', {}, el('tr', {}, b.entetes.map(h => el('th', {}, riche(h))))), el('tbody', {}, b.lignes.map(l => el('tr', {}, l.map(c => el('td', {}, riche(c)))))));
       case 'question': return question(b);
+      case 'signature': {
+        const q = questionDe(m, b.q), s = rep[b.q];
+        return el('div', { class: 'cr-sig' }, el('strong', { text: b.titre || 'Signature' }), b.mention && q?.qui !== 'entreprise' ? el('small', { text: 'Mention « Lu et approuvé »' }) : null,
+          el('button', { type: 'button', class: 'cr-sig-zone ' + (s ? 'signee' : 'signable'), 'aria-label': `${b.titre || 'Signature'} : ${s ? 'signé, toucher pour refaire' : 'toucher pour signer'}`, onclick: () => actions[b.q]?.signer() },
+            s ? [el('img', { src: s.png, alt: '' }), s.tampon ? el('img', { src: s.tampon, alt: '' }) : null] : (q?.qui === 'entreprise' ? 'Toucher pour signer' : 'Toucher pour faire signer')),
+          s ? el('small', {}, s.nom || '', ' ', el('button', { type: 'button', class: 'lien-effacer', text: 'Effacer', onclick: () => actions[b.q]?.effacer() })) : null);
+      }
       case 'signatures': return el('div', { class: 'cr-signatures' + (b.cases.length === 1 ? ' une' : '') }, b.cases.map(c => {
         const q = questionDe(m, c.q), s = rep[c.q];
         return el('div', { class: 'cr-sig' }, el('strong', { text: c.titre || 'Signature' }), c.mention ? el('small', { text: 'Mention « Lu et approuvé »' }) : null,
@@ -6418,10 +6513,9 @@ function pageDocRemplie(m, rep, { changer, actions }) {
     el('div', { class: 'cr-entete-d', text: dateLongue() })));
   const enrobe = (b, n) => { const d = el('div', { class: 'cr-bloc-rempli' }, n); if (b.couleur) d.style.setProperty('--doc-c1', b.couleur); return d; };
   const vis = m.blocs.filter(b => blocVisible(b, rep));
-  for (let i = 0; i < vis.length; i++) {
-    const b = vis[i], s = vis[i + 1], n = bloc(b); if (!n) continue;
-    if (b.demi) { const n2 = s?.demi ? bloc(s) : null; page.append(el('div', { class: 'cr-rangee-blocs' }, enrobe(b, n), n2 ? enrobe(s, n2) : null)); if (s?.demi) i++; }
-    else page.append(enrobe(b, n));
+  for (const rg of rangeesDoc(m, vis)) {
+    if (rg.length === 1 && fractionBloc(m, rg[0]) === 6) { const n = bloc(rg[0]); if (n) page.append(enrobe(rg[0], n)); continue; }
+    page.append(el('div', { class: 'cr-rangee-blocs' }, rg.map(b => { const n = bloc(b); if (!n) return null; const d = enrobe(b, n); d.style.gridColumn = 'span ' + fractionBloc(m, b); return d; })));
   }
   if (m.pied !== 'aucun') page.append(el('div', { class: 'cr-pied-doc' }, el('span', { text: [e.nom, e.siret ? 'SIRET ' + e.siret : '', e.mentions].filter(Boolean).join(' · ') }), el('span', {})));
   return page;
@@ -6719,6 +6813,19 @@ async function genererPdfDocument(m, rep) {
         }
         y -= 4; break;
       }
+      case 'signature': {
+        const s = rep[b.q], q = questionDe(m, b.q), hb = 70, mention = b.mention && q?.qui !== 'entreprise';
+        y -= 8; await place(hb + 40);
+        page.drawText(couperA(b.titre || '', F.b, 10, L), { x: X, y: y - 10, size: 10, font: F.b, color: encre });
+        if (mention) page.drawText(s ? 'Lu et approuvé' : versWinAnsi('Précédée de la mention « Lu et approuvé »'), { x: X, y: y - 23, size: 8, font: F.i, color: doux });
+        const haut = y - (mention ? 30 : 18);
+        rectArrondi(page, X, haut, L, hb, 5, { borderColor: filet, borderWidth: 0.8 });
+        if (s?.tampon) { const t = await image(s.tampon), kk = Math.min((L - 10) / t.width, (hb - 10) / t.height) * 0.9; page.drawImage(t, { x: X + L - t.width * kk - 6, y: haut - hb + 5, width: t.width * kk, height: t.height * kk }); }
+        if (s?.png) { const im = await image(s.png), kk = Math.min((L - 20) / im.width, (hb - 22) / im.height, 1); page.drawImage(im, { x: X + 10, y: haut - hb + 16, width: im.width * kk, height: im.height * kk }); }
+        if (s?.nom) page.drawText(couperA(`${s.nom}${s.client ? ' - ' + new Date(s.date).toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' }) : ''}`, F.n, 7.5, L - 12), { x: X + 6, y: haut - hb + 5, size: 7.5, font: F.n, color: doux });
+        if (s?.client) signatures.push(s);
+        y = haut - hb - 12; break;
+      }
       case 'signatures': {
         const gap = 20, cw = (largeur - gap) / 2, hb = 70;
         y -= 8; await place(hb + 40);
@@ -6743,19 +6850,22 @@ async function genererPdfDocument(m, rep) {
   await nouvellePage();
   const visibles = m.blocs.filter(b => blocVisible(b, rep));
   const hEstimee = (b, l) => {
-    if (b.type === 'texte' || b.type === 'encadre') return lignesDe(paragraphes(b.html), l - (b.type === 'encadre' ? 20 : 0)).reduce((s, x) => s + hauteur(x), 0) + (b.type === 'encadre' ? 30 : 6);
+    if (b.type === 'signature') return 120;
+    if (b.type === 'texte' || b.type === 'encadre') return lignesDe(paragraphes(b.html), l - (b.type === 'encadre' ? 20 : 0)).reduce((t, x) => t + hauteur(x), 0) + (b.type === 'encadre' ? 30 : 10);
     const q = questionDe(m, b.q); return 26 + (q?.type === 'choix' ? (q.options || []).length * 15 : 0);
   };
-  for (let i = 0; i < visibles.length; i++) {
-    const b = visibles[i], s = visibles[i + 1]?.demi ? visibles[i + 1] : null;
-    if (!b.demi) { await dessinerBloc(b); continue; }
-    // Deux blocs « Moitié » : le second se dessine à droite du premier, à la même hauteur
-    const gap = 24, l2 = (largeur - gap) / 2;
-    await place(Math.min(Math.max(hEstimee(b, l2), s ? hEstimee(s, l2) : 0), 420));
-    const y0 = y, p0 = page;
-    L = l2; X = mg; await dessinerBloc(b);
-    if (s) { const y1 = y, memePage = page === p0; if (memePage) y = y0; X = mg + l2 + gap; await dessinerBloc(s); if (memePage && page === p0) y = Math.min(y, y1); i++; }
-    X = mg; L = largeur;
+  for (const rg of rangeesDoc(m, visibles)) {
+    if (rg.length === 1 && fractionBloc(m, rg[0]) === 6) { await dessinerBloc(rg[0]); continue; }
+    // Blocs côte à côte : chacun dans sa colonne, tous à la même hauteur
+    const gap = 20, larg = b => (largeur + gap) * fractionBloc(m, b) / 6 - gap;
+    await place(Math.min(Math.max(...rg.map(b => hEstimee(b, larg(b)))), 420));
+    const y0 = y, p0 = page; let bas = y, x = mg;
+    for (const b of rg) {
+      if (page === p0) y = y0;
+      X = x; L = larg(b); await dessinerBloc(b);
+      bas = page === p0 ? Math.min(bas, y) : y; x += L + gap;
+    }
+    y = bas; X = mg; L = largeur;
   }
   // Pied de page : mentions de l'entreprise et numéro, sur chaque page
   const pages = doc.getPages();
