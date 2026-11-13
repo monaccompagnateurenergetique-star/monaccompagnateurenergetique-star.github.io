@@ -334,10 +334,12 @@ a{color:var(--accent)}
 #ecran-doc.mode-lire.onglet-document #barre-apercu{display:flex}
 #ecran-doc.mode-lire :is(.inserer,.ajout-fin,#aide-placement){display:none!important}
 #ecran-doc.mode-lire #defil{background:#c9c7c0}
-/* Lecture pure : document en grand, barre simple (Modifier, Partager, Enregistrer, Plus) */
+/* Lecture pure : document en grand, barre simple (Modifier, Partager, Enregistrer, Plus).
+   Les onglets Document / Pages restent en haut, au même endroit qu'en modification. */
 #ap-plus{display:none}
 #ecran-doc.lecture-pure #ap-plus{display:flex}
-#ecran-doc.lecture-pure :is(.onglets,#doc-apercu,#doc-annuler,#doc-partager,#doc-enregistrer){display:none}
+#ecran-doc.lecture-pure #doc-apercu{display:none}
+#ecran-doc.lecture-pure.onglet-document :is(#doc-annuler,#doc-partager,#doc-enregistrer){display:none}
 #doc-apercu[aria-pressed="true"]{background:var(--accent-pale);color:var(--accent-fort)}
 #ecran-doc:not(.onglet-document) :is(#defil,#indic-page,#aide-placement,#barre-recherche,#bandeau-page){display:none!important}
 #ecran-doc:not(.onglet-pages) #vue-pages{display:none}
@@ -880,6 +882,16 @@ body.mode-entreprise .seul-particulier{display:none!important}
 .liste-dossiers{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .carte-dossier{display:flex;flex-direction:column;gap:10px;text-align:left;padding:14px;border:1px solid transparent;border-radius:var(--rayon);background:var(--carte);box-shadow:var(--ombre)}
 .carte-dossier:hover{border-color:var(--accent)}
+/* Clients : les trois affichages de la barre commune (cartes, cartes rectangulaires, liste) */
+.liste-dossiers.vue-rect{grid-template-columns:repeat(auto-fill,minmax(380px,1fr))}
+.liste-dossiers:is(.vue-rect,.vue-liste) .carte-dossier{flex-direction:row;align-items:center;gap:8px 16px;flex-wrap:wrap;padding:12px 14px}
+.liste-dossiers:is(.vue-rect,.vue-liste) .carte-dossier-tete{flex:1 1 150px;min-width:0}
+.liste-dossiers:is(.vue-rect,.vue-liste) .avancement{flex:1 1 180px;min-width:0}
+.liste-dossiers.vue-liste{display:block;background:var(--carte);border-radius:var(--rayon);box-shadow:var(--ombre);overflow:hidden}
+.liste-dossiers.vue-liste .carte-dossier{width:100%;border:0;border-radius:0;box-shadow:none;border-bottom:1px solid var(--ligne)}
+.liste-dossiers.vue-liste .carte-dossier:last-child{border-bottom:0}
+.liste-dossiers.vue-liste>.vide-dossiers{padding:14px}
+@media (max-width:640px){.liste-dossiers.vue-rect{grid-template-columns:1fr}.tete-modeles .btn-listes{flex:1 1 100%}}
 .carte-dossier-tete{display:flex;flex-direction:column}
 .carte-dossier-tete strong{font-size:16px}
 .carte-dossier-tete small{color:var(--doux);font-size:13px}
@@ -1588,7 +1600,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.51.0';
+const VERSION_APPLI = '1.52.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -2547,6 +2559,7 @@ function majStyleItem(e, it) {
     e.style.width = it.largeur ? it.largeur * s + 'px' : '';
     const z = e.querySelector('.contenu');
     z.style.lineHeight = it.interligne ? String(it.interligne) : '';
+    z.style.textAlign = it.aligne === 'centre' ? 'center' : '';
     z.style.backgroundColor = it.fond || '';
     // Police resserrée comme l'originale (ex. police « condensée » des Cerfa) : on écrit plus large puis on resserre
     const k = it.serre || 1;
@@ -2937,7 +2950,14 @@ function ajouterCouleurPerso(c) {
   ecrirePrefs(prefs);
 }
 function appliquerCouleur(it, c, sansMemo) {
-  const f = () => { it.couleur = c; if (it.type === 'texte') { prefs.couleurTexte = c; ecrirePrefs(prefs); } };
+  const f = () => {
+    it.couleur = c;
+    if (it.morceaux) { // la couleur choisie vaut pour tout le texte, y compris les mots qui avaient gardé leur couleur d'origine
+      it.morceaux.forEach(m => { delete m.c; }); it.morceaux = nettoyerMorceaux(it.morceaux);
+      elItem(it.id)?.querySelectorAll('.contenu [style]').forEach(n => { n.style.color = ''; });
+    }
+    if (it.type === 'texte') { prefs.couleurTexte = c; ecrirePrefs(prefs); }
+  };
   if (sansMemo) { f(); rafraichirItem(it); } else modifierItem(it, f);
 }
 function palette(it) {
@@ -3070,26 +3090,105 @@ async function corrigerTexte(id, x, y) {
   const { t, r } = meilleur;
   // Texte incliné : on garde l'ancien comportement (une seule ligne)
   if (Math.abs(r.angle) > 0.05) {
-    const masque = { id: idUnique(), type: 'masque', page: id, x: r.x - 1, y: r.y - 1, w: r.w + 2, h: r.h + 2, couleur: '#ffffff' };
+    const lire = await lecteurCouleurs(pg, r);
+    const c = lire ? lire(r) : null;
+    const masque = { id: idUnique(), type: 'masque', page: id, x: r.x - 1, y: r.y - 1, w: r.w + 2, h: r.h + 2, couleur: c ? hexCouleur(c.fond) : '#ffffff' };
     const taille = Math.round(r.taille * 10) / 10;
-    const texte = { id: idUnique(), type: 'texte', page: id, x: r.x, y: r.y, texte: t.str, taille, couleur: '#111111', masqueLie: masque.id };
+    const texte = { id: idUnique(), type: 'texte', page: id, x: r.x, y: r.y, texte: t.str, taille, couleur: (c && c.texte && hexCouleur(c.texte)) || '#111111', masqueLie: masque.id };
     D.items.push(masque, texte); D.modifie = true; rendreItems(id); commencerEdition(texte, avant); return;
   }
-  // Tout le paragraphe : on reconstitue les lignes de la page, puis on prend les lignes voisines du même paragraphe
-  const para = paragrapheAutour(pg, tc, t, r);
+  // Tout le paragraphe : on reconstitue les lignes de la page, puis on prend les lignes voisines du même paragraphe.
+  // Premier passage pour connaître la zone ; on lit alors les vraies couleurs sur la page (texte et fond), puis second passage.
+  let para = paragrapheAutour(pg, tc, t, r);
+  const lire = await lecteurCouleurs(pg, para);
+  let couleur = '#111111', fond = '#ffffff';
+  if (lire) {
+    const vues = [];
+    // Deux teintes presque pareilles (bords adoucis des lettres fines) comptent pour la même couleur
+    const nommer = rgb => {
+      if (!rgb) return undefined;
+      const p = vues.find(v => Math.abs(v.rgb[0] - rgb[0]) + Math.abs(v.rgb[1] - rgb[1]) + Math.abs(v.rgb[2] - rgb[2]) < 70);
+      if (p) return p.hex;
+      const hex = hexCouleur(rgb); vues.push({ rgb, hex }); return hex;
+    };
+    para = paragrapheAutour(pg, tc, t, r, rc => nommer(lire(rc).texte));
+    fond = hexCouleur(lire({ x: para.x - 1.5, y: para.y - 1.5, w: para.w + 3, h: para.h + 3 }, true).fond);
+    // Couleur du texte = celle du plus grand nombre de lettres ; les autres restent notées mot par mot
+    const poids = {};
+    para.morceaux.forEach(m => { if (m.c) poids[m.c] = (poids[m.c] || 0) + m.t.trim().length; });
+    couleur = Object.keys(poids).sort((a, b) => poids[b] - poids[a])[0] || '#111111';
+    para.morceaux.forEach(m => { if (!m.c || m.c === couleur) delete m.c; });
+    para.morceaux = nettoyerMorceaux(para.morceaux);
+  }
   const taille = Math.round(para.taille * 10) / 10;
   const interligne = para.interligne;
-  const masque = { id: idUnique(), type: 'masque', page: id, x: para.x - 1.5, y: para.y - 1.5, w: para.w + 3, h: para.h + 3, couleur: '#ffffff' };
-  const texte = { id: idUnique(), type: 'texte', page: id, x: para.x, y: para.base - taille * ((interligne - 1.15) / 2 + 0.92), texte: para.texte, taille, couleur: '#111111', masqueLie: masque.id,
-    largeur: Math.round((para.w + taille * 0.3) * 10) / 10, interligne, morceaux: para.morceaux.length ? para.morceaux : undefined, serre: para.serre };
+  const centre = para.aligne === 'centre';
+  const masque = { id: idUnique(), type: 'masque', page: id, x: para.x - 1.5, y: para.y - 1.5, w: para.w + 3, h: para.h + 3, couleur: fond };
+  // Lignes gardées telles quelles (titre centré, adresse…) : on laisse de la marge pour qu'aucune ne revienne à la ligne
+  const largeur = centre ? para.w + taille * 2 : para.w + taille * (para.dur ? 2 : 0.3);
+  const texte = { id: idUnique(), type: 'texte', page: id, x: centre ? para.x - taille : para.x, y: para.base - taille * ((interligne - 1.15) / 2 + 0.92), texte: para.texte, taille, couleur, masqueLie: masque.id,
+    largeur: Math.round(largeur * 10) / 10, interligne, morceaux: para.morceaux.length ? para.morceaux : undefined, serre: para.serre, aligne: centre ? 'centre' : undefined };
   if (!texte.morceaux) texte.gras = para.gras || undefined;
   D.items.push(masque, texte); D.modifie = true; journaliser('Texte corrigé');
   rendreItems(id);
   commencerEdition(texte, avant);
-  if (para.nbLignes > 1) toast(`Paragraphe de ${para.nbLignes} lignes : le texte revient à la ligne tout seul.`);
+  if (para.nbLignes > 1 && !para.dur) toast(`Paragraphe de ${para.nbLignes} lignes : le texte revient à la ligne tout seul.`);
+}
+/** Couleur « #rrggbb » ; un presque noir devient le noir de l'appli, un presque blanc le blanc. */
+function hexCouleur(rgb) {
+  if (!rgb) return undefined;
+  if (Math.max(...rgb) < 70) return '#111111';
+  if (Math.min(...rgb) > 242) return '#ffffff';
+  return '#' + rgb.map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+}
+/** « rgb(1, 2, 3) » ou « #abcdef » → « #rrggbb ». */
+function hexDe(c) {
+  const m = /rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/.exec(c || '');
+  if (m) return '#' + [1, 2, 3].map(k => (+m[k]).toString(16).padStart(2, '0')).join('');
+  return /^#[0-9a-f]{6}$/i.test(c || '') ? c.toLowerCase() : undefined;
+}
+/** Dessine en grand la seule zone du paragraphe, et rend une fonction qui lit, pour un rectangle (en points),
+    la couleur du fond (la plus répandue) et celle du texte (la plus éloignée du fond). */
+async function lecteurCouleurs(pg, zone) {
+  try {
+    const marge = 3;
+    let E = 4; while (E > 1 && Math.max(zone.w + 2 * marge, zone.h + 2 * marge) * E > 3200) E--;
+    const x0 = zone.x - marge, y0 = zone.y - marge;
+    const c = document.createElement('canvas');
+    c.width = Math.max(1, Math.ceil((zone.w + 2 * marge) * E)); c.height = Math.max(1, Math.ceil((zone.h + 2 * marge) * E));
+    const ctx = c.getContext('2d', { willReadFrequently: true });
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, c.width, c.height);
+    await pg.p.render({ canvasContext: ctx, viewport: pg.p.getViewport({ scale: E, rotation: rotationTotale(pg) }), transform: [1, 0, 0, 1, -x0 * E, -y0 * E], annotationMode: pdfjsLib.AnnotationMode.DISABLE }).promise;
+    const W = c.width, H = c.height, d = ctx.getImageData(0, 0, W, H).data;
+    c.width = c.height = 0;
+    const borne = (v, max) => Math.max(0, Math.min(max, Math.round(v)));
+    return (r, entier) => {
+      // Pour un mot, on regarde le cœur des lettres (sans le haut ni le bas de la ligne)
+      const xa = borne((r.x - x0) * E, W - 1), xb = borne((r.x + r.w - x0) * E, W);
+      const ya = borne((r.y + (entier ? 0 : r.h * 0.15) - y0) * E, H - 1), yb = borne((r.y + r.h * (entier ? 1 : 0.88) - y0) * E, H);
+      const tas = new Map();
+      for (let y = ya; y < yb; y++) for (let x = xa; x < xb; x++) {
+        const i = (y * W + x) * 4, k = (d[i] >> 3) << 10 | (d[i + 1] >> 3) << 5 | (d[i + 2] >> 3);
+        let t = tas.get(k); if (!t) tas.set(k, t = [0, 0, 0, 0]);
+        t[0]++; t[1] += d[i]; t[2] += d[i + 1]; t[3] += d[i + 2];
+      }
+      let g = null; for (const t of tas.values()) if (!g || t[0] > g[0]) g = t;
+      if (!g) return { fond: [255, 255, 255], texte: null };
+      const fond = [g[1] / g[0], g[2] / g[0], g[3] / g[0]];
+      const ecart = i => Math.abs(d[i] - fond[0]) + Math.abs(d[i + 1] - fond[1]) + Math.abs(d[i + 2] - fond[2]);
+      let max = 0;
+      for (let y = ya; y < yb; y++) for (let x = xa; x < xb; x++) { const e = ecart((y * W + x) * 4); if (e > max) max = e; }
+      if (max < 90) return { fond, texte: null }; // rien de lisible ici
+      const s = [0, 0, 0, 0];
+      for (let y = ya; y < yb; y++) for (let x = xa; x < xb; x++) {
+        const i = (y * W + x) * 4; if (ecart(i) >= max * 0.82) { s[0]++; s[1] += d[i]; s[2] += d[i + 1]; s[3] += d[i + 2]; }
+      }
+      return { fond, texte: [s[1] / s[0], s[2] / s[0], s[3] / s[0]] };
+    };
+  } catch (e) { console.error(e); return null; }
 }
 /** Lignes de la page autour du texte touché : même taille de caractères, lignes rapprochées, sans changer de puce (–, •). */
-function paragrapheAutour(pg, tc, t0, r0) {
+function paragrapheAutour(pg, tc, t0, r0, coul) {
   // 1. regrouper les morceaux de texte par ligne (même ligne de base)
   const morceaux = tc.items.filter(t => t.str && t.str.trim()).map(t => ({ t, r: rectTexte(pg, t) })).filter(m => Math.abs(m.r.angle) <= 0.05);
   const lignes = [];
@@ -3116,22 +3215,28 @@ function paragrapheAutour(pg, tc, t0, r0) {
     for (let k = debutDe; k < cellules.length; k++) cellules[k].nbCol = cellules.length - debutDe;
   }
   lignes.splice(0, lignes.length, ...cellules);
+  /** Morceaux d'une ligne : gras ou non, et (si on la connaît) la couleur lue sur la page. */
+  function runsLigne(l, couleurDe) {
+    const runs = []; let acc = '';
+    l.m.forEach((m, k) => {
+      const g = estGras(nomPolice(pg, tc, m.t.fontName));
+      let s = m.t.str;
+      if (k) { const ecart = m.r.x - (l.m[k - 1].r.x + l.m[k - 1].r.w); if (ecart > l.taille * 0.15 && !/\s$/.test(acc) && !/^\s/.test(s)) s = ' ' + s; }
+      acc += s; ajouterRun(runs, s, g, couleurDe && m.t.str.trim() ? couleurDe(m.r) : undefined);
+    });
+    return { runs, acc };
+  }
   for (const l of lignes) {
     l.m.sort((a, b) => a.r.x - b.r.x);
     l.x = Math.min(...l.m.map(m => m.r.x)); l.y = Math.min(...l.m.map(m => m.r.y));
     l.droite = Math.max(...l.m.map(m => m.r.x + m.r.w)); l.bas = Math.max(...l.m.map(m => m.r.y + m.r.h));
     l.taille = Math.max(...l.m.map(m => m.r.taille));
     // Morceaux gras / normal (d'après le vrai nom de la police) et largeur réelle comparée à Arial
-    l.runs = []; l.sO = 0; l.sA = 0;
-    let acc = '';
-    l.m.forEach((m, k) => {
-      const g = estGras(nomPolice(pg, tc, m.t.fontName));
-      let s = m.t.str;
-      if (k) { const ecart = m.r.x - (l.m[k - 1].r.x + l.m[k - 1].r.w); if (ecart > l.taille * 0.15 && !/\s$/.test(acc) && !/^\s/.test(s)) s = ' ' + s; }
-      acc += s; ajouterRun(l.runs, s, g);
-      if (m.t.str.trim().length > 2) { l.sO += m.r.w; l.sA += largeurArial(m.t.str, m.r.taille, g); }
-    });
-    l.texte = acc.replace(/\s+/g, ' ').trim();
+    l.sO = 0; l.sA = 0;
+    const rl = runsLigne(l);
+    l.runs = rl.runs;
+    l.m.forEach(m => { if (m.t.str.trim().length > 2) { const g = estGras(nomPolice(pg, tc, m.t.fontName)); l.sO += m.r.w; l.sA += largeurArial(m.t.str, m.r.taille, g); } });
+    l.texte = rl.acc.replace(/\s+/g, ' ').trim();
     l.gras = l.runs.every(r => r.g || !r.t.trim());
   }
   lignes.sort((a, b) => a.base - b.base);
@@ -3145,7 +3250,8 @@ function paragrapheAutour(pg, tc, t0, r0) {
   const tabulaire = l0.nbCol > 1, largeurMax = Math.max(...lignes.slice(Math.max(0, i - 6), i + 7).map(l => l.droite - l.x));
   const pleine = l => !tabulaire || l.droite - l.x >= largeurMax * 0.75;
   const puce = s => /^[–—•▪●○■\-*]\s|^\d+[.)]\s|^[a-z][.)]\s/i.test(s);
-  const meme = (a, b) => Math.abs(a.taille - b.taille) < b.taille * 0.2 && a.x < b.droite && a.droite > b.x;
+  // Même paragraphe : même taille de lettres, même graisse (un titre gras ne s'accroche pas au texte qui suit)
+  const meme = (a, b) => Math.abs(a.taille - b.taille) < b.taille * 0.06 && a.gras === b.gras && a.x < b.droite && a.droite > b.x;
   let debut = i, fin = i;
   // vers le haut : tant que la ligne courante n'est pas un début de puce, et que l'écart reste celui d'un paragraphe
   while (debut > 0 && !puce(lignes[debut].texte)) {
@@ -3160,8 +3266,19 @@ function paragrapheAutour(pg, tc, t0, r0) {
     fin++;
   }
   const sel = lignes.slice(debut, fin + 1);
+  // Lignes centrées (titre) : même milieu, bords différents. Elles restent centrées, chacune sur sa ligne.
+  const milieux = sel.map(l => (l.x + l.droite) / 2), gauches = sel.map(l => l.x);
+  const centre = sel.length > 1 && Math.max(...milieux) - Math.min(...milieux) < 2.5 && Math.max(...gauches) - Math.min(...gauches) > 4;
+  // Retour à la ligne voulu (adresse, liste courte) : le premier mot de la ligne suivante aurait tenu au bout de celle-ci
+  const droiteMax = Math.max(...sel.map(l => l.droite));
+  const dur = sel.slice(0, -1).map((l, k) => {
+    if (centre) return true;
+    if (tabulaire) return false;
+    const n = sel[k + 1], mot = n.texte.split(' ')[0];
+    return l.droite + (n.droite - n.x) * (mot.length + 1) / Math.max(1, n.texte.length) < droiteMax - l.taille * 0.5;
+  });
   // texte continu : « appar-» + « tient » → « appartient »
-  const texte = sel.map(l => l.texte).reduce((s, l) => !s ? l : (/[a-zà-ÿ]-$/i.test(s) && /^[a-zà-ÿ]/.test(l) ? s.slice(0, -1) + l : s + ' ' + l), '');
+  const texte = sel.map(l => l.texte).reduce((s, l, k) => !s ? l : dur[k - 1] ? s + '\n' + l : (/[a-zà-ÿ]-$/i.test(s) && /^[a-zà-ÿ]/.test(l) ? s.slice(0, -1) + l : s + ' ' + l), '');
   const ecarts = sel.slice(1).map((l, k) => l.base - sel[k].base);
   const taille = sel[0].taille;
   const interligne = ecarts.length ? Math.round(Math.min(1.8, Math.max(1.05, ecarts.reduce((a, b) => a + b, 0) / ecarts.length / taille)) * 100) / 100 : 1.15;
@@ -3169,18 +3286,20 @@ function paragrapheAutour(pg, tc, t0, r0) {
   // Morceaux du paragraphe entier (mêmes règles de jonction que le texte)
   let runs = [];
   sel.forEach((l, k) => {
+    const lr = coul ? runsLigne(l, coul).runs : l.runs;
     if (k && runs.length) {
       const d = runs[runs.length - 1]; d.t = d.t.trimEnd();
-      const debutLigne = l.runs.map(r => r.t).join('').trimStart();
-      if (/[a-zà-ÿ]-$/i.test(d.t) && /^[a-zà-ÿ]/.test(debutLigne)) d.t = d.t.slice(0, -1); else d.t += ' ';
+      const debutLigne = lr.map(r => r.t).join('').trimStart();
+      if (dur[k - 1]) d.t += '\n';
+      else if (/[a-zà-ÿ]-$/i.test(d.t) && /^[a-zà-ÿ]/.test(debutLigne)) d.t = d.t.slice(0, -1); else d.t += ' ';
     }
-    l.runs.forEach(r => ajouterRun(runs, r.t, r.g));
+    lr.forEach(r => ajouterRun(runs, r.t, r.g, r.c));
   });
   runs = nettoyerMorceaux(runs);
   const sO = sel.reduce((a, l) => a + l.sO, 0), sA = sel.reduce((a, l) => a + l.sA, 0);
   const k = sA > 0 ? Math.min(1, Math.max(0.6, sO / sA)) : 1;
   return { x, y, w: Math.max(...sel.map(l => l.droite)) - x, h: Math.max(...sel.map(l => l.bas)) - y, base: sel[0].base, taille, interligne, texte: runs.map(r => r.t).join('') || texte, nbLignes: sel.length, gras: sel.every(l => l.gras),
-    morceaux: runs, serre: k < 0.97 ? Math.round(k * 100) / 100 : undefined };
+    morceaux: runs, serre: k < 0.97 ? Math.round(k * 100) / 100 : undefined, aligne: centre ? 'centre' : undefined, dur: dur.some(Boolean) };
 }
 /** Nom réel de la police d'un morceau de texte (ex. « FrutigerLTStd-BoldCn »). */
 function nomPolice(pg, tc, fontName) {
@@ -3195,10 +3314,11 @@ function largeurArial(s, taille, gras) {
   return ctxMesure.measureText(s).width;
 }
 /** Texte mis en forme = liste de morceaux { t, g } (g : gras). Les morceaux voisins de même style sont fusionnés. */
-function ajouterRun(runs, t, g) {
+function ajouterRun(runs, t, g, c) {
   if (!t) return;
   g = !!g; const d = runs[runs.length - 1];
-  if (d && !!d.g === g) d.t += t; else runs.push(g ? { t, g: true } : { t });
+  if (d && !!d.g === g && (d.c || '') === (c || '')) { d.t += t; return; }
+  const n = { t }; if (g) n.g = true; if (c) n.c = c; runs.push(n);
 }
 function nettoyerMorceaux(runs) {
   const res = [];
@@ -3206,7 +3326,7 @@ function nettoyerMorceaux(runs) {
     let t = r.t.replace(/[ \t ]+/g, ' ');
     const prec = res.map(x => x.t).join('');
     if ((!prec || /[ \n]$/.test(prec)) && t.startsWith(' ')) t = t.replace(/^ +/, '');
-    ajouterRun(res, t, r.g);
+    ajouterRun(res, t, r.g, r.c);
   });
   if (res.length) { const d = res[res.length - 1]; d.t = d.t.replace(/\s+$/, ''); if (!d.t) res.pop(); }
   return res;
@@ -3214,24 +3334,28 @@ function nettoyerMorceaux(runs) {
 /** Relit le texte tapé (avec ses mots en gras) depuis la zone d'écriture. */
 function lireMorceaux(z) {
   const runs = [];
-  const parcourir = (n, g) => {
+  const parcourir = (n, g, col) => {
     for (const c of n.childNodes) {
-      if (c.nodeType === 3) ajouterRun(runs, c.data, g);
-      else if (c.nodeName === 'BR') ajouterRun(runs, '\n', g);
+      if (c.nodeType === 3) ajouterRun(runs, c.data, g, col);
+      else if (c.nodeName === 'BR') ajouterRun(runs, '\n', g, col);
       else if (c.nodeType === 1) {
         const fw = c.style && c.style.fontWeight;
         const gc = /^(B|STRONG)$/.test(c.nodeName) ? true : (fw ? (fw === 'bold' || +fw >= 600) : g);
-        if (/^(DIV|P)$/.test(c.nodeName) && runs.length) ajouterRun(runs, '\n', g);
-        parcourir(c, gc);
+        const cc = hexDe(c.style && c.style.color) || (c.nodeName === 'FONT' && hexDe(c.getAttribute('color'))) || col;
+        if (/^(DIV|P)$/.test(c.nodeName) && runs.length) ajouterRun(runs, '\n', g, col);
+        parcourir(c, gc, cc);
       }
     }
   };
-  parcourir(z, false);
+  parcourir(z, false, undefined);
   if (runs.length) { const d = runs[runs.length - 1]; d.t = d.t.replace(/\n$/, ''); if (!d.t) runs.pop(); }
   return runs;
 }
 function remplirContenu(z, it) {
-  if (it.morceaux) z.replaceChildren(...it.morceaux.map(r => r.g ? el('b', { text: r.t }) : document.createTextNode(r.t)));
+  if (it.morceaux) z.replaceChildren(...it.morceaux.map(r => {
+    const n = r.g ? el('b', { text: r.t }) : document.createTextNode(r.t);
+    return r.c ? el('span', { style: { color: r.c } }, n) : n; // mot d'une autre couleur que le reste (puce, mot en couleur)
+  }));
   else z.textContent = it.texte;
 }
 
@@ -3689,10 +3813,10 @@ function couperLigne(ligne, police, taille, largeur) {
 /** Coupe un texte mis en forme (morceaux gras / normal) en lignes qui tiennent dans la largeur. */
 function couperMorceaux(runs, pol, taille, largeur) {
   const jetons = [];
-  for (const r of runs) for (const p of r.t.split(/(\n|[ \t ]+)/)) if (p) jetons.push({ t: p, g: r.g });
+  for (const r of runs) for (const p of r.t.split(/(\n|[ \t ]+)/)) if (p) jetons.push({ t: p, g: r.g, c: r.c });
   const L = j => pol(j.g).widthOfTextAtSize(j.t, taille);
   const lignes = []; let cour = [], lc = 0;
-  const ajouter = j => { const d = cour[cour.length - 1]; if (d && d.g === j.g) d.t += j.t; else cour.push({ t: j.t, g: j.g }); lc += L(j); };
+  const ajouter = j => { const d = cour[cour.length - 1]; if (d && d.g === j.g && d.c === j.c) d.t += j.t; else cour.push({ t: j.t, g: j.g, c: j.c }); lc += L(j); };
   const fermer = () => {
     while (cour.length && !cour[cour.length - 1].t.trimEnd()) cour.pop();
     if (cour.length) cour[cour.length - 1].t = cour[cour.length - 1].t.trimEnd();
@@ -3707,7 +3831,7 @@ function couperMorceaux(runs, pol, taille, largeur) {
       let reste = j.t;
       while (reste) {
         let n = reste.length; while (n > 1 && L({ t: reste.slice(0, n), g: j.g }) > largeur + 0.01) n--;
-        ajouter({ t: reste.slice(0, n), g: j.g }); reste = reste.slice(n); if (reste) fermer();
+        ajouter({ t: reste.slice(0, n), g: j.g, c: j.c }); reste = reste.slice(n); if (reste) fermer();
       }
     } else ajouter(j);
   }
@@ -3723,7 +3847,7 @@ async function dessinerItems(out, np, items, versPdf, R, ressources) {
     const pol = g => g ? ressources.gras : ressources.police;
     if (it.type === 'texte') {
       // Morceaux gras / normal (texte corrigé) ; sinon un seul morceau
-      const runs = (it.morceaux || [{ t: it.texte, g: it.gras }]).map(r => ({ t: versWinAnsi(r.t), g: !!r.g }));
+      const runs = (it.morceaux || [{ t: it.texte, g: it.gras }]).map(r => ({ t: versWinAnsi(r.t), g: !!r.g, c: r.c }));
       if (runs.some(r => r.g) && !ressources.gras) ressources.gras = await out.embedFont(StandardFonts.HelveticaBold);
       inter = it.interligne || 1.15; k = it.serre || 1;
       // Paragraphe : retour à la ligne automatique (même règle que l'écran : largeur / resserrement, coupure entre les mots)
@@ -3762,16 +3886,18 @@ async function dessinerItems(out, np, items, versPdf, R, ressources) {
       if (k !== 1) np.pushOperators(pushGraphicsState(), setCharacterSqueeze(Math.round(k * 1000) / 10));
       lignes.forEach((ligne, n) => {
         const base = it.y + T * (decal + inter * n);
-        let dx = 0;
+        // Texte centré : chaque ligne est placée au milieu de la largeur du bloc
+        const dx0 = it.aligne === 'centre' && it.largeur ? Math.max(0, (it.largeur - ligne.reduce((a, sg) => a + pol(sg.g).widthOfTextAtSize(sg.t, T), 0) * k) / 2) : 0;
+        let dx = dx0;
         for (const sg of ligne) {
           if (!sg.t) continue;
           const [x, y] = point(it.x + dx, base);
-          np.drawText(sg.t, { x, y, size: T, font: pol(sg.g), color: hexVersRgb(it.couleur), rotate: rot });
+          np.drawText(sg.t, { x, y, size: T, font: pol(sg.g), color: hexVersRgb(sg.c || it.couleur), rotate: rot });
           dx += pol(sg.g).widthOfTextAtSize(sg.t, T) * k;
         }
-        if (it.souligne && dx) {
+        if (it.souligne && dx > dx0) {
           const sous = base + T * 0.14;
-          const [x1, y1] = point(it.x, sous), [x2, y2] = point(it.x + dx, sous);
+          const [x1, y1] = point(it.x + dx0, sous), [x2, y2] = point(it.x + dx, sous);
           np.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, thickness: Math.max(0.5, T * 0.07), color: hexVersRgb(it.couleur) });
         }
       });
@@ -5822,12 +5948,24 @@ function majTableauBord() {
 function ouvrirDossiers(filtreInitial = 'tous') {
   const fe = feuille({ titre: 'Clients', plein: true, pied: false, page: 'clients', rouvrir: () => ouvrirDossiers(filtre.value) });
   fe.feuille.classList.add('large');
-  const recherche = el('input', { class: 'champ', id: 'recherche-dossiers', type: 'search', placeholder: 'Nom, ville…', autocomplete: 'off' });
   const zone = el('div', { class: 'liste-dossiers' });
+  // Même barre que sur les pages Fichiers et Modèles : recherche, filtre, tri, affichage
+  const appliquerVue = v => {
+    prefs.vueClients = v; ecrirePrefs(prefs);
+    zone.classList.toggle('vue-rect', v === 'rect'); zone.classList.toggle('vue-liste', v === 'liste');
+    outils.choix.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vue === v)));
+  };
+  const outils = barreListe({ id: 'recherche-dossiers', placeholder: 'Nom, ville…', libFiltre: 'Afficher seulement certains dossiers',
+    filtres: [['tous', 'Tous les dossiers'], ['actifs', 'En cours (pièces manquantes)'], ['relancer', 'À relancer'], ['complets', 'Complets']],
+    tri: prefs.triClients, libTri: 'Trier les clients', libVues: 'Affichage des clients', surVue: v => appliquerVue(v),
+    vues: [['cartes', 'vue-cartes', 'Afficher en cartes'], ['rect', 'vue-liste', 'Afficher en cartes rectangulaires'], ['liste', 'vue-lignes', 'Afficher en liste']] });
+  const recherche = outils.champ, filtre = outils.filtre;
+  filtre.id = 'filtre-dossiers';
   const stats = el('div', { class: 'stats-dossiers' });
   const sansA = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   const afficher = () => {
-    const tous = dossiers().slice().sort((a, b) => b.maj - a.maj);
+    const t = outils.tri.value;
+    const tous = dossiers().slice().sort((a, b) => t === 'az' ? nomClient(a.client).localeCompare(nomClient(b.client), 'fr') : t === 'za' ? nomClient(b.client).localeCompare(nomClient(a.client), 'fr') : b.maj - a.maj);
     const complets = tous.filter(d => avancement(d).complet).length;
     const manquantes = tous.reduce((s, d) => s + d.pieces.filter(p => p.etat !== 'recu').length, 0);
     stats.replaceChildren(
@@ -5846,16 +5984,16 @@ function ouvrirDossiers(filtreInitial = 'tous') {
         tous.length ? null : bouton('Créer le premier dossier', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); nouveauDossier(); } }))]));
   };
   recherche.addEventListener('input', afficher);
-  const filtre = el('select', { class: 'champ', id: 'filtre-dossiers', 'aria-label': 'Afficher' },
-    [['tous', 'Tous les dossiers'], ['actifs', 'En cours (pièces manquantes)'], ['relancer', 'À relancer'], ['complets', 'Complets']].map(([v, t]) => el('option', { value: v, text: t })));
-  filtre.value = filtreInitial; filtre.addEventListener('change', afficher);
-  fe.corps.append(stats,
-    el('div', { class: 'barre-dossiers barre-clients' },
-      el('label', { class: 'lib-recherche', for: 'recherche-dossiers' }, icone('zoom'), 'Rechercher'), recherche,
-      filtre,
-      bouton('Mes listes', { ico: 'vue-liste', label: 'Mes listes de pièces', onclick: async () => { await fe.fermer(); ouvrirMesListes(ouvrirDossiers); } }),
-      bouton('Nouveau client', { ico: 'plus', cls: 'btn principal', onclick: async () => { await fe.fermer(); nouveauDossier(); } })),
-    zone);
+  filtre.value = filtreInitial; if (filtre.selectedIndex < 0) filtre.selectedIndex = 0;
+  filtre.addEventListener('change', afficher);
+  outils.tri.addEventListener('change', () => { prefs.triClients = outils.tri.value; ecrirePrefs(prefs); afficher(); });
+  // Le bouton principal est en haut à droite, comme « Créer un modèle » ; la barre de recherche juste dessous
+  fe.corps.append(
+    el('div', { class: 'tete-modeles' },
+      bouton('Mes listes de pièces', { ico: 'vue-liste', cls: 'btn btn-listes', onclick: async () => { await fe.fermer(); ouvrirMesListes(ouvrirDossiers); } }),
+      bouton('Nouveau client', { ico: 'plus', cls: 'btn principal btn-creer-modele', onclick: async () => { await fe.fermer(); nouveauDossier(); } })),
+    outils.barre, stats, zone);
+  appliquerVue(['rect', 'liste'].includes(prefs.vueClients) ? prefs.vueClients : 'cartes');
   afficher();
 }
 
@@ -9144,6 +9282,23 @@ const quand = t => {
 const LIBELLES_ACTION = { enregistré: 'Enregistré', partagé: 'Partagé', images: 'Converti en images', drive: 'Enregistré dans Drive' };
 
 /** Ligne de liste : aperçu, nom, détail, actions. */
+/** Barre commune aux pages de liste (Clients, Fichiers, Modèles) : recherche, filtre, tri, choix d'affichage.
+    Toujours les mêmes éléments, dans le même ordre et au même endroit : on garde ses repères d'une page à l'autre. */
+const TRIS_LISTE = [['recents', 'Les plus récents'], ['az', 'Nom : A → Z'], ['za', 'Nom : Z → A']];
+function barreListe({ id, placeholder, filtres, libFiltre, tri, libTri, vues, libVues, surVue }) {
+  const champ = el('input', { type: 'search', class: 'champ', id, placeholder, autocomplete: 'off', enterkeyhint: 'search' });
+  const liste = (opts, label, val) => {
+    const sel = el('select', { class: 'champ tri-modeles', 'aria-label': label }, opts.map(([v, t]) => el('option', { value: v, text: t })));
+    if (val != null) sel.value = val;
+    if (sel.selectedIndex < 0) sel.selectedIndex = 0;
+    return sel;
+  };
+  const filtre = liste(filtres, libFiltre), selTri = liste(TRIS_LISTE, libTri, tri);
+  const choix = el('div', { class: 'choix-vue', role: 'group', 'aria-label': libVues });
+  vues.forEach(([v, ico, label]) => { const b = bouton('', { ico, cls: 'btn-icone', label, onclick: () => surVue(v) }); b.dataset.vue = v; choix.append(b); });
+  const barre = el('div', { class: 'barre-recherche-docs outils-modeles' }, el('label', { for: id, class: 'lib-recherche' }, icone('zoom'), 'Rechercher'), champ, filtre, selTri, choix);
+  return { barre, champ, filtre, tri: selTri, choix };
+}
 function ligneDoc({ apercu, ico, titre, detail, onclick, actions = [], badges = [] }) {
   return el('div', { class: 'ligne-doc' },
     el('button', { type: 'button', class: 'ligne-doc-principal', onclick, 'aria-label': `Ouvrir ${titre}` },
@@ -9188,17 +9343,38 @@ async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
   const fe = feuille({ titre: 'Fichiers', plein: true, pied: false, page: 'documents', rouvrir: () => ouvrirMesDocuments(courant, filtreDoc) });
   const zone = el('div', { class: 'liste-docs' });
   let courant = onglet, seulFavoris = false;
-  const btnFavoris = el('button', { type: 'button', class: 'btn puce btn-filtre-fav', 'aria-pressed': 'false', title: 'Afficher seulement mes favoris',
-    onclick: () => { seulFavoris = !seulFavoris; btnFavoris.setAttribute('aria-pressed', String(seulFavoris)); afficher(); } }, '★ Favoris');
   const onglets = [['documents', 'Documents'], ['historique', 'Historique'], ...(enEntreprise() ? [] : [['modeles', 'Modèles']])];
   if (driveConfigure()) onglets.push(['drive', 'Drive']);
   const barreOnglets = segments('mesdocs', onglets, courant, v => { courant = v; filtreDoc = null; afficher(); });
   barreOnglets.classList.add('onglets-capsule');
   // Recherche : filtre par nom dans l'onglet affiché (sans accents ni majuscules)
   const sansAccent = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-  const champRecherche = el('input', { type: 'search', class: 'champ', id: 'recherche-docs', placeholder: 'Nom du document…', autocomplete: 'off', enterkeyhint: 'search' });
+  // Même barre que sur les pages Clients et Modèles : recherche, filtre, tri, affichage
+  const appliquerVue = v => {
+    prefs.vueDocs = v; ecrirePrefs(prefs);
+    zone.classList.toggle('vue-cartes', v === 'cartes');
+    zone.classList.toggle('vue-lignes', v === 'lignes');
+    choixVue.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vue === v)));
+  };
+  const outils = barreListe({ id: 'recherche-docs', placeholder: 'Nom du document…', filtres: [['', 'Tous les fichiers'], ['favoris', '★ Favoris']], libFiltre: 'Afficher seulement un type de fichier',
+    tri: prefs.triDocs, libTri: 'Trier les fichiers', libVues: 'Affichage', surVue: v => appliquerVue(v),
+    vues: [['cartes', 'vue-cartes', 'Afficher en cartes'], ['liste', 'vue-liste', 'Afficher en liste'], ['lignes', 'vue-lignes', 'Afficher ligne par ligne']] });
+  const champRecherche = outils.champ, choixVue = outils.choix;
+  outils.filtre.addEventListener('change', () => { seulFavoris = outils.filtre.value === 'favoris'; afficher(); });
+  outils.tri.addEventListener('change', () => { prefs.triDocs = outils.tri.value; ecrirePrefs(prefs); filtrer(); });
   const infoRecherche = el('p', { class: 'info-recherche', 'aria-live': 'polite' });
+  /** Tri choisi : « récents » garde l'ordre d'arrivée (favoris d'abord) ; sinon par nom. */
+  const ranger = () => {
+    const parParent = new Map();
+    zone.querySelectorAll('.ligne-doc').forEach(l => { if (!parParent.has(l.parentNode)) parParent.set(l.parentNode, []); parParent.get(l.parentNode).push(l); });
+    const t = outils.tri.value, nom = l => l.querySelector('strong')?.textContent || '';
+    for (const [parent, lignes] of parParent) {
+      lignes.forEach((l, k) => { if (!l.dataset.rang) l.dataset.rang = String(k + 1); });
+      lignes.sort((a, b) => t === 'az' ? nom(a).localeCompare(nom(b), 'fr') : t === 'za' ? nom(b).localeCompare(nom(a), 'fr') : a.dataset.rang - b.dataset.rang).forEach(l => parent.append(l));
+    }
+  };
   const filtrer = () => {
+    ranger();
     const q = sansAccent(champRecherche.value.trim());
     const lignes = [...zone.querySelectorAll('.ligne-doc')];
     let n = 0;
@@ -9207,21 +9383,9 @@ async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
   };
   champRecherche.addEventListener('input', filtrer);
   fe.feuille.classList.add('large', 'atelier', 'mes-docs');
-  // Affichage en liste ou en cartes (mémorisé)
-  const choixVue = el('div', { class: 'choix-vue', role: 'group', 'aria-label': 'Affichage' });
-  const appliquerVue = v => {
-    prefs.vueDocs = v; ecrirePrefs(prefs);
-    zone.classList.toggle('vue-cartes', v === 'cartes');
-    zone.classList.toggle('vue-lignes', v === 'lignes');
-    choixVue.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vue === v)));
-  };
-  [['lignes', 'vue-lignes', 'Afficher ligne par ligne'], ['liste', 'vue-liste', 'Afficher en liste'], ['cartes', 'vue-cartes', 'Afficher en cartes']].forEach(([v, ico, label]) => {
-    const b = bouton('', { ico, cls: 'btn-icone', label, onclick: () => appliquerVue(v) });
-    b.dataset.vue = v; choixVue.append(b);
-  });
+  // Affichage en liste ou en cartes (mémorisé). Les onglets sont en haut, la barre juste dessous : comme sur la page Modèles.
   appliquerVue(['cartes', 'lignes'].includes(prefs.vueDocs) ? prefs.vueDocs : 'liste');
-  fe.corps.append(el('div', { class: 'barre-recherche-docs' },
-    el('label', { for: 'recherche-docs', class: 'lib-recherche' }, icone('zoom'), 'Rechercher'), champRecherche, btnFavoris, choixVue), barreOnglets, infoRecherche, zone);
+  fe.corps.append(el('div', { class: 'tete-modeles' }, barreOnglets), outils.barre, infoRecherche, zone);
   const ouvrirPuis = async fn => { await fe.fermer(); fn(); };
   const surDrive = () => { if (!zone.isConnected) document.removeEventListener('drive-etat', surDrive); else if (courant === 'drive' || courant === 'documents') afficher(); };
   document.addEventListener('drive-etat', surDrive);
