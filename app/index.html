@@ -480,6 +480,9 @@ a{color:var(--accent)}
 .barre-format .sep{width:1px;height:24px;background:rgba(255,255,255,.2);margin:0 2px}
 .barre-format .teinte{min-width:28px;width:28px;height:28px;padding:0;border-radius:50%;border:2px solid rgba(255,255,255,.7)}
 .barre-format .teinte[aria-pressed="true"]{box-shadow:0 0 0 3px #1fae76;background-clip:padding-box}
+.barre-format .teinte.pipette{display:inline-grid;place-items:center;color:#fff;border-style:dashed}
+.barre-format .teinte.pipette .ico{width:15px;height:15px;stroke-width:2.2}
+#pages.pipette,#pages.pipette *{cursor:crosshair!important}
 .barre-format .teinte.aucune{background:linear-gradient(135deg,transparent 45%,#e53935 45%,#e53935 55%,transparent 55%),#fff}
 .item-image img{width:100%;height:100%;display:block;pointer-events:none;-webkit-user-drag:none}
 /* Traits (stylo, surligneur) */
@@ -506,6 +509,8 @@ a{color:var(--accent)}
 .suppr{top:-20px;right:-20px;width:34px;height:34px;background:var(--danger);color:#fff;place-items:center}
 .suppr .ico{width:16px;height:16px;stroke-width:3}
 .mode-editer .item.sel .poignee{display:block}
+/* Paragraphe : la poignée est au milieu du bord droit, elle règle la largeur du cadre */
+.item-texte.paragraphe>.poignee{bottom:auto;top:50%;margin-top:-14px;cursor:ew-resize}
 .mode-editer .item.sel:not(.edition) .suppr{display:grid}
 #pages.placement .calque-items{pointer-events:auto;cursor:crosshair}
 #pages.placement .item{pointer-events:none}
@@ -1415,6 +1420,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
   <symbol id="i-tampon" viewBox="0 0 24 24"><path d="M9.5 13V9.5a2.5 2.5 0 1 1 5 0V13"/><rect x="5" y="13" width="14" height="4" rx="1"/><path d="M6 20.5h12"/></symbol>
   <symbol id="i-masque" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="10" rx="1.5"/><path d="M9 17l6-10"/></symbol>
   <symbol id="i-corriger" viewBox="0 0 24 24"><path d="M4 20l1-4 9-9 3 3-9 9-4 1z"/><path d="M14 20h6"/></symbol>
+  <symbol id="i-pipette" viewBox="0 0 24 24"><path d="M13 7l4 4"/><path d="M11.5 8.5l-7 7V19h3.5l7-7"/><path d="M14.5 3.6a2 2 0 0 1 2.9 0l3 3a2 2 0 0 1 0 2.900L17.5 12.400 11.600 6.500z"/></symbol>
   <symbol id="i-annuler" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></symbol>
   <symbol id="i-valider" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7"/></symbol>
   <symbol id="i-oeil" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
@@ -1600,7 +1606,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.52.0';
+const VERSION_APPLI = '1.52.1';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
@@ -2591,14 +2597,18 @@ function elementItem(it) {
     // Texte mis en forme : Entrée et coller insèrent du texte simple (pas de mise en page copiée d'ailleurs)
     z.addEventListener('keydown', ev => { if (it.morceaux && D.edition === it.id && ev.key === 'Enter') { ev.preventDefault(); document.execCommand('insertText', false, '\n'); } });
     z.addEventListener('paste', ev => { if (!it.morceaux || D.edition !== it.id) return; ev.preventDefault(); document.execCommand('insertText', false, (ev.clipboardData?.getData('text/plain') || '').replace(/\r/g, '')); });
-    z.addEventListener('blur', () => { if (D && D.edition === it.id) setTimeout(() => { if (D && D.edition === it.id && document.activeElement !== z) terminerEdition(); }, 0); });
+    z.addEventListener('blur', () => { if (D && D.edition === it.id) setTimeout(() => {
+      if (!D || D.edition !== it.id || document.activeElement === z) return;
+      if (D.pipette || Date.now() - (D.pipetteT || 0) < 600) { z.focus({ preventScroll: true }); return; } // la pipette ne ferme pas l'écriture
+      terminerEdition();
+    }, 0); });
     e.append(z);
   }
   if (it.type === 'image') e.append(el('img', { src: D.images[it.img], alt: '', draggable: 'false' }));
   if (it.type === 'image' && D.rognage && D.rognage.id === it.id) ajouterCadreRognage(e, it);
   majStyleItem(e, it);
   if (D.mode === 'editer') {
-    e.append(el('span', { class: 'poignee', title: 'Agrandir ou réduire', 'aria-hidden': 'true' }),
+    e.append(el('span', { class: 'poignee', title: it.type === 'texte' && it.largeur ? 'Élargir ou rétrécir le cadre' : 'Agrandir ou réduire', 'aria-hidden': 'true' }),
       el('span', { class: 'poignee-rot', title: 'Faire tourner', 'aria-hidden': 'true' }, icone('pivoter')),
       el('button', { type: 'button', class: 'suppr', 'aria-label': 'Supprimer cet élément', title: 'Supprimer', onclick: ev => { ev.stopPropagation(); supprimerItem(it.id); } }, icone('fermer')));
     // (append(null) écrirait « null » : la poignée « déplacer » n'est ajoutée que pour un texte)
@@ -2680,14 +2690,25 @@ function barreFormat(it, e) {
   const bSoul = el('button', { type: 'button', class: 'b-souligne', title: 'Souligné', 'aria-label': 'Souligné', text: 'S', onclick: () => changer(() => { it.souligne = !it.souligne || undefined; }) });
   const teintes = TEINTES_FOND.map(([c, nom]) => el('button', { type: 'button', class: 'teinte' + (c ? '' : ' aucune'), title: nom, 'aria-label': nom, style: c ? { background: c } : null,
     onclick: () => changer(() => { it.fond = c || undefined; }) }));
+  // Pipette : on touche la page pour reprendre sa couleur (fond d'une case grise, d'un bandeau…)
+  const bPipette = el('button', { type: 'button', class: 'teinte pipette', title: 'Pipette : reprendre une couleur de la page', 'aria-label': 'Pipette : reprendre une couleur de la page', 'aria-pressed': 'false',
+    onclick: () => {
+      const actif = D.pipette === it.id; arreterPipette();
+      if (!actif) { D.pipette = it.id; pagesEl.classList.add('pipette'); etats(); toast('Touchez, sur la page, la couleur à reprendre pour le fond.'); }
+    } }, icone('pipette'));
   const etats = () => {
+    const perso = !!it.fond && !TEINTES_FOND.some(t => t[0] === it.fond);
+    bPipette.style.background = perso ? it.fond : '';
+    bPipette.style.color = perso && hexVersRgb(it.fond).green > 0.6 ? '#1b2130' : '';
+    bPipette.setAttribute('aria-pressed', String(D.pipette === it.id));
     let gras = !!it.gras;
     if (it.morceaux) { try { gras = !!selDedans() && document.queryCommandState('bold'); } catch { gras = false; } }
     bGras.setAttribute('aria-pressed', String(gras)); bSoul.setAttribute('aria-pressed', String(!!it.souligne));
     teintes.forEach((b, k) => b.setAttribute('aria-pressed', String((it.fond || '') === TEINTES_FOND[k][0])));
   };
   const barre = el('div', { class: 'barre-format', role: 'toolbar', 'aria-label': 'Mise en forme du texte' },
-    bGras, bSoul, el('span', { class: 'sep' }), el('span', { text: 'Surligner', style: { color: '#b8c0cc', padding: '0 4px 0 2px' } }), ...teintes);
+    bGras, bSoul, el('span', { class: 'sep' }), el('span', { text: 'Surligner', style: { color: '#b8c0cc', padding: '0 4px 0 2px' } }), ...teintes, bPipette);
+  barre.maj = () => etats();
   // On garde le curseur dans le texte : la barre ne prend pas le focus et ne déclenche pas le déplacement
   barre.addEventListener('pointerdown', ev => { ev.preventDefault(); ev.stopPropagation(); });
   barre.addEventListener('mousedown', ev => ev.preventDefault());
@@ -2697,8 +2718,44 @@ function barreFormat(it, e) {
   etats();
   return barre;
 }
+function arreterPipette() {
+  if (!D || !D.pipette) return;
+  D.pipette = null; pagesEl.classList.remove('pipette');
+  document.querySelectorAll('.barre-format .pipette').forEach(b => b.setAttribute('aria-pressed', 'false'));
+}
+/* Pipette active : le prochain toucher sur une page donne sa couleur au fond du texte (et au cache qui recouvre l'ancien texte) */
+pagesEl.addEventListener('pointerdown', ev => {
+  if (!D || !D.pipette || ev.target.closest('.barre-format')) return;
+  ev.preventDefault(); ev.stopPropagation();
+  const it = D.items.find(t => t.id === D.pipette), page = ev.target.closest('.page'), v = page && D.vues.get(page.dataset.id);
+  arreterPipette(); D.pipetteT = Date.now();
+  if (!it || !v) return;
+  let hex;
+  try {
+    const c = v.canvas, rc = c.getBoundingClientRect();
+    // On prend la couleur la plus répandue autour du doigt : un trait fin ou une lettre sous le doigt ne faussent pas le résultat
+    const cote = Math.min(13, c.width, c.height);
+    const px = clamp(Math.round((ev.clientX - rc.left) * c.width / rc.width) - (cote >> 1), 0, c.width - cote), py = clamp(Math.round((ev.clientY - rc.top) * c.height / rc.height) - (cote >> 1), 0, c.height - cote);
+    const d = c.getContext('2d').getImageData(px, py, cote, cote).data, tas = new Map();
+    for (let k = 0; k < d.length; k += 4) {
+      const cle = (d[k] >> 2) << 12 | (d[k + 1] >> 2) << 6 | (d[k + 2] >> 2);
+      let t = tas.get(cle); if (!t) tas.set(cle, t = [0, 0, 0, 0]);
+      t[0]++; t[1] += d[k]; t[2] += d[k + 1]; t[3] += d[k + 2];
+    }
+    let g = null; for (const t of tas.values()) if (!g || t[0] > g[0]) g = t;
+    hex = '#' + [1, 2, 3].map(k => Math.round(g[k] / g[0]).toString(16).padStart(2, '0')).join('');
+  } catch (err) { console.error(err); toast('La couleur n\'a pas pu être lue à cet endroit.'); return; }
+  it.fond = hex;
+  const m = it.masqueLie && D.items.find(t => t.id === it.masqueLie);
+  if (m) m.couleur = hex;
+  D.modifie = true;
+  for (const x of [it, m]) { const ex = x && elItem(x.id); if (ex) majStyleItem(ex, x); }
+  elItem(it.id)?.querySelector('.barre-format')?.maj?.();
+  toast('Couleur du fond reprise');
+}, true);
 function terminerEdition(annuler) {
   if (!D || !D.edition) return;
+  arreterPipette();
   const it = D.items.find(t => t.id === D.edition), e = elItem(D.edition);
   D.edition = null;
   if (e) { e.classList.remove('edition'); e.querySelector('.barre-format')?.remove(); const z = e.querySelector('.contenu'); z.contentEditable = 'false'; if (document.activeElement === z) z.blur(); }
@@ -2826,6 +2883,12 @@ function attacherGestes(e, it) {
         const lx = dx * cs + dy * sn, ly = -dx * sn + dy * cs;
         if (it.type === 'image' || it.type === 'trait') { it.w = clamp(orig.w + lx, 6, pg.w * 1.5); it.h = it.w * orig.h / orig.w; }
         else if (it.type === 'masque') { it.w = Math.max(4, orig.w + lx); it.h = Math.max(4, orig.h + ly); }
+        else if (it.type === 'texte' && it.largeur) {
+          // Paragraphe (texte corrigé) : la poignée règle la largeur du cadre ; la taille des lettres se règle avec A− et A+
+          const l = clamp(orig.largeur + (it.aligne === 'centre' ? 2 : 1) * lx, it.taille * 2, pg.w * 1.2);
+          if (it.aligne === 'centre') it.x = orig.x - (l - orig.largeur) / 2; // un texte centré s'élargit des deux côtés
+          it.largeur = Math.round(l * 10) / 10;
+        }
         else it.taille = clamp(orig.taille * (largeur0 + lx) / largeur0, 4, 120);
       } else {
         it.x = clamp(orig.x + dx, -largeur0 * 0.6, pg.w - 8);
@@ -3125,7 +3188,8 @@ async function corrigerTexte(id, x, y) {
   const centre = para.aligne === 'centre';
   const masque = { id: idUnique(), type: 'masque', page: id, x: para.x - 1.5, y: para.y - 1.5, w: para.w + 3, h: para.h + 3, couleur: fond };
   // Lignes gardées telles quelles (titre centré, adresse…) : on laisse de la marge pour qu'aucune ne revienne à la ligne
-  const largeur = centre ? para.w + taille * 2 : para.w + taille * (para.dur ? 2 : 0.3);
+  // Une seule ligne (case d'un tableau, titre) : le cadre va jusqu'au bout de la place libre, pour écrire plus long sans revenir à la ligne
+  const largeur = centre ? para.w + taille * 2 : para.nbLignes === 1 ? Math.max(para.w + taille * 0.3, para.place - para.x) : para.w + taille * (para.dur ? 2 : 0.3);
   const texte = { id: idUnique(), type: 'texte', page: id, x: centre ? para.x - taille : para.x, y: para.base - taille * ((interligne - 1.15) / 2 + 0.92), texte: para.texte, taille, couleur, masqueLie: masque.id,
     largeur: Math.round(largeur * 10) / 10, interligne, morceaux: para.morceaux.length ? para.morceaux : undefined, serre: para.serre, aligne: centre ? 'centre' : undefined };
   if (!texte.morceaux) texte.gras = para.gras || undefined;
@@ -3241,9 +3305,12 @@ function paragrapheAutour(pg, tc, t0, r0, coul) {
   }
   lignes.sort((a, b) => a.base - b.base);
   let i = lignes.findIndex(l => l.m.some(m => m.t === t0));
-  if (i < 0) return { ...r0, texte: t0.str, nbLignes: 1, interligne: 1.15 };
+  if (i < 0) return { ...r0, texte: t0.str, nbLignes: 1, interligne: 1.15, morceaux: [], place: r0.x + r0.w };
   // On ne garde que les lignes de la même colonne que le texte touché
   const l0 = lignes[i];
+  // Place libre à droite de la ligne touchée : jusqu'à la case suivante (tableau), sinon jusqu'au bord droit du texte de la page
+  const caseSuivante = Math.min(...lignes.filter(l => l !== l0 && Math.abs(l.base - l0.base) < l0.taille * 0.35 && l.x >= l0.droite).map(l => l.x - l0.taille * 0.8));
+  const place = Math.max(l0.droite, Number.isFinite(caseSuivante) ? caseSuivante : Math.max(...lignes.map(l => l.droite)));
   lignes.splice(0, lignes.length, ...lignes.filter(l => l === l0 || (l.x < l0.droite && l.droite > l0.x)));
   i = lignes.indexOf(l0);
   // Dans un tableau, deux lignes ne forment un paragraphe que si celle du dessus remplit la cellule (texte qui revient à la ligne)
@@ -3299,7 +3366,7 @@ function paragrapheAutour(pg, tc, t0, r0, coul) {
   const sO = sel.reduce((a, l) => a + l.sO, 0), sA = sel.reduce((a, l) => a + l.sA, 0);
   const k = sA > 0 ? Math.min(1, Math.max(0.6, sO / sA)) : 1;
   return { x, y, w: Math.max(...sel.map(l => l.droite)) - x, h: Math.max(...sel.map(l => l.bas)) - y, base: sel[0].base, taille, interligne, texte: runs.map(r => r.t).join('') || texte, nbLignes: sel.length, gras: sel.every(l => l.gras),
-    morceaux: runs, serre: k < 0.97 ? Math.round(k * 100) / 100 : undefined, aligne: centre ? 'centre' : undefined, dur: dur.some(Boolean) };
+    morceaux: runs, serre: k < 0.97 ? Math.round(k * 100) / 100 : undefined, aligne: centre ? 'centre' : undefined, dur: dur.some(Boolean), place };
 }
 /** Nom réel de la police d'un morceau de texte (ex. « FrutigerLTStd-BoldCn »). */
 function nomPolice(pg, tc, fontName) {
