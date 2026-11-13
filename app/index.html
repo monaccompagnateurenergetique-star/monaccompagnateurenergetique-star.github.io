@@ -469,6 +469,10 @@ a{color:var(--accent)}
 /* Texte en paragraphe (outil Corriger) : largeur fixe, retour à la ligne automatique ; mise en forme */
 .item-texte.paragraphe .contenu{white-space:pre-wrap;overflow-wrap:break-word;width:100%}
 .item-texte.gras .contenu{font-weight:700}
+.item-texte .contenu{position:relative;font-kerning:none;font-variant-ligatures:none}
+/* Polices proches de l'originale : à empattements, ou machine à écrire (décalée pour garder la même ligne de base que dans le PDF final) */
+.item-texte.police-serif .contenu{font-family:"Times New Roman",Times,"Liberation Serif","Nimbus Roman",serif}
+.item-texte.police-mono .contenu{font-family:"Courier New",Courier,"Liberation Mono",monospace;top:.08em}
 .item-texte.souligne .contenu{text-decoration:underline;text-underline-offset:.12em}
 /* Petite barre de mise en forme, juste au-dessus du texte en cours d'écriture */
 .barre-format{position:absolute;left:0;bottom:calc(100% + 34px);display:flex;align-items:center;gap:4px;padding:5px;background:#1b2130;border-radius:12px;box-shadow:0 8px 22px rgba(0,0,0,.25);z-index:6;white-space:nowrap;font:600 13px system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
@@ -1613,10 +1617,10 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.52.2';
+const VERSION_APPLI = '1.53.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
-const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze } = window.PDFLib;
+const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze, setWordSpacing } = window.PDFLib;
 const MODE_FORMS = pdfjsLib.AnnotationMode.ENABLE_FORMS;
 const MODE_STOCK = pdfjsLib.AnnotationMode.ENABLE_STORAGE;
 const CLE_TAMPONS = 'atelierpdf.stamps.v1';
@@ -2572,12 +2576,19 @@ function majStyleItem(e, it) {
     e.style.width = it.largeur ? it.largeur * s + 'px' : '';
     const z = e.querySelector('.contenu');
     z.style.lineHeight = it.interligne ? String(it.interligne) : '';
-    z.style.textAlign = it.aligne === 'centre' ? 'center' : '';
+    z.style.textAlign = it.aligne === 'centre' ? 'center' : it.aligne === 'justifie' ? 'justify' : '';
+    e.classList.toggle('police-serif', it.police === 'serif'); e.classList.toggle('police-mono', it.police === 'mono');
+    // Police resserrée (ou élargie) comme l'originale, ex. police « condensée » des Cerfa : on écrit plus large puis on resserre
+    const k = it.serre || 1, centre = it.aligne === 'centre';
+    // Fond : il épouse le texte (largeur du texte, petite marge autour comme le cache), pas tout le cadre
+    const epouse = !!it.fond && !!it.largeur;
     z.style.backgroundColor = it.fond || '';
-    // Police resserrée comme l'originale (ex. police « condensée » des Cerfa) : on écrit plus large puis on resserre
-    const k = it.serre || 1;
-    z.style.width = it.largeur && k !== 1 ? it.largeur / k * s + 'px' : '';
-    z.style.transform = k !== 1 ? `scaleX(${k})` : ''; z.style.transformOrigin = k !== 1 ? 'left top' : '';
+    z.style.boxShadow = it.fond ? `${s}px 0 0 ${0.5 * s}px ${it.fond}, ${-s}px 0 0 ${0.5 * s}px ${it.fond}` : '';
+    z.style.width = epouse ? 'fit-content' : it.largeur && k !== 1 ? it.largeur / k * s + 'px' : '';
+    z.style.maxWidth = epouse ? it.largeur / k * s + 'px' : '';
+    z.style.left = epouse && centre ? '50%' : '';
+    z.style.transform = ((epouse && centre ? 'translateX(-50%) ' : '') + (k !== 1 ? `scaleX(${k})` : '')).trim();
+    z.style.transformOrigin = epouse && centre ? 'center top' : k !== 1 ? 'left top' : '';
     if (D.edition !== it.id) remplirContenu(z, it);
   } else if (it.type === 'note') {
     const t = Math.max(26, 18 * s) + 'px'; e.style.width = t; e.style.height = t;
@@ -2755,6 +2766,11 @@ function barreFormat(it, e) {
   };
   requestAnimationFrame(caler); setTimeout(caler, 450);
   return barre;
+}
+/** Lignes que donnera le PDF final pour ce texte (mêmes mesures et même règle de coupe que l'export). */
+function lignesPrevues(morceaux, police, taille, largeur, k) {
+  const pol = (g, i) => { const n = nomStandard(police, g, i); let f = fontesMesure.get(n); if (!f) fontesMesure.set(n, f = docMesure.embedStandardFont(n)); return f; };
+  return couperMorceaux(morceaux.map(r => ({ t: versWinAnsi(r.t), g: !!r.g, i: !!r.i })), pol, taille, largeur / k).map(l => l.map(sg => sg.t).join(''));
 }
 function arreterPipette() {
   if (!D || !D.pipette) return;
@@ -3219,6 +3235,7 @@ async function corrigerTexte(id, x, y) {
   }
   // Tout le paragraphe : on reconstitue les lignes de la page, puis on prend les lignes voisines du même paragraphe.
   // Premier passage pour connaître la zone ; on lit alors les vraies couleurs sur la page (texte et fond), puis second passage.
+  await preparerMesure();
   let para = paragrapheAutour(pg, tc, t, r);
   const lire = await lecteurCouleurs(pg, para);
   let couleur = '#111111', fond = '#ffffff';
@@ -3243,12 +3260,27 @@ async function corrigerTexte(id, x, y) {
   const taille = Math.round(para.taille * 10) / 10;
   const interligne = para.interligne;
   const centre = para.aligne === 'centre';
-  const masque = { id: idUnique(), type: 'masque', page: id, x: para.x - 1.5, y: para.y - 1.5, w: para.w + 3, h: para.h + 3, couleur: fond };
+  const masque = { id: idUnique(), type: 'masque', page: id, x: para.x - 1.5, y: para.haut, w: para.w + 3, h: para.bas - para.haut, couleur: fond };
   // Lignes gardées telles quelles (titre centré, adresse…) : on laisse de la marge pour qu'aucune ne revienne à la ligne
   // Une seule ligne (case d'un tableau, titre) : le cadre va jusqu'au bout de la place libre, pour écrire plus long sans revenir à la ligne
-  const largeur = centre ? para.w + taille * 2 : para.nbLignes === 1 ? Math.max(para.w + taille * 0.3, para.place - para.x) : para.w + taille * (para.dur ? 2 : 0.3);
+  // Texte justifié : le cadre a exactement la largeur des lignes d'origine, pour que le bord droit retombe au même endroit
+  const largeur = centre ? para.w + taille * 2 : para.aligne === 'justifie' ? para.w + 0.4 : para.nbLignes === 1 ? Math.max(para.w + taille * 0.3, para.place - para.x) : para.w + taille * (para.dur ? 2 : 0.3);
+  // Paragraphe de plusieurs lignes : tant qu'on ne change rien, chaque ligne doit commencer par le même mot que dans l'original.
+  // La police de remplacement n'a pas tout à fait les mêmes largeurs : on essaie de très légers réglages jusqu'à retrouver les mêmes coupures.
+  let largeurCadre = Math.round(largeur * 10) / 10, serre = para.serre;
+  if (docMesure && para.nbLignes > 1 && para.morceaux.length && para.lignes) {
+    try {
+      const debuts = ls => ls.map(l => l.trim().split(/\s+/)[0] || '').join('|');
+      const voulu = debuts(para.lignes), k0 = para.serre || 1;
+      const essaisL = centre || para.aligne === 'justifie' ? [0] : [0, -0.2, 0.3, 0.7, -0.35, 1.2];
+      recherche: for (const fk of [1, 0.99, 1.01, 0.98, 1.02, 0.97, 1.03, 0.96, 1.04]) for (const dl of essaisL) {
+        const kk = Math.round(Math.min(1.35, Math.max(0.6, k0 * fk)) * 1000) / 1000, ll = Math.round((largeur + dl * taille) * 10) / 10;
+        if (debuts(lignesPrevues(para.morceaux, para.police, taille, ll, kk)) === voulu) { largeurCadre = ll; serre = Math.abs(kk - 1) >= 0.004 ? kk : undefined; break recherche; }
+      }
+    } catch (e) { console.error(e); }
+  }
   const texte = { id: idUnique(), type: 'texte', page: id, x: centre ? para.x - taille : para.x, y: para.base - taille * ((interligne - 1.15) / 2 + 0.92), texte: para.texte, taille, couleur, masqueLie: masque.id,
-    largeur: Math.round(largeur * 10) / 10, interligne, morceaux: para.morceaux.length ? para.morceaux : undefined, serre: para.serre, aligne: centre ? 'centre' : undefined };
+    largeur: largeurCadre, interligne, morceaux: para.morceaux.length ? para.morceaux : undefined, serre, aligne: para.aligne, police: para.police };
   if (!texte.morceaux) texte.gras = para.gras || undefined;
   D.items.push(masque, texte); D.modifie = true; journaliser('Texte corrigé');
   rendreItems(id);
@@ -3283,7 +3315,7 @@ async function lecteurCouleurs(pg, zone) {
     const W = c.width, H = c.height, d = ctx.getImageData(0, 0, W, H).data;
     c.width = c.height = 0;
     const borne = (v, max) => Math.max(0, Math.min(max, Math.round(v)));
-    return (r, entier) => {
+    const lire = (r, entier) => {
       // Pour un mot, on regarde le cœur des lettres (sans le haut ni le bas de la ligne)
       const xa = borne((r.x - x0) * E, W - 1), xb = borne((r.x + r.w - x0) * E, W);
       const ya = borne((r.y + (entier ? 0 : r.h * 0.15) - y0) * E, H - 1), yb = borne((r.y + r.h * (entier ? 1 : 0.88) - y0) * E, H);
@@ -3306,10 +3338,14 @@ async function lecteurCouleurs(pg, zone) {
       }
       return { fond, texte: [s[1] / s[0], s[2] / s[0], s[3] / s[0]] };
     };
+    return lire;
   } catch (e) { console.error(e); return null; }
 }
 /** Lignes de la page autour du texte touché : même taille de caractères, lignes rapprochées, sans changer de puce (–, •). */
 function paragrapheAutour(pg, tc, t0, r0, coul) {
+  // Le PDF range parfois l'espace entre deux mots dans un morceau à part : on note les morceaux suivis d'une telle espace
+  const suiviEspace = new Set();
+  tc.items.forEach((t, n) => { const s = tc.items[n + 1]; if (t.str && t.str.trim() && s && s.str && !s.str.trim() && !/\s$/.test(t.str)) suiviEspace.add(t); });
   // 1. regrouper les morceaux de texte par ligne (même ligne de base)
   const morceaux = tc.items.filter(t => t.str && t.str.trim()).map(t => ({ t, r: rectTexte(pg, t) })).filter(m => Math.abs(m.r.angle) <= 0.05);
   const lignes = [];
@@ -3340,10 +3376,10 @@ function paragrapheAutour(pg, tc, t0, r0, coul) {
   function runsLigne(l, couleurDe) {
     const runs = []; let acc = '';
     l.m.forEach((m, k) => {
-      const g = estGras(nomPolice(pg, tc, m.t.fontName));
+      const nom = nomPolice(pg, tc, m.t.fontName), g = estGras(nom);
       let s = m.t.str;
-      if (k) { const ecart = m.r.x - (l.m[k - 1].r.x + l.m[k - 1].r.w); if (ecart > l.taille * 0.15 && !/\s$/.test(acc) && !/^\s/.test(s)) s = ' ' + s; }
-      acc += s; ajouterRun(runs, s, g, couleurDe && m.t.str.trim() ? couleurDe(m.r) : undefined);
+      if (k) { const ecart = m.r.x - (l.m[k - 1].r.x + l.m[k - 1].r.w); if ((ecart > l.taille * 0.15 || suiviEspace.has(l.m[k - 1].t)) && !/\s$/.test(acc) && !/^\s/.test(s)) s = ' ' + s; }
+      acc += s; ajouterRun(runs, s, g, couleurDe && m.t.str.trim() ? couleurDe(m.r) : undefined, estItalique(nom));
     });
     return { runs, acc };
   }
@@ -3352,17 +3388,15 @@ function paragrapheAutour(pg, tc, t0, r0, coul) {
     l.x = Math.min(...l.m.map(m => m.r.x)); l.y = Math.min(...l.m.map(m => m.r.y));
     l.droite = Math.max(...l.m.map(m => m.r.x + m.r.w)); l.bas = Math.max(...l.m.map(m => m.r.y + m.r.h));
     l.taille = Math.max(...l.m.map(m => m.r.taille));
-    // Morceaux gras / normal (d'après le vrai nom de la police) et largeur réelle comparée à Arial
-    l.sO = 0; l.sA = 0;
+    // Morceaux gras / italique / normal (d'après le vrai nom de la police)
     const rl = runsLigne(l);
     l.runs = rl.runs;
-    l.m.forEach(m => { if (m.t.str.trim().length > 2) { const g = estGras(nomPolice(pg, tc, m.t.fontName)); l.sO += m.r.w; l.sA += largeurArial(m.t.str, m.r.taille, g); } });
     l.texte = rl.acc.replace(/\s+/g, ' ').trim();
     l.gras = l.runs.every(r => r.g || !r.t.trim());
   }
   lignes.sort((a, b) => a.base - b.base);
   let i = lignes.findIndex(l => l.m.some(m => m.t === t0));
-  if (i < 0) return { ...r0, texte: t0.str, nbLignes: 1, interligne: 1.15, morceaux: [], place: r0.x + r0.w };
+  if (i < 0) return { ...r0, texte: t0.str, nbLignes: 1, interligne: 1.15, morceaux: [], place: r0.x + r0.w, haut: r0.y - 0.6, bas: r0.y + r0.h + 0.6 };
   // On ne garde que les lignes de la même colonne que le texte touché
   const l0 = lignes[i];
   // Place libre à droite de la ligne touchée : jusqu'à la case suivante (tableau), sinon jusqu'au bord droit du texte de la page
@@ -3402,7 +3436,7 @@ function paragrapheAutour(pg, tc, t0, r0, coul) {
     return l.droite + (n.droite - n.x) * (mot.length + 1) / Math.max(1, n.texte.length) < droiteMax - l.taille * 0.5;
   });
   // texte continu : « appar-» + « tient » → « appartient »
-  const texte = sel.map(l => l.texte).reduce((s, l, k) => !s ? l : dur[k - 1] ? s + '\n' + l : (/[a-zà-ÿ]-$/i.test(s) && /^[a-zà-ÿ]/.test(l) ? s.slice(0, -1) + l : s + ' ' + l), '');
+  const texte = sel.map(l => l.texte).reduce((s, l, k) => !s ? l : dur[k - 1] ? s + '\n' + l : (/[a-zà-ÿ]-$/i.test(s) && /^[a-zà-ÿ]/.test(l) ? s.slice(0, -1) + CESURE + l : s + ' ' + l), '');
   const ecarts = sel.slice(1).map((l, k) => l.base - sel[k].base);
   const taille = sel[0].taille;
   const interligne = ecarts.length ? Math.round(Math.min(1.8, Math.max(1.05, ecarts.reduce((a, b) => a + b, 0) / ecarts.length / taille)) * 100) / 100 : 1.15;
@@ -3415,22 +3449,81 @@ function paragrapheAutour(pg, tc, t0, r0, coul) {
       const d = runs[runs.length - 1]; d.t = d.t.trimEnd();
       const debutLigne = lr.map(r => r.t).join('').trimStart();
       if (dur[k - 1]) d.t += '\n';
-      else if (/[a-zà-ÿ]-$/i.test(d.t) && /^[a-zà-ÿ]/.test(debutLigne)) d.t = d.t.slice(0, -1); else d.t += ' ';
+      else if (/[a-zà-ÿ]-$/i.test(d.t) && /^[a-zà-ÿ]/.test(debutLigne)) d.t = d.t.slice(0, -1) + CESURE; else d.t += ' ';
     }
-    lr.forEach(r => ajouterRun(runs, r.t, r.g, r.c));
+    lr.forEach(r => ajouterRun(runs, r.t, r.g, r.c, r.i));
   });
   runs = nettoyerMorceaux(runs);
-  const sO = sel.reduce((a, l) => a + l.sO, 0), sA = sel.reduce((a, l) => a + l.sA, 0);
-  const k = sA > 0 ? Math.min(1, Math.max(0.6, sO / sA)) : 1;
+  // Famille de police la plus présente dans le paragraphe (sans empattements, à empattements, machine à écrire)
+  const poidsFam = {};
+  sel.forEach(l => l.m.forEach(m => { const f = famillePolice(pg, tc, m.t.fontName); poidsFam[f] = (poidsFam[f] || 0) + m.t.str.trim().length; }));
+  const police = Object.keys(poidsFam).sort((a, b) => poidsFam[b] - poidsFam[a])[0] || 'sans';
+  // Texte justifié : les lignes coupées automatiquement vont toutes jusqu'au même bord droit, et d'autres lignes de la colonne s'y arrêtent aussi
+  const douces = sel.filter((l, n) => n < sel.length - 1 && !dur[n]);
+  const justifie = !centre && !tabulaire && douces.length >= 1 && douces.every(l => Math.abs(l.droite - droiteMax) < 1.5) && lignes.filter(l => Math.abs(l.droite - droiteMax) < 1.5).length >= 3;
+  // Largeur des lettres d'origine comparée à la police de remplacement : on resserre ou on élargit pour retomber pile sur l'original.
+  // On compare la ligne entière (largeur réelle / largeur du même texte dans la police de remplacement).
+  const mesures = sel.map((l, n) => ({ o: l.droite - l.x, a: l.runs.reduce((t, r) => t + largeurStandard(r.t, l.taille, police, r.g, r.i), 0), nb: l.texte.length, etiree: justifie && n < sel.length - 1 && !dur[n] }));
+  // Une ligne justifiée est étirée : seules les autres (dernière ligne, lignes courtes) donnent la vraie largeur des lettres
+  let fiables = mesures.filter(m => !m.etiree && m.a > 0);
+  if (fiables.reduce((t, m) => t + m.nb, 0) < 8) fiables = [];
+  let k = 1;
+  if (fiables.length) k = fiables.reduce((t, m) => t + m.o, 0) / fiables.reduce((t, m) => t + m.a, 0);
+  else { const v = mesures.filter(m => m.a > 0).map(m => m.o / m.a); if (v.length) k = Math.min(...v); }
+  // Le cache ne doit pas manger les lettres des lignes voisines (jambages de la ligne du dessus, haut de la ligne du dessous)
+  const prem = sel[0], dern = sel[sel.length - 1], avantL = lignes[debut - 1], apresL = lignes[fin + 1];
+  let haut = y - 0.6, bas = Math.max(...sel.map(l => l.bas)) + 0.6;
+  if (avantL) { const lim = avantL.base + avantL.taille * 0.24; if (lim > haut) haut = Math.min(lim, prem.base - prem.taille * 0.76); }
+  if (apresL) { const lim = apresL.base - apresL.taille * 0.78; if (lim < bas) bas = Math.max(lim, dern.base + dern.taille * 0.24); }
+  k = Math.min(1.35, Math.max(0.6, k));
   return { x, y, w: Math.max(...sel.map(l => l.droite)) - x, h: Math.max(...sel.map(l => l.bas)) - y, base: sel[0].base, taille, interligne, texte: runs.map(r => r.t).join('') || texte, nbLignes: sel.length, gras: sel.every(l => l.gras),
-    morceaux: runs, serre: k < 0.97 ? Math.round(k * 100) / 100 : undefined, aligne: centre ? 'centre' : undefined, dur: dur.some(Boolean), place };
+    morceaux: runs, serre: Math.abs(k - 1) >= 0.004 ? Math.round(k * 1000) / 1000 : undefined, aligne: centre ? 'centre' : justifie ? 'justifie' : undefined, dur: dur.some(Boolean), place, haut, bas, lignes: sel.map(l => l.texte),
+    police: police !== 'sans' ? police : undefined };
 }
 /** Nom réel de la police d'un morceau de texte (ex. « FrutigerLTStd-BoldCn »). */
 function nomPolice(pg, tc, fontName) {
   try { const f = pg.p.commonObjs.get(fontName); if (f && f.name) return f.name; } catch {}
   return tc.styles?.[fontName]?.fontFamily || fontName || '';
 }
+/** Trait d'union discret : invisible au milieu d'une ligne, il devient un « - » si la ligne est coupée à cet endroit. */
+const CESURE = String.fromCharCode(173);
 const estGras = nom => /bold|black|heavy|semibold|demibold/i.test(nom);
+const estItalique = nom => /italic|oblique|-it$|-ital/i.test(nom);
+/** Famille la plus proche parmi les polices que tout lecteur de PDF possède : sans empattements, à empattements, machine à écrire. */
+function famillePolice(pg, tc, fontName) {
+  const nom = nomPolice(pg, tc, fontName), fam = tc.styles?.[fontName]?.fontFamily || '';
+  if (fam === 'monospace' || /courier|mono|consolas|typewriter/i.test(nom)) return 'mono';
+  if (fam === 'serif' || (/times|georgia|garamond|minion|cambria|palatino|bookman|century|didot|baskerville|caslon|serif/i.test(nom) && !/sans/i.test(nom))) return 'serif';
+  return 'sans';
+}
+const NOMS_POLICE = { sans: ['Helvetica', 'Helvetica-Bold', 'Helvetica-Oblique', 'Helvetica-BoldOblique'], serif: ['Times-Roman', 'Times-Bold', 'Times-Italic', 'Times-BoldItalic'], mono: ['Courier', 'Courier-Bold', 'Courier-Oblique', 'Courier-BoldOblique'] };
+const nomStandard = (famille, g, i) => (NOMS_POLICE[famille] || NOMS_POLICE.sans)[(g ? 1 : 0) + (i ? 2 : 0)];
+let docMesure = null; const fontesMesure = new Map();
+const cacheLargeurs = new WeakMap();
+/** Largeur d'un texte tel qu'il sera dessiné dans le PDF : lettre par lettre. (pdf-lib, en mesurant un mot entier, compte un
+    rapprochement entre certaines lettres, « TA », « AV »…, qu'il ne dessine pas : le texte sortait alors plus large que prévu.) */
+function largeurPdf(f, s, taille) {
+  let c = cacheLargeurs.get(f); if (!c) cacheLargeurs.set(f, c = new Map());
+  let w = 0;
+  for (const ch of String(s)) {
+    let v = c.get(ch);
+    if (v === undefined) { try { v = f.widthOfTextAtSize(ch, 1000); } catch { v = 500; } c.set(ch, v); }
+    w += v;
+  }
+  return w * taille / 1000;
+}
+async function preparerMesure() { try { if (!docMesure) docMesure = await PDFDocument.create(); } catch (e) { console.error(e); } }
+/** Largeur d'un texte dans la police qui servira dans le PDF final : la même mesure sur tous les appareils (PC, Android, iPhone). */
+function largeurStandard(s, taille, famille, g, i) {
+  try {
+    if (docMesure) {
+      const n = nomStandard(famille, g, i); let f = fontesMesure.get(n);
+      if (!f) fontesMesure.set(n, f = docMesure.embedStandardFont(n));
+      return largeurPdf(f, versWinAnsi(s).replaceAll(CESURE, ''), taille);
+    }
+  } catch (e) { console.error(e); }
+  return largeurArial(s, taille, g);
+}
 let ctxMesure = null;
 function largeurArial(s, taille, gras) {
   ctxMesure = ctxMesure || document.createElement('canvas').getContext('2d');
@@ -3438,11 +3531,11 @@ function largeurArial(s, taille, gras) {
   return ctxMesure.measureText(s).width;
 }
 /** Texte mis en forme = liste de morceaux { t, g } (g : gras). Les morceaux voisins de même style sont fusionnés. */
-function ajouterRun(runs, t, g, c) {
+function ajouterRun(runs, t, g, c, i) {
   if (!t) return;
-  g = !!g; const d = runs[runs.length - 1];
-  if (d && !!d.g === g && (d.c || '') === (c || '')) { d.t += t; return; }
-  const n = { t }; if (g) n.g = true; if (c) n.c = c; runs.push(n);
+  g = !!g; i = !!i; const d = runs[runs.length - 1];
+  if (d && !!d.g === g && !!d.i === i && (d.c || '') === (c || '')) { d.t += t; return; }
+  const n = { t }; if (g) n.g = true; if (i) n.i = true; if (c) n.c = c; runs.push(n);
 }
 function nettoyerMorceaux(runs) {
   const res = [];
@@ -3450,7 +3543,7 @@ function nettoyerMorceaux(runs) {
     let t = r.t.replace(/[ \t ]+/g, ' ');
     const prec = res.map(x => x.t).join('');
     if ((!prec || /[ \n]$/.test(prec)) && t.startsWith(' ')) t = t.replace(/^ +/, '');
-    ajouterRun(res, t, r.g, r.c);
+    ajouterRun(res, t, r.g, r.c, r.i);
   });
   if (res.length) { const d = res[res.length - 1]; d.t = d.t.replace(/\s+$/, ''); if (!d.t) res.pop(); }
   return res;
@@ -3458,26 +3551,29 @@ function nettoyerMorceaux(runs) {
 /** Relit le texte tapé (avec ses mots en gras) depuis la zone d'écriture. */
 function lireMorceaux(z) {
   const runs = [];
-  const parcourir = (n, g, col) => {
+  const parcourir = (n, g, col, ital) => {
     for (const c of n.childNodes) {
-      if (c.nodeType === 3) ajouterRun(runs, c.data, g, col);
-      else if (c.nodeName === 'BR') ajouterRun(runs, '\n', g, col);
+      if (c.nodeType === 3) ajouterRun(runs, c.data, g, col, ital);
+      else if (c.nodeName === 'BR') ajouterRun(runs, '\n', g, col, ital);
       else if (c.nodeType === 1) {
-        const fw = c.style && c.style.fontWeight;
+        const fw = c.style && c.style.fontWeight, fs = c.style && c.style.fontStyle;
         const gc = /^(B|STRONG)$/.test(c.nodeName) ? true : (fw ? (fw === 'bold' || +fw >= 600) : g);
+        const ic = /^(I|EM)$/.test(c.nodeName) ? true : (fs ? fs !== 'normal' : ital);
         const cc = hexDe(c.style && c.style.color) || (c.nodeName === 'FONT' && hexDe(c.getAttribute('color'))) || col;
-        if (/^(DIV|P)$/.test(c.nodeName) && runs.length) ajouterRun(runs, '\n', g, col);
-        parcourir(c, gc, cc);
+        if (/^(DIV|P)$/.test(c.nodeName) && runs.length) ajouterRun(runs, '\n', g, col, ital);
+        parcourir(c, gc, cc, ic);
       }
     }
   };
-  parcourir(z, false, undefined);
+  parcourir(z, false, undefined, false);
   if (runs.length) { const d = runs[runs.length - 1]; d.t = d.t.replace(/\n$/, ''); if (!d.t) runs.pop(); }
   return runs;
 }
 function remplirContenu(z, it) {
   if (it.morceaux) z.replaceChildren(...it.morceaux.map(r => {
-    const n = r.g ? el('b', { text: r.t }) : document.createTextNode(r.t);
+    let n = document.createTextNode(r.t);
+    if (r.i) n = el('i', {}, n);
+    if (r.g) n = el('b', {}, n);
     return r.c ? el('span', { style: { color: r.c } }, n) : n; // mot d'une autre couleur que le reste (puce, mot en couleur)
   }));
   else z.textContent = it.texte;
@@ -3937,29 +4033,35 @@ function couperLigne(ligne, police, taille, largeur) {
 /** Coupe un texte mis en forme (morceaux gras / normal) en lignes qui tiennent dans la largeur. */
 function couperMorceaux(runs, pol, taille, largeur) {
   const jetons = [];
-  for (const r of runs) for (const p of r.t.split(/(\n|[ \t ]+)/)) if (p) jetons.push({ t: p, g: r.g, c: r.c });
-  const L = j => pol(j.g).widthOfTextAtSize(j.t, taille);
+  for (const r of runs) for (const p of r.t.split(/(\n|[ \t ]+)/)) if (p) for (const q of p.split(CESURE).flatMap((x, n) => n ? [CESURE, x] : [x])) if (q) jetons.push({ t: q, g: r.g, c: r.c, i: r.i });
+  const L = j => largeurPdf(pol(j.g, j.i), j.t, taille);
   const lignes = []; let cour = [], lc = 0;
-  const ajouter = j => { const d = cour[cour.length - 1]; if (d && d.g === j.g && d.c === j.c) d.t += j.t; else cour.push({ t: j.t, g: j.g, c: j.c }); lc += L(j); };
-  const fermer = () => {
+  const ajouter = j => { const d = cour[cour.length - 1]; if (d && d.g === j.g && d.c === j.c && d.i === j.i) d.t += j.t; else cour.push({ t: j.t, g: j.g, c: j.c, i: j.i }); lc += L(j); };
+  // « dur » : fin de ligne voulue (Entrée, ou fin du texte) ; sinon la ligne a été coupée automatiquement (elle peut être justifiée)
+  const fermer = dur => {
     while (cour.length && !cour[cour.length - 1].t.trimEnd()) cour.pop();
     if (cour.length) cour[cour.length - 1].t = cour[cour.length - 1].t.trimEnd();
-    lignes.push(cour); cour = []; lc = 0;
+    cour.dur = !!dur; lignes.push(cour); cour = []; lc = 0;
   };
+  let cesure = false; // un trait d'union discret précède le mot courant
   for (const j of jetons) {
-    if (j.t === '\n') { fermer(); continue; }
+    if (j.t === CESURE) { cesure = cour.length > 0; continue; }
+    const apresCesure = cesure; cesure = false;
+    if (j.t === '\n') { fermer(true); continue; }
+    // Le mot ne tient plus sur la ligne et on est à une césure : la ligne finit par un vrai trait d'union
+    if (apresCesure && cour.length && !/^\s+$/.test(j.t) && lc + L(j) > largeur + 0.01) { const d = cour[cour.length - 1]; if (d.t.trim()) { d.t += '-'; } }
     if (/^\s+$/.test(j.t)) { if (cour.length) ajouter(j); continue; }
     const wj = L(j);
     if (cour.length && lc + wj > largeur + 0.01) fermer();
     if (wj > largeur + 0.01) { // mot plus long que la ligne : coupé
       let reste = j.t;
       while (reste) {
-        let n = reste.length; while (n > 1 && L({ t: reste.slice(0, n), g: j.g }) > largeur + 0.01) n--;
-        ajouter({ t: reste.slice(0, n), g: j.g, c: j.c }); reste = reste.slice(n); if (reste) fermer();
+        let n = reste.length; while (n > 1 && L({ t: reste.slice(0, n), g: j.g, i: j.i }) > largeur + 0.01) n--;
+        ajouter({ t: reste.slice(0, n), g: j.g, c: j.c, i: j.i }); reste = reste.slice(n); if (reste) fermer();
       }
     } else ajouter(j);
   }
-  fermer();
+  fermer(true);
   return lignes;
 }
 async function dessinerItems(out, np, items, versPdf, R, ressources) {
@@ -3967,17 +4069,26 @@ async function dessinerItems(out, np, items, versPdf, R, ressources) {
   for (const it of items) {
     // Rotation de l'élément autour de son centre (sens des aiguilles d'une montre, comme à l'écran)
     const a = (it.rot || 0) * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
-    let w = it.w, h = it.h, lignes = null, inter = 1.15, k = 1;
-    const pol = g => g ? ressources.gras : ressources.police;
+    let w = it.w, h = it.h, lignes = null, inter = 1.15, k = 1, wt = 0;
+    // Police standard la plus proche de l'originale (sans empattements, à empattements, machine à écrire ; gras, italique)
+    const pol = (g, i) => {
+      const n = nomStandard(it.police, g, i);
+      if (n === 'Helvetica') return ressources.police;
+      if (n === 'Helvetica-Bold') return ressources.gras || (ressources.gras = out.embedStandardFont(n));
+      const m = ressources.autres || (ressources.autres = new Map());
+      let f = m.get(n); if (!f) m.set(n, f = out.embedStandardFont(n));
+      return f;
+    };
     if (it.type === 'texte') {
       // Morceaux gras / normal (texte corrigé) ; sinon un seul morceau
-      const runs = (it.morceaux || [{ t: it.texte, g: it.gras }]).map(r => ({ t: versWinAnsi(r.t), g: !!r.g, c: r.c }));
+      const runs = (it.morceaux || [{ t: it.texte, g: it.gras }]).map(r => ({ t: versWinAnsi(r.t), g: !!r.g, c: r.c, i: !!r.i }));
       if (runs.some(r => r.g) && !ressources.gras) ressources.gras = await out.embedFont(StandardFonts.HelveticaBold);
       inter = it.interligne || 1.15; k = it.serre || 1;
       // Paragraphe : retour à la ligne automatique (même règle que l'écran : largeur / resserrement, coupure entre les mots)
       lignes = couperMorceaux(runs, pol, it.taille, it.largeur ? it.largeur / k : Infinity);
-      const larg = l => l.reduce((a, sg) => a + pol(sg.g).widthOfTextAtSize(sg.t, it.taille), 0) * k;
-      w = it.largeur || Math.max(1, ...lignes.map(larg));
+      const larg = l => l.reduce((a, sg) => a + largeurPdf(pol(sg.g, sg.i), sg.t, it.taille), 0) * k;
+      wt = Math.max(1, ...lignes.map(larg));
+      w = it.largeur || wt;
       h = it.taille * inter * lignes.length;
     }
     const cx = it.x + w / 2, cy = it.y + h / 2;
@@ -4003,22 +4114,35 @@ async function dessinerItems(out, np, items, versPdf, R, ressources) {
       const T = it.taille, decal = (inter - 1.15) / 2 + 0.92; // ligne de base dans chaque ligne (comme à l'écran)
       // Fond de surlignage : un rectangle derrière tout le bloc de texte
       if (it.fond) {
-        const lf = it.largeur || w, [x, y] = point(it.x, it.y + h);
-        np.drawRectangle({ x, y, width: lf, height: h, color: hexVersRgb(it.fond), rotate: rot, borderWidth: 0 });
+        // Le fond épouse le texte, avec la même petite marge que le cache posé sur l'ancien texte : pas tout le cadre
+        const mx = 1.5, my = 0.5, lf = it.aligne === 'justifie' && lignes.length > 1 && it.largeur ? it.largeur : Math.min(wt, it.largeur || wt);
+        const dec = it.aligne === 'centre' && it.largeur ? Math.max(0, (it.largeur - lf) / 2) : 0;
+        const [x, y] = point(it.x + dec - mx, it.y + h + my);
+        np.drawRectangle({ x, y, width: lf + 2 * mx, height: h + 2 * my, color: hexVersRgb(it.fond), rotate: rot, borderWidth: 0 });
       }
       // Resserrement horizontal des lettres (opérateur PDF « Tz »), comme la police étroite d'origine
       if (k !== 1) np.pushOperators(pushGraphicsState(), setCharacterSqueeze(Math.round(k * 1000) / 10));
       lignes.forEach((ligne, n) => {
         const base = it.y + T * (decal + inter * n);
         // Texte centré : chaque ligne est placée au milieu de la largeur du bloc
-        const dx0 = it.aligne === 'centre' && it.largeur ? Math.max(0, (it.largeur - ligne.reduce((a, sg) => a + pol(sg.g).widthOfTextAtSize(sg.t, T), 0) * k) / 2) : 0;
+        const lw = ligne.reduce((a, sg) => a + largeurPdf(pol(sg.g, sg.i), sg.t, T), 0) * k;
+        const dx0 = it.aligne === 'centre' && it.largeur ? Math.max(0, (it.largeur - lw) / 2) : 0;
+        // Texte justifié : une ligne coupée automatiquement va jusqu'au bord droit, en élargissant un peu ses espaces
+        const espaces = t => (t.match(/ /g) || []).length;
+        let esp = 0;
+        if (it.aligne === 'justifie' && it.largeur && !ligne.dur) {
+          const nb = ligne.reduce((a, sg) => a + espaces(sg.t), 0), reste = it.largeur - lw;
+          if (nb && reste > 0 && reste / nb < T * 0.9) esp = reste / nb;
+        }
+        if (esp) np.pushOperators(setWordSpacing(esp / k));
         let dx = dx0;
         for (const sg of ligne) {
           if (!sg.t) continue;
           const [x, y] = point(it.x + dx, base);
-          np.drawText(sg.t, { x, y, size: T, font: pol(sg.g), color: hexVersRgb(sg.c || it.couleur), rotate: rot });
-          dx += pol(sg.g).widthOfTextAtSize(sg.t, T) * k;
+          np.drawText(sg.t, { x, y, size: T, font: pol(sg.g, sg.i), color: hexVersRgb(sg.c || it.couleur), rotate: rot });
+          dx += largeurPdf(pol(sg.g, sg.i), sg.t, T) * k + esp * espaces(sg.t);
         }
+        if (esp) np.pushOperators(setWordSpacing(0));
         if (it.souligne && dx > dx0) {
           const sous = base + T * 0.14;
           const [x1, y1] = point(it.x + dx0, sous), [x2, y2] = point(it.x + dx, sous);
