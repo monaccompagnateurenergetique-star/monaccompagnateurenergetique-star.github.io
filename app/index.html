@@ -1673,7 +1673,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.57.0';
+const VERSION_APPLI = '1.58.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze, setWordSpacing } = window.PDFLib;
@@ -6134,7 +6134,7 @@ async function genererPdfOfficiel(modele, rep) {
    Les fichiers des pièces restent sur l'appareil (base locale).
    ========================================================= */
 const LISTES_PIECES = {
-  mpr: { nom: 'Dossier MaPrimeRénov\'', pieces: [['Mandat Anah signé', 'mandat-anah-po'], ['Avis d\'imposition'], ['Justificatif de propriété (taxe foncière)'], ['Devis signé'], ['Photos avant travaux', 'visite'], ['Facture'], ['Attestation de fin de travaux', 'aft'], ['RIB']] },
+  mpr: { nom: 'Dossier MaPrimeRénov\'', pieces: [['Mandat Anah signé', 'mandat-anah-po'], ['Avis d\'imposition', '', 'le plus récent, toutes les pages'],['Justificatif de propriété (taxe foncière)'], ['Devis signé'], ['Photos avant travaux', 'visite'], ['Facture'], ['Attestation de fin de travaux', 'aft'], ['RIB']] },
   chantier: { nom: 'Chantier', pieces: [['Devis signé'], ['Visite technique', 'visite'], ['État des lieux avant travaux', 'edl'], ['PV de réception', 'pv'], ['Facture']] },
   vide: { nom: 'Liste vide (je la compose)', pieces: [] }
 };
@@ -6166,6 +6166,10 @@ function nomsDossiers(liste) {
 }
 const ecrireDossier = d => { d.maj = Date.now(); prefs.dossiers = [...dossiers().filter(x => x.id !== d.id), d]; ecrirePrefs(prefs); majTableauBord(); };
 const nomClient = c => [c.prenom, c.nom].filter(Boolean).join(' ') || 'Client sans nom';
+/* Une pièce de liste s'écrit [nom, formulaire, précision] ; la précision (« de moins de 3 mois »…) est reprise dans le message au client. */
+const pieceDeListe = ([nom, modele, precision]) => ({ id: idUnique(), nom, modele: modele || null, etat: 'manquant', ...(precision ? { precision } : {}) });
+const pieceVersListe = p => { const a = [p.nom, p.modele || '', p.precision || '']; while (a.length > 1 && !a[a.length - 1]) a.pop(); return a; };
+const nomEtPrecision = p => p.precision ? `${p.nom} (${p.precision})` : p.nom;
 const avancement = d => { const n = d.pieces.length, ok = d.pieces.filter(p => p.etat === 'recu').length; return { n, ok, complet: n > 0 && ok === n }; };
 /** Données du client pour pré-remplir un formulaire (champs marqués client: …). */
 function reponsesClient(c, modele) {
@@ -6739,7 +6743,7 @@ function nouveauDossier(init = {}, listeChoisie = null) {
     bouton('Créer le client', { ico: 'valider', cls: 'btn principal', onclick: async () => {
       if (!c.nom) { toast('Indiquez au moins le nom du client.'); $('#nd-nom').focus(); return; }
       const liste = choix.value;
-      const d = { id: idUnique(), cree: Date.now(), client: c, liste, pieces: toutes[liste].pieces.map(([nom, modele]) => ({ id: idUnique(), nom, modele: modele || null, etat: 'manquant' })) };
+      const d = { id: idUnique(), cree: Date.now(), client: c, liste, pieces: toutes[liste].pieces.map(pieceDeListe) };
       ecrireDossier(d); toast('Client créé'); await fe.fermer(); ouvrirDossier(d.id);
     } }));
   setTimeout(() => $('#nd-nom')?.focus(), 300);
@@ -6757,9 +6761,11 @@ function editerListe(l, retour) {
       const n = el('input', { class: 'champ', 'aria-label': `Pièce ${i + 1}`, autocomplete: 'off' }); n.value = p[0];
       n.addEventListener('input', () => { p[0] = n.value; });
       const f = el('select', { class: 'champ', 'aria-label': `Formulaire de la pièce ${i + 1}` }, el('option', { value: '', text: 'Pas de formulaire (pièce à recevoir)' }), modeles.map(m => el('option', { value: m.id, text: 'Formulaire : ' + m.nom })));
-      f.value = p[1] || ''; f.addEventListener('change', () => { if (f.value) p[1] = f.value; else p.length = 1; });
+      f.value = p[1] || ''; f.addEventListener('change', () => { p[1] = f.value; });
+      const pr = el('input', { class: 'champ', 'aria-label': `Précision pour le client, pièce ${i + 1}`, autocomplete: 'off', placeholder: 'Précision (facultatif) : ex. de moins de 3 mois' }); pr.value = p[2] || '';
+      pr.addEventListener('input', () => { p[2] = pr.value; });
       return el('div', { class: 'piece ligne-liste' },
-        el('span', { class: 'piece-texte' }, n, f),
+        el('span', { class: 'piece-texte' }, n, f, pr),
         el('span', { class: 'piece-actions' },
           bouton('', { ico: 'haut', label: 'Monter', onclick: () => { if (i) { [l.pieces[i - 1], l.pieces[i]] = [l.pieces[i], l.pieces[i - 1]]; rendre(); } } }),
           bouton('', { ico: 'poubelle', cls: 'btn danger', label: `Retirer « ${p[0] || 'pièce'} »`, onclick: () => { l.pieces.splice(i, 1); rendre(); } })));
@@ -6771,7 +6777,7 @@ function editerListe(l, retour) {
   fe.corps.append(el('div', { class: 'form-blocs' },
     el('label', { class: 'etiquette', for: 'ml-nom' }, 'Nom de la liste', el('span', { class: 'requis', text: ' *' })), nom,
     el('div', { class: 'etiquette', text: 'Pièces à demander' }),
-    el('p', { class: 'note', text: 'Si une pièce se remplit avec un formulaire de l\'appli, choisissez-le : le bouton « Remplir » apparaîtra dans le dossier.' }),
+    el('p', { class: 'note', text: 'Si une pièce se remplit avec un formulaire de l\'appli, choisissez-le : le bouton « Remplir » apparaîtra dans le dossier. La précision (ex. « de moins de 3 mois », « recto et verso ») est ajoutée au message qui demande les pièces au client.' }),
     zone,
     el('label', { class: 'etiquette', for: 'ml-ajout', text: 'Ajouter une pièce' }),
     el('div', { class: 'barre-dossiers' }, nouvelle, bouton('Ajouter', { ico: 'plus', onclick: ajouter }))));
@@ -6779,7 +6785,7 @@ function editerListe(l, retour) {
     bouton('Enregistrer la liste', { ico: 'valider', cls: 'btn principal', onclick: async () => {
       l.nom = nom.value.trim();
       if (!l.nom) { toast('Donnez un nom à la liste.'); nom.focus(); return; }
-      l.pieces = l.pieces.map(p => [p[0].trim(), p[1]].filter(Boolean)).filter(p => p[0]);
+      l.pieces = l.pieces.map(p => pieceVersListe({ nom: p[0].trim(), modele: p[1], precision: (p[2] || '').trim() })).filter(p => p[0]);
       if (!l.pieces.length) { toast('Ajoutez au moins une pièce.'); nouvelle.focus(); return; }
       const perso = prefs.listesPerso || [], i = perso.findIndex(x => x.id === l.id);
       if (i >= 0) perso[i] = l; else perso.push(l);
@@ -6833,7 +6839,7 @@ function ouvrirDossier(id, filtre = 'tous') {
       return el('div', { class: 'piece' + (recu ? ' recue' : '') },
         el('span', { class: 'piece-etat', 'aria-hidden': 'true', text: recu ? '✓' : '' }),
         el('span', { class: 'piece-texte' }, el('strong', { text: p.nom }),
-          el('small', { text: recu ? (p.fichier ? `${p.fichier.nom} · ${new Date(p.fichier.date).toLocaleDateString('fr-FR')}` : 'Marquée comme reçue') : 'Manquante' })),
+          el('small', { text: recu ? (p.fichier ? `${p.fichier.nom} · ${new Date(p.fichier.date).toLocaleDateString('fr-FR')}` : 'Marquée comme reçue') : ['Manquante', p.precision].filter(Boolean).join(' · ') })),
         el('span', { class: 'piece-actions' },
           recu && p.fichier ? bouton('Voir', { ico: 'oeil', cls: 'btn', onclick: () => voirPiece(p) }) : null,
           !recu && modele ? bouton('Remplir', { ico: 'formulaire', cls: 'btn principal', onclick: () => remplirPiece(p, modele) }) : null,
@@ -6912,12 +6918,18 @@ function ouvrirDossier(id, filtre = 'tous') {
       { valeur: 'basculer', texte: recu ? 'Marquer comme manquante' : 'Marquer comme reçue (sans fichier)', ico: recu ? 'annuler' : 'valider' },
       recu && p.fichier ? { valeur: 'remplacer', texte: 'Remplacer le fichier', ico: 'doc' } : null,
       { valeur: 'renommer', texte: 'Renommer la pièce', ico: 'crayon' },
+      { valeur: 'precision', texte: p.precision ? 'Modifier la précision pour le client' : 'Ajouter une précision (ex. de moins de 3 mois)', ico: 'note' },
       i > 0 ? { valeur: 'monter', texte: 'Monter', ico: 'haut' } : null,
       i < d.pieces.length - 1 ? { valeur: 'descendre', texte: 'Descendre', ico: 'bas' } : null,
       { valeur: 'retirer', texte: 'Retirer cette pièce de la liste', ico: 'poubelle' }].filter(Boolean));
     if (choix === 'basculer') { p.etat = recu ? 'manquant' : 'recu'; if (recu && p.fichier) { await bdDel('fichiers', 'piece:' + p.id).catch(() => {}); delete p.fichier; } sauver(); }
     if (choix === 'remplacer') { p.etat = 'manquant'; await ajouterFichierPiece(p); }
     if (choix === 'renommer') { const n = await demanderTexte({ titre: 'Renommer la pièce', etiquette: 'Nom de la pièce', valeur: p.nom, action: 'Renommer' }); if (n) { p.nom = n; sauver(); } }
+    if (choix === 'precision') {
+      const t = await demanderTexte({ titre: `Précision pour « ${p.nom} »`, etiquette: 'Précision pour le client', valeur: p.precision || '', exemple: 'Ex. : de moins de 3 mois, recto et verso', action: 'Enregistrer', vide: true,
+        aide: 'Elle est ajoutée au message qui demande les pièces au client. Laissez vide pour la retirer.' });
+      if (t !== null) { if (t) p.precision = t; else delete p.precision; sauver(); }
+    }
     if (choix === 'monter' || choix === 'descendre') { const j = i + (choix === 'monter' ? -1 : 1); [d.pieces[i], d.pieces[j]] = [d.pieces[j], d.pieces[i]]; sauver(); }
     if (choix === 'retirer' && await confirmer({ titre: `Retirer « ${p.nom} » du dossier ?`, texte: p.fichier ? 'Le fichier de cette pièce sera effacé de cet appareil.' : 'La pièce disparaît de la liste.', action: 'Retirer la pièce' })) {
       await bdDel('fichiers', 'piece:' + p.id).catch(() => {}); d.pieces.splice(i, 1); sauver();
@@ -6947,7 +6959,7 @@ function ouvrirDossier(id, filtre = 'tous') {
     } }),
     bouton('Enregistrer comme liste', { ico: 'vue-liste', label: 'Enregistrer ces pièces comme liste réutilisable', onclick: async () => {
       if (!d.pieces.length) { toast('Ajoutez d\'abord des pièces à ce dossier.'); return; }
-      const l = { id: 'perso-' + idUnique(), nom: 'Ma liste ' + ((prefs.listesPerso || []).length + 1), pieces: d.pieces.map(p => p.modele ? [p.nom, p.modele] : [p.nom]) };
+      const l = { id: 'perso-' + idUnique(), nom: 'Ma liste ' + ((prefs.listesPerso || []).length + 1), pieces: d.pieces.map(pieceVersListe) };
       await fe.fermer(); editerListe(l, () => ouvrirDossier(d.id));
     } })));
   // Dossiers du client (MaPrimeRénov', chantier…) : onglets à gauche, « Nouveau dossier » à droite, comme en haut des autres pages
@@ -6978,7 +6990,7 @@ function ouvrirDossier(id, filtre = 'tous') {
     f2.pied.append(bouton('Annuler', { onclick: () => f2.fermer() }), bouton('Créer le dossier', { ico: 'valider', cls: 'btn principal', onclick: async () => {
       const liste = choix.value;
       const nd = { id: idUnique(), cree: Date.now(), clientId: cleClient(d), client: { ...d.client }, liste, ...(titre.value.trim() ? { titre: titre.value.trim() } : {}),
-        pieces: toutes[liste].pieces.map(([nom, modele]) => ({ id: idUnique(), nom, modele: modele || null, etat: 'manquant' })) };
+        pieces: toutes[liste].pieces.map(pieceDeListe) };
       ecrireDossier(nd); toast('Dossier créé'); await f2.fermer(); await fe.fermer(); ouvrirDossier(nd.id, filtre);
     } }));
   }
@@ -7009,15 +7021,16 @@ async function rangerDansDossier(lien, octets, nom) {
   return true;
 }
 /** Petite fenêtre avec un champ texte (à la place de la fenêtre grise du navigateur). Renvoie le texte, ou null. */
-function demanderTexte({ titre, etiquette, valeur = '', exemple = '', action = 'Valider' }) {
+function demanderTexte({ titre, etiquette, valeur = '', exemple = '', action = 'Valider', vide = false, aide = '' }) {
   return new Promise(res => {
     let resultat = null;
     const fe = feuille({ titre, surFermeture: () => res(resultat) });
     const id = 'dt-' + idUnique();
     const champ = el('input', { class: 'champ', id, autocomplete: 'off', placeholder: exemple, enterkeyhint: 'done' }); champ.value = valeur;
-    const valider = () => { const t = champ.value.trim(); if (!t) { champ.focus(); return; } resultat = t; fe.fermer(); };
+    // vide : un champ laissé vide est une réponse (« retirer »), pas un oubli
+    const valider = () => { const t = champ.value.trim(); if (!t && !vide) { champ.focus(); return; } resultat = t; fe.fermer(); };
     champ.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); valider(); } });
-    fe.corps.append(el('div', { class: 'form-blocs' }, el('label', { class: 'etiquette', for: id, text: etiquette }), champ));
+    fe.corps.append(el('div', { class: 'form-blocs' }, el('label', { class: 'etiquette', for: id, text: etiquette }), champ, ...(aide ? [el('p', { class: 'note', text: aide })] : [])));
     fe.pied.append(bouton('Annuler', { onclick: () => fe.fermer() }), bouton(action, { ico: 'valider', cls: 'btn principal', onclick: valider }));
     setTimeout(() => { champ.focus(); champ.select(); }, 120);
   });
@@ -7038,12 +7051,12 @@ function demanderPieces(d, apres) {
   const choisies = () => manquantes.filter(p => coches.has(p.id));
   const rediger = () => {
     const signe = entreprise().nom, nom = c.nom ? nomClient(c) : '';
-    return `Bonjour${nom ? ' ' + nom : ''},\n\nPour compléter votre dossier, il me manque encore :\n${choisies().map(p => '- ' + p.nom).join('\n')}\n\n`
+    return `Bonjour${nom ? ' ' + nom : ''},\n\nPour compléter votre dossier, il me manque encore :\n${choisies().map(p => '- ' + nomEtPrecision(p)).join('\n')}\n\n`
       + `Vous pouvez me les envoyer en photo ou en PDF, en réponse à ce message.\n\nMerci et bonne journée${signe ? ',\n' + signe : '.'}`;
   };
   const cases = el('div', {}, manquantes.map(p => el('label', { class: 'case-option' },
     el('input', { type: 'checkbox', checked: coches.has(p.id), onchange: e => { if (e.target.checked) coches.add(p.id); else coches.delete(p.id); if (!touche) texte.value = rediger(); } }),
-    el('span', { class: 'texte' }, el('strong', { text: p.nom }), p.modele ? el('small', { text: 'Document à remplir avec le client' }) : null))));
+    el('span', { class: 'texte' }, el('strong', { text: p.nom }), p.modele ? el('small', { text: 'Document à remplir avec le client' }) : p.precision ? el('small', { text: p.precision }) : null))));
   const ouvrirLien = url => { const a = el('a', { href: url }); document.body.append(a); a.click(); a.remove(); };
   const copier = async msg => { try { await navigator.clipboard.writeText(msg); } catch { texte.select(); document.execCommand('copy'); } };
   async function envoyer(canal) {
