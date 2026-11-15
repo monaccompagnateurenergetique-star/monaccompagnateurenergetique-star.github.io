@@ -923,6 +923,16 @@ button.stat[aria-pressed="true"]{border-color:var(--accent);background:var(--acc
 .lien-contact{display:inline-flex;align-items:center;gap:8px;min-height:40px;color:var(--accent);font-weight:600;text-decoration:none;overflow-wrap:anywhere}
 .lien-contact .ico{width:18px;height:18px;flex:none}
 .type-dossier{margin:0;font-size:14px;color:var(--doux)}
+/* Dossiers d'un client : onglets (ou nom du dossier) à gauche, « Nouveau dossier » à droite */
+.barre-dossiers-client{margin-bottom:12px}
+.dossiers-client-gauche{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto}
+.dossiers-client-gauche .titre-dossier{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.segments.onglets-dossiers{margin:0;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.segments.onglets-dossiers span{white-space:nowrap}
+.carte-dossier .mini-dossiers{display:flex;flex-direction:column;gap:6px}
+.carte-dossier .mini-dossier{display:flex;flex-direction:column;gap:2px}
+.carte-dossier .mini-dossier>small{font-size:12.5px;color:var(--doux);font-weight:600}
+@media (max-width:640px){.dossiers-client-gauche{flex:1 1 100%}}
 /* Téléphone : les 4 compteurs des clients sur une seule rangée */
 @media (max-width:520px){
   .page-clients .stats-dossiers{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
@@ -1663,7 +1673,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.56.0';
+const VERSION_APPLI = '1.57.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze, setWordSpacing } = window.PDFLib;
@@ -6134,6 +6144,26 @@ const listesPieces = () => {
   return { ...base, ...Object.fromEntries((prefs.listesPerso || []).map(l => [l.id, l])), vide };
 };
 const dossiers = () => prefs.dossiers || [];
+/* Un client peut avoir plusieurs dossiers (MaPrimeRénov', chantier…). Les dossiers d'un même client partagent « clientId » ;
+   un dossier sans « clientId » (tous ceux créés avant) est à lui seul un client : rien à convertir. */
+const cleClient = d => d.clientId || d.id;
+const titreDossier = d => d.titre || (d.liste !== 'vide' && listesPieces()[d.liste]?.nom) || 'Dossier';
+/** Clients = dossiers regroupés ; le plus récent d'abord, dans chaque client comme entre clients. */
+function groupesClients() {
+  const m = new Map();
+  for (const d of dossiers().slice().sort((a, b) => (b.maj || 0) - (a.maj || 0))) {
+    const k = cleClient(d);
+    if (!m.has(k)) m.set(k, { cle: k, client: d.client, dossiers: [] });
+    m.get(k).dossiers.push(d);
+  }
+  return [...m.values()];
+}
+const dossiersDuClient = d => groupesClients().find(g => g.cle === cleClient(d))?.dossiers || [d];
+/** Noms des dossiers d'un client, rendus distincts (deux « Chantier » : on ajoute la date de création). */
+function nomsDossiers(liste) {
+  const titres = liste.map(titreDossier);
+  return liste.map((d, i) => titres.filter(t => t === titres[i]).length > 1 ? `${titres[i]} (${new Date(d.cree || d.maj || Date.now()).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })})` : titres[i]);
+}
 const ecrireDossier = d => { d.maj = Date.now(); prefs.dossiers = [...dossiers().filter(x => x.id !== d.id), d]; ecrirePrefs(prefs); majTableauBord(); };
 const nomClient = c => [c.prenom, c.nom].filter(Boolean).join(' ') || 'Client sans nom';
 const avancement = d => { const n = d.pieces.length, ok = d.pieces.filter(p => p.etat === 'recu').length; return { n, ok, complet: n > 0 && ok === n }; };
@@ -6595,29 +6625,38 @@ function ouvrirDossiers(filtreInitial = 'tous', ongletInitial = 'clients') {
   function afficher() {
     if (onglet === 'listes') { afficherListes(); return; }
     remplirFiltre();
+    // Une carte par client ; un client peut avoir plusieurs dossiers (MaPrimeRénov', chantier…)
     const t = outils.tri.value, aRel = new Map(aRelancer().map(x => [x.d.id, x.pourquoi]));
     const manque = d => { const a = avancement(d); return a.n - a.ok; };
-    const tous = dossiers().slice().sort((a, b) => t === 'az' ? nomClient(a.client).localeCompare(nomClient(b.client), 'fr')
+    const manqueG = g => g.dossiers.reduce((s, d) => s + manque(d), 0);
+    const majG = g => Math.max(0, ...g.dossiers.map(d => d.maj || 0));
+    const relanceG = g => g.dossiers.some(d => aRel.has(d.id)), enCoursG = g => g.dossiers.some(dossierActif);
+    const tous = groupesClients().sort((a, b) => t === 'az' ? nomClient(a.client).localeCompare(nomClient(b.client), 'fr')
       : t === 'za' ? nomClient(b.client).localeCompare(nomClient(a.client), 'fr')
-      : t === 'manque' ? manque(b) - manque(a) || (b.maj || 0) - (a.maj || 0) : (b.maj || 0) - (a.maj || 0));
-    const nComplets = tous.filter(d => avancement(d).complet).length, nEnCours = tous.length - nComplets;
+      : t === 'manque' ? manqueG(b) - manqueG(a) || majG(b) - majG(a) : majG(b) - majG(a));
+    const nEnCours = tous.filter(enCoursG).length, nComplets = tous.length - nEnCours, nRelance = tous.filter(relanceG).length;
     compteurs.replaceChildren(
       tuile('tous', tous.length, pluriel(tous.length, 'client')),
-      tuile('relancer', aRel.size, 'à relancer', aRel.size ? 'alerte' : ''),
+      tuile('relancer', nRelance, 'à relancer', nRelance ? 'alerte' : ''),
       tuile('actifs', nEnCours, 'en cours'),
       tuile('complets', nComplets, pluriel(nComplets, 'complet'), 'ok'));
     const q = sansAccents(recherche.value.trim()), chiffres = q.replace(/\D/g, ''), f = filtre.value;
-    const trouve = d => !q || sansAccents([nomClient(d.client), d.client.ville, d.client.adresse, d.client.email, listesPieces()[d.liste]?.nom].join(' ')).includes(q)
-      || (chiffres.length >= 3 && (d.client.tel || '').replace(/\D/g, '').includes(chiffres));
-    const liste = tous.filter(trouve).filter(d => f === 'tous' || (f === 'actifs' && dossierActif(d)) || (f === 'complets' && !dossierActif(d))
-      || (f === 'relancer' && aRel.has(d.id)) || (f.startsWith('liste:') && d.liste === f.slice(6)));
-    const carte = d => {
-      const derniere = (d.notes || []).slice(-1)[0], nomListe = listesPieces()[d.liste]?.nom;
+    const trouve = g => !q || sansAccents([nomClient(g.client), g.client.ville, g.client.adresse, g.client.email, ...g.dossiers.map(titreDossier)].join(' ')).includes(q)
+      || (chiffres.length >= 3 && (g.client.tel || '').replace(/\D/g, '').includes(chiffres));
+    const liste = tous.filter(trouve).filter(g => f === 'tous' || (f === 'actifs' && enCoursG(g)) || (f === 'complets' && !enCoursG(g))
+      || (f === 'relancer' && relanceG(g)) || (f.startsWith('liste:') && g.dossiers.some(d => d.liste === f.slice(6))));
+    const carte = g => {
+      // On ouvre le dossier qui demande le plus d'attention : à relancer, puis incomplet, puis le plus récent
+      const d = g.dossiers.find(x => aRel.has(x.id)) || g.dossiers.find(dossierActif) || g.dossiers[0];
+      const plusieurs = g.dossiers.length > 1, derniere = g.dossiers.flatMap(x => x.notes || []).sort((a, b) => a.d - b.d).slice(-1)[0];
+      const relance = g.dossiers.find(x => aRel.has(x.id));
       return el('button', { type: 'button', class: 'carte-dossier', onclick: async () => { await fe.fermer(); ouvrirDossier(d.id, filtre.value); } },
-        el('span', { class: 'carte-dossier-tete' }, el('strong', { text: nomClient(d.client) }), el('small', { text: [d.client.ville, nomListe].filter(Boolean).join(' · ') })),
-        aRel.has(d.id) ? el('small', { class: 'relance-due', text: 'À relancer : ' + aRel.get(d.id) })
+        el('span', { class: 'carte-dossier-tete' }, el('strong', { text: nomClient(g.client) }),
+          el('small', { text: [g.client.ville, plusieurs ? `${g.dossiers.length} dossiers` : titreDossier(d)].filter(Boolean).join(' · ') })),
+        relance ? el('small', { class: 'relance-due', text: 'À relancer : ' + aRel.get(relance.id) })
           : derniere ? el('small', { class: 'derniere-action', text: `${dateCourteDe(derniere.d)} · ${derniere.t}` }) : null,
-        barreAvancement(d));
+        plusieurs ? el('span', { class: 'mini-dossiers' }, nomsDossiers(g.dossiers).map((nom, i) => el('span', { class: 'mini-dossier' }, el('small', { text: nom }), barreAvancement(g.dossiers[i]))))
+          : barreAvancement(d));
     };
     const filtreActif = f !== 'tous' || q;
     zone.replaceChildren(...(liste.length ? liste.map(carte)
@@ -6629,7 +6668,7 @@ function ouvrirDossiers(filtreInitial = 'tous', ongletInitial = 'clients') {
   /** Onglet « Mes listes de pièces » : vos listes, puis celles de l'appli (à copier pour les modifier). */
   function afficherListes() {
     const q = sansAccents(recherche.value.trim());
-    const clientsDe = k => dossiers().filter(d => d.liste === k).length;
+    const clientsDe = k => new Set(dossiers().filter(d => d.liste === k).map(cleClient)).size;
     const trouve = l => !q || sansAccents([l.nom, ...l.pieces.map(p => p[0])].join(' ')).includes(q);
     const carteListe = (l, perso) => {
       const n = clientsDe(l.id), nb = l.pieces.length;
@@ -6763,15 +6802,13 @@ function ouvrirDossier(id, filtre = 'tous') {
     const c = d.client;
     const adresse = [c.adresse, [c.cp, c.ville].filter(Boolean).join(' ')].filter(Boolean).join(', ');
     const { n, ok } = avancement(d), manque = n - ok;
-    const nomListe = listesPieces()[d.liste]?.nom;
     // Téléphone et e-mail : un toucher appelle ou écrit au client
     tete.replaceChildren(
       el('div', { class: 'recap-coord' },
         el('strong', { text: nomClient(c) }),
         el('span', { class: adresse ? '' : 'manque', text: adresse || 'Adresse à compléter' }),
         c.tel ? el('a', { class: 'lien-contact', href: 'tel:' + c.tel.replace(/[^\d+]/g, ''), 'aria-label': `Appeler ${nomClient(c)} au ${c.tel}` }, icone('note'), c.tel) : el('span', { class: 'manque', text: 'Téléphone à compléter' }),
-        c.email ? el('a', { class: 'lien-contact', href: 'mailto:' + c.email, 'aria-label': `Écrire à ${c.email}` }, icone('doc'), c.email) : el('span', { class: 'manque', text: 'E-mail à compléter' })),
-      ...(nomListe && d.liste !== 'vide' ? [el('p', { class: 'type-dossier', text: 'Type de dossier : ' + nomListe })] : []));
+        c.email ? el('a', { class: 'lien-contact', href: 'mailto:' + c.email, 'aria-label': `Écrire à ${c.email}` }, icone('doc'), c.email) : el('span', { class: 'manque', text: 'E-mail à compléter' })));
     etatPieces.replaceChildren(
       barreAvancement(d),
       el('p', { class: 'recap-etat', text: !n ? 'Aucune pièce dans ce dossier : ajoutez-en ci-dessous.' : manque ? `${manque} pièce${manque > 1 ? 's' : ''} à récupérer` : 'Toutes les pièces sont là : vous pouvez tout réunir en un seul PDF.' }),
@@ -6810,6 +6847,8 @@ function ouvrirDossier(id, filtre = 'tous') {
     f2.corps.append(el('div', { class: 'form-blocs' }, ...champsClient(c, 'mc-')));
     f2.pied.append(bouton('Annuler', { onclick: () => f2.fermer() }), bouton('Enregistrer', { ico: 'valider', cls: 'btn principal', onclick: async () => {
       if (!c.nom) { toast('Le nom du client est obligatoire.'); return; }
+      // Les coordonnées sont celles du client : tous ses dossiers sont mis à jour
+      for (const x of dossiersDuClient(d)) if (x !== d) x.client = { ...c };
       d.client = c; sauver(); toast('Client enregistré'); await f2.fermer();
     } }));
   }
@@ -6911,12 +6950,51 @@ function ouvrirDossier(id, filtre = 'tous') {
       const l = { id: 'perso-' + idUnique(), nom: 'Ma liste ' + ((prefs.listesPerso || []).length + 1), pieces: d.pieces.map(p => p.modele ? [p.nom, p.modele] : [p.nom]) };
       await fe.fermer(); editerListe(l, () => ouvrirDossier(d.id));
     } })));
-  fe.corps.append(el('div', { class: 'fiche-grille' }, blocCoord, blocPieces, blocSuivi));
+  // Dossiers du client (MaPrimeRénov', chantier…) : onglets à gauche, « Nouveau dossier » à droite, comme en haut des autres pages
+  const freres = dossiersDuClient(d), nomsFreres = nomsDossiers(freres), monNom = nomsFreres[freres.indexOf(d)] || titreDossier(d);
+  const renommerDossier = async () => {
+    const n = await demanderTexte({ titre: 'Renommer le dossier', etiquette: 'Nom du dossier', valeur: titreDossier(d), exemple: 'Ex. : Salle de bain 2027', action: 'Renommer' });
+    if (!n) return; d.titre = n; ecrireDossier(d); await fe.fermer(); ouvrirDossier(d.id, filtre);
+  };
+  const choixDossiers = freres.length > 1 ? segments('dossiers-client', freres.map((x, i) => [x.id, nomsFreres[i]]), d.id, async v => { await fe.fermer(); ouvrirDossier(v, filtre); }) : null;
+  choixDossiers?.classList.add('onglets-capsule', 'onglets-dossiers');
+  const barreDossiersClient = el('div', { class: 'tete-modeles barre-dossiers-client' },
+    el('div', { class: 'dossiers-client-gauche' },
+      choixDossiers || el('strong', { class: 'titre-dossier', text: monNom }),
+      bouton('', { ico: 'crayon', cls: 'btn-icone', label: `Renommer le dossier « ${monNom} »`, onclick: renommerDossier })),
+    bouton('Nouveau dossier', { ico: 'plus', cls: 'btn principal btn-creer-modele', label: `Nouveau dossier pour ${nomClient(d.client)}`, onclick: nouveauDossierPourClient }));
+  /** Un autre dossier pour ce même client : mêmes coordonnées, une autre liste de pièces. */
+  async function nouveauDossierPourClient() {
+    const toutes = listesPieces();
+    const f2 = feuille({ titre: `Nouveau dossier pour ${nomClient(d.client)}` });
+    const choix = el('select', { class: 'champ', id: 'ndc-liste' }, Object.entries(toutes).map(([k, v]) => el('option', { value: k, text: `${v.nom}${v.pieces.length ? ` (${v.pieces.length} pièce${v.pieces.length > 1 ? 's' : ''})` : ''}` })));
+    const apercu = el('p', { class: 'note' });
+    const majApercu = () => { const l = toutes[choix.value]; apercu.textContent = l.pieces.length ? l.pieces.map(p => p[0]).join(', ') : 'Aucune pièce : vous les ajouterez dans le dossier.'; };
+    choix.addEventListener('change', majApercu); majApercu();
+    const titre = el('input', { class: 'champ', id: 'ndc-titre', autocomplete: 'off', placeholder: 'Ex. : Salle de bain 2027' });
+    f2.corps.append(el('div', { class: 'form-blocs' },
+      el('label', { class: 'etiquette', for: 'ndc-liste', text: 'Pièces à réunir' }), choix, apercu,
+      el('label', { class: 'etiquette', for: 'ndc-titre', text: 'Nom du dossier (facultatif)' }), titre));
+    f2.pied.append(bouton('Annuler', { onclick: () => f2.fermer() }), bouton('Créer le dossier', { ico: 'valider', cls: 'btn principal', onclick: async () => {
+      const liste = choix.value;
+      const nd = { id: idUnique(), cree: Date.now(), clientId: cleClient(d), client: { ...d.client }, liste, ...(titre.value.trim() ? { titre: titre.value.trim() } : {}),
+        pieces: toutes[liste].pieces.map(([nom, modele]) => ({ id: idUnique(), nom, modele: modele || null, etat: 'manquant' })) };
+      ecrireDossier(nd); toast('Dossier créé'); await f2.fermer(); await fe.fermer(); ouvrirDossier(nd.id, filtre);
+    } }));
+  }
+  fe.corps.append(barreDossiersClient, el('div', { class: 'fiche-grille' }, blocCoord, blocPieces, blocSuivi));
   fe.pied.append(
-    bouton('', { ico: 'poubelle', cls: 'btn danger', label: `Supprimer le dossier de ${nomClient(d.client)}`, onclick: async () => {
-      if (!(await confirmer({ titre: `Supprimer le dossier de ${nomClient(d.client)} ?`, texte: 'La fiche client et les fichiers des pièces seront effacés de cet appareil. Les PDF déjà enregistrés ailleurs ne changent pas.', action: 'Supprimer le dossier' }))) return;
+    bouton('', { ico: 'poubelle', cls: 'btn danger', label: freres.length > 1 ? `Supprimer le dossier « ${monNom} »` : `Supprimer le client ${nomClient(d.client)}`, onclick: async () => {
+      // Plusieurs dossiers : on ne supprime que celui-ci. Un seul : c'est le client qui disparaît.
+      const seul = dossiersDuClient(d).length <= 1;
+      if (!(await confirmer(seul
+        ? { titre: `Supprimer le client ${nomClient(d.client)} ?`, texte: 'La fiche client et les fichiers des pièces seront effacés de cet appareil. Les PDF déjà enregistrés ailleurs ne changent pas.', action: 'Supprimer le client' }
+        : { titre: `Supprimer le dossier « ${monNom} » de ${nomClient(d.client)} ?`, texte: 'Les fichiers des pièces de ce dossier seront effacés de cet appareil. Les autres dossiers du client ne changent pas.', action: 'Supprimer le dossier' }))) return;
       for (const p of d.pieces) await bdDel('fichiers', 'piece:' + p.id).catch(() => {});
-      prefs.dossiers = dossiers().filter(x => x.id !== d.id); ecrirePrefs(prefs); majTableauBord(); toast('Dossier supprimé'); await fe.fermer(); ouvrirDossiers(filtre);
+      const autre = dossiersDuClient(d).find(x => x !== d);
+      prefs.dossiers = dossiers().filter(x => x.id !== d.id); ecrirePrefs(prefs); majTableauBord();
+      toast(seul ? 'Client supprimé' : 'Dossier supprimé'); await fe.fermer();
+      if (autre) ouvrirDossier(autre.id, filtre); else ouvrirDossiers(filtre);
     } }),
     bouton('Tout réunir', { ico: 'fusion', cls: 'btn principal', label: 'Tout réunir en un seul PDF', onclick: toutReunir }));
   rendre();
@@ -7012,7 +7090,9 @@ function choisirClient(titre = 'Ranger chez quel client ?') {
     const afficher = () => {
       const q = sansAccents(champ.value.trim());
       const liste = dossiers().slice().sort((a, b) => (b.maj || 0) - (a.maj || 0)).filter(d => !q || sansAccents([nomClient(d.client), d.client.ville].join(' ')).includes(q));
-      zone.replaceChildren(...(liste.length ? liste.map(d => bouton([nomClient(d.client), d.client.ville].filter(Boolean).join(' · '), { ico: 'clients', onclick: () => { choix = d; fe.fermer(); } }))
+      // Un client qui a plusieurs dossiers apparaît une fois par dossier, avec le nom du dossier
+      const nb = new Map(); dossiers().forEach(d => nb.set(cleClient(d), (nb.get(cleClient(d)) || 0) + 1));
+      zone.replaceChildren(...(liste.length ? liste.map(d => bouton([nomClient(d.client), nb.get(cleClient(d)) > 1 ? titreDossier(d) : d.client.ville].filter(Boolean).join(' · '), { ico: 'clients', onclick: () => { choix = d; fe.fermer(); } }))
         : [el('p', { class: 'vide', text: 'Aucun client ne correspond à cette recherche.' })]));
     };
     champ.addEventListener('input', afficher);
