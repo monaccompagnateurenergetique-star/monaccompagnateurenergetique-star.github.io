@@ -1620,7 +1620,7 @@ button.cr-sig-zone{width:100%;font:inherit;font-size:.85em;cursor:pointer}
 /* =========================================================
    0. RÉGLAGES GÉNÉRAUX ET OUTILS
    ========================================================= */
-const VERSION_APPLI = '1.54.0';
+const VERSION_APPLI = '1.55.0';
 const pdfjsLib = window.pdfjsLib;
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
 const { PDFDocument, StandardFonts, rgb, degrees, LineCapStyle, BlendMode, PDFHexString, pushGraphicsState, popGraphicsState, setCharacterSqueeze, setWordSpacing } = window.PDFLib;
@@ -4701,7 +4701,11 @@ async function exporter(action, { format: formatInitial = 'pdf', niveau: niveauI
     const surDrive = partage ? versDrive : destination !== 'appareil';
     const seulementDrive = !partage && destination === 'drive';
     if (partage) { if (await partager([fichierPdf(final, nomFinal)])) { noterHistorique(D, 'partagé', final, nomFinal); verifierQuota(D.docId); } }
-    else if (!seulementDrive && await enregistrer(final, nomFinal)) { noterHistorique(D, 'enregistré', final, nomFinal); verifierQuota(D.docId); D.modifie = false; if (!surDrive) toast(`PDF enregistré (${tailleLisible(final.length)})`); }
+    else if (!seulementDrive && await enregistrer(final, nomFinal)) {
+      noterHistorique(D, 'enregistré', final, nomFinal); verifierQuota(D.docId); D.modifie = false;
+      // Mode Entreprise : on peut ranger tout de suite ce PDF chez un client
+      if (!surDrive) toast(`PDF enregistré (${tailleLisible(final.length)})`, enEntreprise() && dossiers().length ? { action: 'Ranger chez un client', onAction: () => rangerChezClient(final, nomFinal) } : {});
+    }
     if (!surDrive) return;
     if (driveConnecte()) {
       if (await envoyerVersDrive(final, nomFinal) && seulementDrive) { noterHistorique(D, 'drive', final, nomFinal); verifierQuota(D.docId); D.modifie = false; }
@@ -4809,6 +4813,7 @@ function ouvrirPanneau(type) {
       o('recherche', 'Rechercher', () => { fermerPanneau(); ouvrirRecherche(); }),
       o('texte', 'Lire (OCR)', () => { fermerPanneau(); lancerOcr(); }),
       o('info', 'Infos', () => { fermerPanneau(); afficherInfos(); }),
+      enEntreprise() ? o('clients', 'Client', () => { fermerPanneau(); rangerDocOuvert(); }) : null,
       o('copier', 'Modèle', () => { fermerPanneau(); creerModele(); })));
   } else {
     avantPanneau = instantane();
@@ -6676,7 +6681,8 @@ function ouvrirDossier(id, filtre = 'tous') {
           el('span', { class: c.tel || c.email ? '' : 'manque', text: [c.tel, c.email].filter(Boolean).join(' · ') || 'Téléphone et e-mail à compléter' })),
         bouton('Modifier', { ico: 'crayon', cls: 'btn', label: 'Modifier les coordonnées du client', onclick: modifierClient })),
       barreAvancement(d),
-      el('p', { class: 'recap-etat', text: !n ? 'Aucune pièce dans ce dossier : ajoutez-en ci-dessous.' : manque ? `${manque} pièce${manque > 1 ? 's' : ''} à récupérer` : 'Toutes les pièces sont là : vous pouvez tout réunir en un seul PDF.' }));
+      el('p', { class: 'recap-etat', text: !n ? 'Aucune pièce dans ce dossier : ajoutez-en ci-dessous.' : manque ? `${manque} pièce${manque > 1 ? 's' : ''} à récupérer` : 'Toutes les pièces sont là : vous pouvez tout réunir en un seul PDF.' }),
+      ...(manque ? [el('div', { class: 'rangee-btn' }, bouton('Demander les pièces manquantes', { ico: 'partager', cls: 'btn principal', label: `Demander à ${nomClient(c)} les pièces manquantes`, onclick: () => demanderPieces(d, rendre) }))] : []));
     // Suivi de la collecte : date de relance, notes (le plus récent en haut)
     const relance = el('input', { class: 'champ', id: 'd-relance', type: 'date' }); relance.value = d.relance || '';
     relance.addEventListener('change', () => { d.relance = relance.value; sauver(); toast(relance.value ? 'Relance prévue le ' + dateCourte(relance.value) : 'Relance retirée'); });
@@ -6716,8 +6722,10 @@ function ouvrirDossier(id, filtre = 'tous') {
   }
   async function ajouterFichierPiece(p) {
     const choix = await demanderChoix(`Ajouter : ${p.nom}`, [
+      { valeur: 'scan', texte: 'Scanner (recadré, recto verso possible)', ico: 'scanner' },
       { valeur: 'photo', texte: 'Prendre une photo', ico: 'camera' }, { valeur: 'fichier', texte: 'Choisir un fichier (PDF ou image)', ico: 'doc' }]);
     if (!choix) return;
+    if (choix === 'scan') { await scannerPiece(p); return; }
     const [f] = await choisirFichiers({ accept: 'application/pdf,.pdf,image/*', capture: choix === 'photo' ? 'environment' : undefined });
     if (!f) return;
     occupe('Ajout de la pièce…');
@@ -6729,6 +6737,32 @@ function ouvrirDossier(id, filtre = 'tous') {
       p.fichier = { nom: estPdf(f) ? f.name : p.nom + '.pdf', type, taille: octets.length, date: Date.now() }; p.etat = 'recu';
       sauver(); toast(`« ${p.nom} » ajoutée au dossier`);
     } catch (e) { console.error(e); toast('Ce fichier n\'a pas pu être ajouté. Réessayez avec un PDF ou une photo.'); }
+    finally { libre(); }
+  }
+  /** Scanner de l'appli (4 coins, rendu net), une page après l'autre : recto, verso… puis un seul PDF pour la pièce. */
+  async function scannerPiece(p) {
+    const pages = [];
+    for (;;) {
+      const [f] = (await choisirFichiers({ accept: 'image/*', capture: 'environment' })).filter(estImage);
+      if (!f) break;
+      let c; occupe('Chargement de la photo…');
+      try { c = await chargerImage(f); } catch { toast('Ce format d\'image n\'est pas pris en charge.'); break; } finally { libre(); }
+      const r = await editeurScanner(c, prefs.renduScan || 'couleur');
+      if (!r) break;
+      prefs.renduScan = r.filtre; ecrirePrefs(prefs); pages.push(r);
+      const suite = await demanderChoix(`${pages.length} page${pages.length > 1 ? 's' : ''} scannée${pages.length > 1 ? 's' : ''} pour « ${p.nom} »`, [
+        { valeur: 'fin', texte: 'Terminer et ajouter au dossier', ico: 'valider' },
+        { valeur: 'encore', texte: 'Scanner une autre page (verso…)', ico: 'scanner' }]);
+      if (suite !== 'encore') break;
+    }
+    if (!pages.length) return;
+    occupe('Création du PDF…');
+    try {
+      const octets = await imagesVersPdf(pages, 'auto');
+      await bdPut('fichiers', octets, 'piece:' + p.id);
+      p.fichier = { nom: p.nom + '.pdf', type: 'application/pdf', taille: octets.length, date: Date.now() }; p.etat = 'recu';
+      sauver(); toast(`« ${p.nom} » ajoutée au dossier (${pages.length} page${pages.length > 1 ? 's' : ''})`);
+    } catch (e) { console.error(e); toast('Le scan n\'a pas pu être ajouté. Réessayez.'); }
     finally { libre(); }
   }
   async function voirPiece(p) {
@@ -6751,7 +6785,7 @@ function ouvrirDossier(id, filtre = 'tous') {
       { valeur: 'retirer', texte: 'Retirer cette pièce de la liste', ico: 'poubelle' }].filter(Boolean));
     if (choix === 'basculer') { p.etat = recu ? 'manquant' : 'recu'; if (recu && p.fichier) { await bdDel('fichiers', 'piece:' + p.id).catch(() => {}); delete p.fichier; } sauver(); }
     if (choix === 'remplacer') { p.etat = 'manquant'; await ajouterFichierPiece(p); }
-    if (choix === 'renommer') { const n = prompt('Nouveau nom de la pièce :', p.nom); if (n && n.trim()) { p.nom = n.trim(); sauver(); } }
+    if (choix === 'renommer') { const n = await demanderTexte({ titre: 'Renommer la pièce', etiquette: 'Nom de la pièce', valeur: p.nom, action: 'Renommer' }); if (n) { p.nom = n; sauver(); } }
     if (choix === 'monter' || choix === 'descendre') { const j = i + (choix === 'monter' ? -1 : 1); [d.pieces[i], d.pieces[j]] = [d.pieces[j], d.pieces[i]]; sauver(); }
     if (choix === 'retirer' && await confirmer({ titre: `Retirer « ${p.nom} » du dossier ?`, texte: p.fichier ? 'Le fichier de cette pièce sera effacé de cet appareil.' : 'La pièce disparaît de la liste.', action: 'Retirer la pièce' })) {
       await bdDel('fichiers', 'piece:' + p.id).catch(() => {}); d.pieces.splice(i, 1); sauver();
@@ -6773,9 +6807,9 @@ function ouvrirDossier(id, filtre = 'tous') {
   if ((d.notes || []).length || d.relance) notesRepli.open = true;
   fe.corps.append(tete,
     el('h3', { class: 'titre-section', text: 'Pièces du dossier' }), liste,
-    el('div', { class: 'rangee-btn' }, bouton('Ajouter une pièce à la liste', { ico: 'plus', cls: 'btn', onclick: () => {
-      const n = prompt('Nom de la pièce (ex. : Attestation d\'assurance) :'); if (!n || !n.trim()) return;
-      d.pieces.push({ id: idUnique(), nom: n.trim(), modele: null, etat: 'manquant' }); sauver();
+    el('div', { class: 'rangee-btn' }, bouton('Ajouter une pièce à la liste', { ico: 'plus', cls: 'btn', onclick: async () => {
+      const n = await demanderTexte({ titre: 'Ajouter une pièce', etiquette: 'Nom de la pièce', exemple: 'Ex. : Attestation d\'assurance', action: 'Ajouter' }); if (!n) return;
+      d.pieces.push({ id: idUnique(), nom: n, modele: null, etat: 'manquant' }); sauver();
     } }),
     bouton('Enregistrer comme liste', { ico: 'vue-liste', label: 'Enregistrer ces pièces comme liste réutilisable', onclick: async () => {
       if (!d.pieces.length) { toast('Ajoutez d\'abord des pièces à ce dossier.'); return; }
@@ -6800,6 +6834,138 @@ async function rangerDansDossier(lien, octets, nom) {
   p.fichier = { nom, type: 'application/pdf', taille: octets.length, date: Date.now() }; p.etat = 'recu';
   ecrireDossier(d);
   return true;
+}
+/** Petite fenêtre avec un champ texte (à la place de la fenêtre grise du navigateur). Renvoie le texte, ou null. */
+function demanderTexte({ titre, etiquette, valeur = '', exemple = '', action = 'Valider' }) {
+  return new Promise(res => {
+    let resultat = null;
+    const fe = feuille({ titre, surFermeture: () => res(resultat) });
+    const id = 'dt-' + idUnique();
+    const champ = el('input', { class: 'champ', id, autocomplete: 'off', placeholder: exemple, enterkeyhint: 'done' }); champ.value = valeur;
+    const valider = () => { const t = champ.value.trim(); if (!t) { champ.focus(); return; } resultat = t; fe.fermer(); };
+    champ.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); valider(); } });
+    fe.corps.append(el('div', { class: 'form-blocs' }, el('label', { class: 'etiquette', for: id, text: etiquette }), champ));
+    fe.pied.append(bouton('Annuler', { onclick: () => fe.fermer() }), bouton(action, { ico: 'valider', cls: 'btn principal', onclick: valider }));
+    setTimeout(() => { champ.focus(); champ.select(); }, 120);
+  });
+}
+const sansAccents = s => String(s || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+
+/* ---------- Demander les pièces au client : un message tout prêt (SMS, e-mail, WhatsApp…) ---------- */
+function demanderPieces(d, apres) {
+  const c = d.client, manquantes = d.pieces.filter(p => p.etat !== 'recu');
+  if (!manquantes.length) { toast('Toutes les pièces sont déjà là.'); return; }
+  // Les pièces qui se remplissent avec un formulaire de l'appli (mandat, PV…) se font avec le client : pas cochées d'office
+  const coches = new Set(manquantes.filter(p => !p.modele).map(p => p.id));
+  if (!coches.size) manquantes.forEach(p => coches.add(p.id));
+  const fe = feuille({ titre: 'Demander les pièces', plein: true, pied: false });
+  const texte = el('textarea', { class: 'champ', id: 'dp-texte', rows: 10 });
+  let touche = false;
+  texte.addEventListener('input', () => { touche = true; });
+  const choisies = () => manquantes.filter(p => coches.has(p.id));
+  const rediger = () => {
+    const signe = entreprise().nom, nom = c.nom ? nomClient(c) : '';
+    return `Bonjour${nom ? ' ' + nom : ''},\n\nPour compléter votre dossier, il me manque encore :\n${choisies().map(p => '- ' + p.nom).join('\n')}\n\n`
+      + `Vous pouvez me les envoyer en photo ou en PDF, en réponse à ce message.\n\nMerci et bonne journée${signe ? ',\n' + signe : '.'}`;
+  };
+  const cases = el('div', {}, manquantes.map(p => el('label', { class: 'case-option' },
+    el('input', { type: 'checkbox', checked: coches.has(p.id), onchange: e => { if (e.target.checked) coches.add(p.id); else coches.delete(p.id); if (!touche) texte.value = rediger(); } }),
+    el('span', { class: 'texte' }, el('strong', { text: p.nom }), p.modele ? el('small', { text: 'Document à remplir avec le client' }) : null))));
+  const ouvrirLien = url => { const a = el('a', { href: url }); document.body.append(a); a.click(); a.remove(); };
+  const copier = async msg => { try { await navigator.clipboard.writeText(msg); } catch { texte.select(); document.execCommand('copy'); } };
+  async function envoyer(canal) {
+    const msg = texte.value.trim();
+    if (!coches.size) { toast('Cochez au moins une pièce à demander.'); return; }
+    if (!msg) { texte.focus(); return; }
+    if (canal === 'SMS') ouvrirLien(`sms:${(c.tel || '').replace(/[^\d+]/g, '')}?body=${encodeURIComponent(msg)}`);
+    else if (canal === 'e-mail') ouvrirLien(`mailto:${(c.email || '').trim()}?subject=${encodeURIComponent('Pièces pour votre dossier')}&body=${encodeURIComponent(msg)}`);
+    else if (canal === 'message') { try { await navigator.share({ text: msg }); } catch (e) { if (e.name === 'AbortError') return; await copier(msg); canal = 'copie'; } }
+    else await copier(msg);
+    // Noté dans le suivi du dossier : la relance « rien depuis 7 jours » repart de ce jour
+    (d.notes ||= []).push({ d: Date.now(), t: `Pièces demandées${canal === 'copie' ? '' : ' par ' + canal} : ${choisies().map(p => p.nom).join(', ')}` });
+    ecrireDossier(d);
+    await fe.fermer(); apres?.();
+    toast(canal === 'copie' ? 'Message copié : collez-le dans votre messagerie.' : 'Message préparé : il ne reste qu\'à l\'envoyer.', 5000);
+  }
+  const boutons = [
+    c.tel ? bouton('SMS', { ico: 'note', cls: 'btn principal', label: `Envoyer par SMS au ${c.tel}`, onclick: () => envoyer('SMS') }) : null,
+    c.email ? bouton('E-mail', { ico: 'doc', cls: 'btn' + (c.tel ? '' : ' principal'), label: `Envoyer par e-mail à ${c.email}`, onclick: () => envoyer('e-mail') }) : null,
+    navigator.share ? bouton('WhatsApp, autre…', { ico: 'partager', cls: 'btn', onclick: () => envoyer('message') }) : null,
+    bouton('Copier', { ico: 'copier', cls: 'btn', onclick: () => envoyer('copie') })].filter(Boolean);
+  fe.corps.append(
+    el('div', { class: 'etiquette', text: 'Pièces à demander' }), cases,
+    el('label', { class: 'etiquette', for: 'dp-texte', text: 'Message' }), texte,
+    el('div', { class: 'rangee-btn' }, bouton('Refaire le message', { cls: 'btn mini', onclick: () => { touche = false; texte.value = rediger(); } })),
+    el('div', { class: 'etiquette', text: 'Envoyer par' }),
+    // (append(null) écrirait « null » : la remarque n'est ajoutée que si besoin)
+    ...(!c.tel && !c.email ? [el('p', { class: 'note', text: 'Le téléphone et l\'e-mail du client ne sont pas renseignés : ajoutez-les avec « Modifier », ou copiez le message.' })] : []),
+    el('div', { class: 'rangee-btn' }, boutons));
+  texte.value = rediger();
+}
+
+/* ---------- Ranger un PDF chez un client (depuis l'éditeur ou Fichiers) ---------- */
+/** Choisir un client, avec recherche. Renvoie son dossier, ou null. */
+function choisirClient(titre = 'Ranger chez quel client ?') {
+  return new Promise(res => {
+    let choix = null;
+    // Grande fenêtre seulement quand la liste est longue ; la recherche n'apparaît qu'à partir de 6 clients
+    const nombreux = dossiers().length > 5;
+    const fe = feuille({ titre, plein: nombreux, pied: false, surFermeture: () => res(choix) });
+    const champ = el('input', { class: 'champ', type: 'search', autocomplete: 'off', placeholder: 'Nom, ville…', 'aria-label': 'Rechercher un client' });
+    champ.hidden = !nombreux;
+    const zone = el('div', { class: 'menu-liste' });
+    const afficher = () => {
+      const q = sansAccents(champ.value.trim());
+      const liste = dossiers().slice().sort((a, b) => (b.maj || 0) - (a.maj || 0)).filter(d => !q || sansAccents([nomClient(d.client), d.client.ville].join(' ')).includes(q));
+      zone.replaceChildren(...(liste.length ? liste.map(d => bouton([nomClient(d.client), d.client.ville].filter(Boolean).join(' · '), { ico: 'clients', onclick: () => { choix = d; fe.fermer(); } }))
+        : [el('p', { class: 'vide', text: 'Aucun client ne correspond à cette recherche.' })]));
+    };
+    champ.addEventListener('input', afficher);
+    fe.corps.append(champ, zone);
+    afficher();
+  });
+}
+/** Range un PDF chez un client, comme pièce de son dossier (manquante, à remplacer, ou nouvelle). */
+async function rangerChezClient(octets, nom) {
+  if (!dossiers().length) { toast('Aucun client pour l\'instant : créez-en un dans « Clients ».', 5000); return false; }
+  const d = await choisirClient(); if (!d) return false;
+  const titreDoc = nomSansExt(nom);
+  const v = await demanderChoix(`Quelle pièce pour ${nomClient(d.client)} ?`, [
+    ...d.pieces.filter(p => p.etat !== 'recu').map(p => ({ valeur: p.id, texte: `${p.nom} (manquante)`, ico: 'doc' })),
+    ...d.pieces.filter(p => p.etat === 'recu').map(p => ({ valeur: p.id, texte: `${p.nom} (déjà reçue : remplacer)`, ico: 'doc' })),
+    { valeur: '+', texte: `Nouvelle pièce : « ${titreDoc} »`, ico: 'plus' }]);
+  if (!v) return false;
+  let p = d.pieces.find(x => x.id === v);
+  if (v === '+') p = { id: idUnique(), nom: titreDoc, modele: null, etat: 'manquant' };
+  else if (p.etat === 'recu' && p.fichier && !(await confirmer({ titre: `Remplacer le fichier de « ${p.nom} » ?`, texte: `Le fichier actuel (${p.fichier.nom}) sera remplacé par « ${nom} ».`, action: 'Remplacer le fichier' }))) return false;
+  try { await bdPut('fichiers', octets, 'piece:' + p.id); }
+  catch (e) { console.error(e); toast('Le PDF n\'a pas pu être rangé chez ce client. Réessayez.'); return false; }
+  if (v === '+') d.pieces.push(p);
+  p.fichier = { nom, type: 'application/pdf', taille: octets.length, date: Date.now() }; p.etat = 'recu';
+  ecrireDossier(d);
+  toast(`« ${p.nom} » ajouté au dossier de ${nomClient(d.client)}`, { action: 'Voir le client', onAction: () => allerAuClient(d.id) });
+  return true;
+}
+/** Ouvre la fiche d'un client ; depuis l'éditeur, on ferme d'abord le document (comme avec sa flèche : le travail est gardé). */
+async function allerAuClient(id) {
+  await fermerTout();
+  if (D) {
+    terminerEdition(); await fermerCouche(); await attendre(80);
+    if (D) return; // une question est posée sur le document (fermer sans enregistrer ?) : on laisse la personne répondre
+  }
+  naviguer(() => ouvrirDossier(id));
+}
+/** Le document ouvert dans l'éditeur, rangé chez un client (tel qu'il serait enregistré). */
+async function rangerDocOuvert() {
+  if (!D) return;
+  if (!dossiers().length) { toast('Aucun client pour l\'instant : créez-en un dans « Clients ».', 5000); return; }
+  terminerEdition();
+  let octets;
+  occupe('Préparation du PDF…');
+  try { octets = await construirePdf(); }
+  catch (e) { console.error(e); toast('Le PDF n\'a pas pu être créé. Réessayez.', 6000); return; }
+  finally { libre(); }
+  await rangerChezClient(octets, nomExport());
 }
 
 /* ---------- Éditeur de modèles : on empile des blocs, sans rien dessiner ---------- */
@@ -9962,6 +10128,7 @@ async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
         onclick: () => ouvrirPuis(() => ouvrirSauvegarde(d)),
         actions: [
           boutonFavori('doc:' + d.id, d.nom, afficher),
+          enEntreprise() ? bouton('', { ico: 'clients', cls: 'btn-icone', label: `Ranger ${d.nom} chez un client`, onclick: () => ouvrirPuis(async () => { await ouvrirSauvegarde(d); if (D) rangerDocOuvert(); }) }) : '',
           bouton('', { ico: 'info', cls: 'btn-icone', label: `Historique des actions de ${d.nom}`, onclick: () => ouvrirJournal(d) }),
           nbVersions(d.id) ? bouton(String(nbVersions(d.id)), { ico: 'horloge', cls: 'btn-icone avec-nombre', label: `Versions envoyées de ${d.nom}`, onclick: () => { courant = 'historique'; filtreDoc = d.id; fe.corps.querySelector('input[name="mesdocs"][value="historique"]').checked = true; afficher(); } }) : '',
           bouton('', { ico: 'poubelle', cls: 'btn-icone danger', label: `Supprimer ${d.nom}`, onclick: async () => {
@@ -9980,13 +10147,15 @@ async function ouvrirMesDocuments(onglet = 'documents', filtreDoc = null) {
           const choix = await demanderChoix(h.nom, [
             { texte: 'Ouvrir cette version', ico: 'doc', valeur: 'ouvrir' },
             { texte: 'Partager à nouveau', ico: 'partager', valeur: 'partager' },
-            { texte: 'Enregistrer à nouveau', ico: 'enregistrer', valeur: 'enregistrer' }]);
+            { texte: 'Enregistrer à nouveau', ico: 'enregistrer', valeur: 'enregistrer' },
+            ...(enEntreprise() && dossiers().length ? [{ texte: 'Ranger chez un client', ico: 'clients', valeur: 'client' }] : [])]);
           if (!choix) return;
           const o = await bdGet('fichiers', 'h' + h.id);
           if (!o) { toast('Ce fichier n\'est plus disponible.'); return; }
           const octets = new Uint8Array(o);
           if (choix === 'ouvrir') ouvrirPuis(() => ouvrirPdf(octets, h.nom, { lecture: true }));
           else if (choix === 'partager') partager([fichierPdf(octets, h.nom)]);
+          else if (choix === 'client') rangerChezClient(octets, h.nom);
           else if (await enregistrer(octets, h.nom)) toast('Fichier enregistré');
         } })));
     } else {
